@@ -331,8 +331,7 @@ export default function ProjectPage() {
                                 return { user: u, role: m.role || 'developer' };
                             }) as any}
                             onAddMember={() => {
-                                // TODO: implement member invite modal
-                                alert('Member invite coming in Phase 4');
+                                setIsInviteModalOpen(true);
                             }}
                         />
                     )}

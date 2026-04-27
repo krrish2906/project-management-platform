@@ -4,9 +4,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     Send, Smile, Paperclip, AtSign, Pin, MoreVertical,
-    Download, Loader2, Wifi, WifiOff, Search, PhoneCall, ArrowLeft,
+    Download, Loader2, Wifi, WifiOff, Search, PhoneCall, ArrowLeft, Video, X, ChevronUp, ChevronDown,
 } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { useParams, useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import { useAuth } from '@/hooks/useAuth';
@@ -69,11 +70,39 @@ const getInitials = (name?: string) => {
         .toUpperCase();
 };
 
+const highlightText = (text: string, highlight: string) => {
+    if (!highlight.trim()) return <>{text}</>;
+    try {
+        const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const parts = text.split(new RegExp(`(${escapedHighlight})`, 'gi'));
+        return (
+            <>
+                {parts.map((part, i) =>
+                    part.toLowerCase() === highlight.toLowerCase() ? (
+                        <span key={i} className="bg-yellow-300 text-gray-900 px-0.5 rounded-sm font-medium shadow-sm transition-all">{part}</span>
+                    ) : (
+                        part
+                    )
+                )}
+            </>
+        );
+    } catch (e) {
+        return <>{text}</>;
+    }
+};
+
 export default function ChatRoomPage() {
     const { id: projectId } = useParams();
     const router = useRouter();
     const { user } = useAuth(true);
     const allProjects = useProjectStore(state => state.projects);
+    const fetchProjects = useProjectStore(state => state.fetchProjects);
+
+    useEffect(() => {
+        if (allProjects.length === 0) {
+            fetchProjects();
+        }
+    }, [allProjects.length, fetchProjects]);
 
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -87,6 +116,20 @@ export default function ChatRoomPage() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [libraryTab, setLibraryTab] = useState('all');
     const [isUploading, setIsUploading] = useState(false);
+
+    // New Feature States
+    const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+    const [callTypeSelection, setCallTypeSelection] = useState<'video' | 'audio'>('video');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<string[]>([]);
+    const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
+    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isMuted, setIsMuted] = useState(false);
+    const optionsMenuRef = useRef<HTMLDivElement>(null);
+    const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     const markAsReadRef = useRef<((id: string) => void) | null>(null);
 
@@ -165,6 +208,7 @@ export default function ChatRoomPage() {
     useEffect(() => {
         if (!projectId) return;
 
+        let isMounted = true;
         const controller = new AbortController();
         const fetchMessages = async () => {
             setIsLoadingMessages(true);
@@ -175,22 +219,27 @@ export default function ChatRoomPage() {
                 });
                 const data = response.data;
                 const fetchedMessages: ChatMessage[] = data?.data?.messages || [];
-                setMessages(
-                    fetchedMessages.sort(
-                        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                    )
-                );
+                if (isMounted) {
+                    setMessages(
+                        fetchedMessages.sort(
+                            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                        )
+                    );
+                }
             } catch (err: any) {
-                if (err.name === 'AbortError') return;
+                if (!isMounted || axios.isCancel(err) || err.name === 'AbortError' || err.name === 'CanceledError') return;
                 setMessageError(err.message || 'Unable to load messages');
             } finally {
-                setIsLoadingMessages(false);
+                if (isMounted) {
+                    setIsLoadingMessages(false);
+                }
             }
         };
 
         fetchMessages();
 
         return () => {
+            isMounted = false;
             controller.abort();
         };
     }, [projectId]);
@@ -366,6 +415,93 @@ export default function ChatRoomPage() {
         [pinMessage]
     );
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (optionsMenuRef.current && !optionsMenuRef.current.contains(event.target as Node)) {
+                setIsOptionsOpen(false);
+            }
+        };
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                setIsSearchOpen(true);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 250);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        if (!debouncedSearchQuery.trim()) {
+            setSearchResults([]);
+            setCurrentSearchIndex(0);
+            return;
+        }
+
+        const query = debouncedSearchQuery.toLowerCase();
+        const results = messages
+            .filter(
+                (msg) =>
+                    msg.content.toLowerCase().includes(query) ||
+                    msg.sender?.name?.toLowerCase().includes(query)
+            )
+            .map((msg) => msg._id);
+
+        setSearchResults(results);
+        setCurrentSearchIndex(results.length > 0 ? 0 : -1);
+    }, [debouncedSearchQuery, messages]);
+
+    const scrollToMessage = useCallback((messageId: string) => {
+        const element = messageRefs.current[messageId];
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.classList.add('bg-blue-50');
+            setTimeout(() => {
+                if (element) element.classList.remove('bg-blue-50');
+            }, 2000);
+        }
+    }, []);
+
+    const handleNextResult = () => {
+        if (searchResults.length === 0) return;
+        const nextIndex = (currentSearchIndex + 1) % searchResults.length;
+        setCurrentSearchIndex(nextIndex);
+        scrollToMessage(searchResults[nextIndex]);
+    };
+
+    const handlePrevResult = () => {
+        if (searchResults.length === 0) return;
+        const prevIndex = (currentSearchIndex - 1 + searchResults.length) % searchResults.length;
+        setCurrentSearchIndex(prevIndex);
+        scrollToMessage(searchResults[prevIndex]);
+    };
+
+    const handleExportChat = () => {
+        const transcript = messages.map(msg => `[${formatTime(msg.createdAt)}] ${msg.sender?.name || 'Unknown'}: ${msg.type === 'file' ? '[File]' : msg.content}`).join('\n');
+        const blob = new Blob([transcript], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${chatRoomName.replace(/\s+/g, '-')}-transcript.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setIsOptionsOpen(false);
+        toast.success('Chat transcript exported successfully!');
+    };
+
     return (
         <div className="flex h-screen bg-gray-100 font-sans">
             {/* Left Sidebar */}
@@ -429,7 +565,7 @@ export default function ChatRoomPage() {
                             <p className="text-xs text-gray-500">No members available.</p>
                         ) : (
                             uniqueMembers.map((member) => {
-                                const isOnline = activeUsers.includes(member._id);
+                                const isOnline = activeUsers.includes(String(member._id));
                                 const isCurrent = member._id === user?._id;
                                 return (
                                     <div key={member._id} className="flex items-center gap-3">
@@ -470,21 +606,96 @@ export default function ChatRoomPage() {
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 relative">
                         <button
-                            className="flex items-center gap-2 px-3 py-2 rounded-md border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+                            onClick={() => setIsCallModalOpen(true)}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors text-sm font-medium border border-indigo-100"
                         >
                             <PhoneCall className="w-4 h-4" />
                             <span className="hidden sm:inline">Group Call</span>
                         </button>
 
-                        <button className="p-2 hover:bg-gray-100 rounded-md border border-transparent">
-                            <Search className="w-5 h-5 text-gray-600" />
-                        </button>
+                        <div className={`flex items-center bg-gray-100 rounded-lg overflow-hidden transition-all duration-300 ease-out origin-right ${isSearchOpen ? 'w-64 px-2 py-1.5 opacity-100 translate-x-0' : 'w-0 opacity-0 pointer-events-none translate-x-4 border-none hidden'}`}>
+                            <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" />
+                            <input
+                                type="text"
+                                autoFocus={isSearchOpen}
+                                placeholder="Search messages..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-gray-400 focus:ring-0"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        if (e.shiftKey) handlePrevResult();
+                                        else handleNextResult();
+                                    } else if (e.key === 'Escape') {
+                                        setIsSearchOpen(false);
+                                        setSearchQuery('');
+                                    }
+                                }}
+                            />
+                            {searchResults.length > 0 && (
+                                <span className="text-xs font-medium text-gray-500 mr-2 whitespace-nowrap bg-gray-200 px-1.5 rounded">
+                                    {currentSearchIndex + 1} / {searchResults.length}
+                                </span>
+                            )}
+                            {searchResults.length === 0 && debouncedSearchQuery.trim() !== '' && (
+                                <span className="text-xs font-medium text-red-400 mr-2 whitespace-nowrap">0 / 0</span>
+                            )}
+                            <div className="flex items-center border-l border-gray-300 pl-1 ml-1 shrink-0">
+                                <button onClick={handlePrevResult} disabled={searchResults.length === 0} className="p-1 hover:bg-gray-200 rounded text-gray-500 disabled:opacity-50 transition-colors">
+                                    <ChevronUp className="w-4 h-4" />
+                                </button>
+                                <button onClick={handleNextResult} disabled={searchResults.length === 0} className="p-1 hover:bg-gray-200 rounded text-gray-500 disabled:opacity-50 transition-colors">
+                                    <ChevronDown className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }} className="p-1 hover:bg-gray-200 hover:text-gray-800 rounded text-gray-500 ml-1 transition-colors">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
 
-                        <button className="p-2 hover:bg-gray-100 rounded-md border border-transparent">
-                            <MoreVertical className="w-5 h-5 text-gray-600" />
-                        </button>
+                        {!isSearchOpen && (
+                            <button onClick={() => setIsSearchOpen(true)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors" title="Search (Ctrl+F)">
+                                <Search className="w-5 h-5" />
+                            </button>
+                        )}
+
+                        <div className="relative" ref={optionsMenuRef}>
+                            <button onClick={() => setIsOptionsOpen(!isOptionsOpen)} className={`p-2 rounded-lg transition-colors ${isOptionsOpen ? 'bg-gray-100 text-gray-900' : 'hover:bg-gray-100 text-gray-600'}`}>
+                                <MoreVertical className="w-5 h-5" />
+                            </button>
+
+                            <div className={`absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] z-50 py-1.5 transition-all duration-200 origin-top-right ${isOptionsOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                                <button onClick={() => { setIsSidebarOpen(true); setIsOptionsOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                    View Shared Files
+                                </button>
+                                <button onClick={() => { setIsSidebarOpen(true); setIsOptionsOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                    Pinned Messages
+                                </button>
+                                <div className="my-1 border-t border-gray-100"></div>
+                                <button onClick={() => { 
+                                    const newMuted = !isMuted;
+                                    setIsMuted(newMuted); 
+                                    setIsOptionsOpen(false);
+                                    toast.success(newMuted ? 'Notifications muted' : 'Notifications unmuted', { icon: newMuted ? '🔕' : '🔔' });
+                                }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between font-medium">
+                                    <span>{isMuted ? 'Unmute Notifications' : 'Mute Notifications'}</span>
+                                    {isMuted && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
+                                </button>
+                                <button onClick={handleExportChat} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                    Export Chat Transcript
+                                </button>
+                                {isSearchOpen && (
+                                    <>
+                                        <div className="my-1 border-t border-gray-100"></div>
+                                        <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); setIsOptionsOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium">
+                                            Close Search
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -531,7 +742,8 @@ export default function ChatRoomPage() {
                                         </div>
                                     )}
                                     <div
-                                        className={`flex space-x-3 ${isOwnMessage ? 'flex-row-reverse text-right space-x-reverse' : ''}`}
+                                        ref={(el) => { messageRefs.current[msg._id] = el; }}
+                                        className={`flex space-x-3 transition-colors duration-1000 p-1.5 rounded-lg -mx-1.5 ${isOwnMessage ? 'flex-row-reverse text-right space-x-reverse' : ''}`}
                                     >
                                         <div
                                             className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white font-semibold text-sm ${isOwnMessage ? 'bg-blue-500' : 'bg-gray-400'}`}
@@ -587,7 +799,7 @@ export default function ChatRoomPage() {
                                                         </div>
                                                     );
                                                 })() : (
-                                                    <span>{msg.content}</span>
+                                                    <span className="whitespace-pre-wrap">{highlightText(msg.content, debouncedSearchQuery)}</span>
                                                 )}
                                             </div>
                                             <div className={`mt-1 flex items-center gap-3 text-[11px] text-gray-400 ${isOwnMessage ? 'justify-end' : ''}`}>
@@ -736,16 +948,22 @@ export default function ChatRoomPage() {
             </div>
 
             {/* Right Sidebar */}
-            <div className="w-72 bg-white border-l border-gray-200 flex flex-col">
-                {/* Shared Files & Media */}
-                <div className="h-1/2 p-5 border-b border-gray-200 flex flex-col">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-[11px] uppercase tracking-wider text-gray-400">Shared Files & Media</p>
-                            <h3 className="text-base font-semibold text-gray-900 mt-1">Library</h3>
+            {isSidebarOpen && (
+                <div className="w-72 bg-white border-l border-gray-200 flex flex-col shrink-0">
+                    {/* Shared Files & Media */}
+                    <div className="h-1/2 p-5 border-b border-gray-200 flex flex-col">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-[11px] uppercase tracking-wider text-gray-400">Shared Files & Media</p>
+                                <h3 className="text-base font-semibold text-gray-900 mt-1">Library</h3>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 font-medium">{messages.filter(m => m.type === 'file').length}</span>
+                                <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-gray-100 rounded text-gray-500 transition-colors">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
-                        <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 font-medium">{messages.filter(m => m.type === 'file').length}</span>
-                    </div>
 
                     {/* Library Tabs */}
                     {(() => {
@@ -838,6 +1056,69 @@ export default function ChatRoomPage() {
                             ))}
                         </div>
                     )}
+                </div>
+            </div>
+            )}
+
+            {/* Call Modal */}
+            <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 ${isCallModalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsCallModalOpen(false)}></div>
+                <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transition-all duration-300 transform ${isCallModalOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}>
+                    <div className="p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Start Group Call</h3>
+                        <p className="text-sm text-gray-500 mb-6">{chatRoomName}</p>
+
+                        <div className="mb-6">
+                            <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-semibold">Call Type</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setCallTypeSelection('video')}
+                                    className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${callTypeSelection === 'video' ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm' : 'border-gray-100 text-gray-500 hover:border-gray-200 hover:bg-gray-50'}`}
+                                >
+                                    <Video className="w-6 h-6" />
+                                    <span className="text-sm font-medium">Video</span>
+                                </button>
+                                <button
+                                    onClick={() => setCallTypeSelection('audio')}
+                                    className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${callTypeSelection === 'audio' ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm' : 'border-gray-100 text-gray-500 hover:border-gray-200 hover:bg-gray-50'}`}
+                                >
+                                    <PhoneCall className="w-6 h-6" />
+                                    <span className="text-sm font-medium">Audio</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-semibold">Online Members ({activeUsers.length})</p>
+                            <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
+                                {uniqueMembers.filter(m => activeUsers.includes(String(m._id))).map(member => (
+                                    <div key={member._id} className="flex items-center gap-3 text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]"></div>
+                                        <span className="font-medium">{member.name} {member._id === user?._id ? <span className="text-gray-400 font-normal ml-1">(You)</span> : ''}</span>
+                                    </div>
+                                ))}
+                                {uniqueMembers.filter(m => activeUsers.includes(String(m._id))).length === 0 && (
+                                    <p className="text-sm text-gray-500 italic">No other members online</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-100">
+                        <button
+                            onClick={() => setIsCallModalOpen(false)}
+                            className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-200 hover:text-gray-900 rounded-lg transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => {
+                                router.push(`/projects/${projectId}/call?type=${callTypeSelection}`);
+                            }}
+                            className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
+                        >
+                            Start Call
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,12 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { useSocket } from '@/hooks/useSocket';
 
 type Status = 'online' | 'busy' | 'offline';
 
@@ -40,8 +41,16 @@ const gradientPalette = [
 export default function TeamPage() {
     const { user } = useAuth(true);
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+    const [globalActiveUsers, setGlobalActiveUsers] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string>('');
+
+    useSocket({
+        projectId: null,
+        onGlobalActiveUsers: (data) => {
+            setGlobalActiveUsers(data.users);
+        }
+    });
 
     useEffect(() => {
         const fetchMembers = async () => {
@@ -53,7 +62,6 @@ export default function TeamPage() {
 
                 if (data?.success && Array.isArray(data.data)) {
                     const formatted: TeamMember[] = data.data.map((User: User, index: number) => {
-                        const status = statusCycle[index % statusCycle.length];
                         const initials = User.name
                             ? User.name
                                 .split(' ')
@@ -70,7 +78,7 @@ export default function TeamPage() {
                             avatar: User.avatar,
                             initials,
                             gradient: gradientPalette[index % gradientPalette.length],
-                            status,
+                            status: 'offline', // will be dynamically computed
                             role: User.role || 'user'
                         };
                     });
@@ -108,17 +116,18 @@ export default function TeamPage() {
                     {/* Filters */}
                     <div className="bg-white rounded-lg p-4 mb-6 flex items-center justify-between">
                         <div className="flex gap-3">
-                            <button className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg flex items-center gap-2 font-medium">
+                            <button suppressHydrationWarning={true} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg flex items-center gap-2 font-medium">
                                 All Roles
                                 <ChevronDown className="w-4 h-4" />
                             </button>
-                            <button className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Design</button>
-                            <button className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Engineering</button>
-                            <button className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">On Leave</button>
-                            <button className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Available</button>
+                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Design</button>
+                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Engineering</button>
+                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">On Leave</button>
+                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Available</button>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
+                                suppressHydrationWarning={true}
                                 className="px-4 py-2 border border-gray-200 rounded-lg flex items-center gap-2 text-gray-700 hover:bg-gray-50"
                                 onClick={() => setTeamMembers((prev) => [...prev].sort((a, b) => a.name.localeCompare(b.name)))}
                             >
@@ -140,7 +149,9 @@ export default function TeamPage() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {teamMembers.map((member) => (
+                            {teamMembers.map((member) => {
+                                const currentStatus = globalActiveUsers.includes(member.id) ? 'online' : 'offline';
+                                return (
                                 <div key={member.id} className="bg-white rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer border border-gray-200">
                                     <div className="flex items-start gap-4">
                                         <div className="relative">
@@ -155,8 +166,8 @@ export default function TeamPage() {
                                                     {member.initials}
                                                 </div>
                                             )}
-                                            <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${member.status === 'online' ? 'bg-green-500' :
-                                                    member.status === 'busy' ? 'bg-red-500' :
+                                            <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${currentStatus === 'online' ? 'bg-green-500' :
+                                                    currentStatus === 'busy' ? 'bg-amber-500' :
                                                         'bg-gray-400'
                                                 }`}></div>
                                         </div>
@@ -169,7 +180,7 @@ export default function TeamPage() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     )}
                 </main>

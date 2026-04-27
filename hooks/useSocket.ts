@@ -43,6 +43,7 @@ interface UseSocketOptions {
     onError?: (error: { message: string }) => void;
     onActiveUsers?: (data: { users: string[] }) => void;
     onMessagePinned?: (data: MessagePinnedPayload) => void;
+    onGlobalActiveUsers?: (data: { users: string[] }) => void;
 }
 
 interface UseSocketReturn {
@@ -57,7 +58,7 @@ interface UseSocketReturn {
 }
 
 export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
-    const { projectId, onMessage, onUserJoined, onUserLeft, onUserTyping, onError, onActiveUsers, onMessagePinned } = options;
+    const { projectId, onMessage, onUserJoined, onUserLeft, onUserTyping, onError, onActiveUsers, onMessagePinned, onGlobalActiveUsers } = options;
     const { user } = useAuthStore();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -66,9 +67,35 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
     const socketRef = useRef<Socket | null>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Keep callbacks in a ref to prevent unnecessary socket reconnections
+    const callbacksRef = useRef({
+        onMessage,
+        onUserJoined,
+        onUserLeft,
+        onUserTyping,
+        onError,
+        onActiveUsers,
+        onMessagePinned,
+        onGlobalActiveUsers,
+    });
+
+    // Update callbacks on every render
+    useEffect(() => {
+        callbacksRef.current = {
+            onMessage,
+            onUserJoined,
+            onUserLeft,
+            onUserTyping,
+            onError,
+            onActiveUsers,
+            onMessagePinned,
+            onGlobalActiveUsers,
+        };
+    });
+
     // Initialize socket connection
     useEffect(() => {
-        if (!user || !projectId) {
+        if (!user) {
             return;
         }
 
@@ -111,8 +138,8 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
 
         // Message events
         newSocket.on('new-message', (data: { message: Message }) => {
-            if (onMessage) {
-                onMessage(data.message);
+            if (callbacksRef.current.onMessage) {
+                callbacksRef.current.onMessage(data.message);
             }
         });
 
@@ -124,44 +151,51 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
                 }
                 return [...prev, data.userId];
             });
-            if (onUserJoined) {
-                onUserJoined(data);
+            if (callbacksRef.current.onUserJoined) {
+                callbacksRef.current.onUserJoined(data);
             }
         });
 
         newSocket.on('user-left', (data: { userId: string; timestamp: Date }) => {
             setActiveUsers((prev) => prev.filter((id) => id !== data.userId));
-            if (onUserLeft) {
-                onUserLeft(data);
+            if (callbacksRef.current.onUserLeft) {
+                callbacksRef.current.onUserLeft(data);
             }
         });
 
         newSocket.on('active-users', (data: { users: string[] }) => {
             setActiveUsers(data.users);
-            if (onActiveUsers) {
-                onActiveUsers(data);
+            if (callbacksRef.current.onActiveUsers) {
+                callbacksRef.current.onActiveUsers(data);
             }
         });
 
         // Typing events
         newSocket.on('user-typing', (data: { userId: string; isTyping: boolean }) => {
-            if (onUserTyping) {
-                onUserTyping(data);
+            if (callbacksRef.current.onUserTyping) {
+                callbacksRef.current.onUserTyping(data);
             }
         });
 
         // Error events
         newSocket.on('error', (errorData: { message: string }) => {
             setError(errorData.message);
-            if (onError) {
-                onError(errorData);
+            if (callbacksRef.current.onError) {
+                callbacksRef.current.onError(errorData);
             }
         });
 
         // Message pinned event
         newSocket.on('message-pinned', (data: MessagePinnedPayload) => {
-            if (onMessagePinned) {
-                onMessagePinned(data);
+            if (callbacksRef.current.onMessagePinned) {
+                callbacksRef.current.onMessagePinned(data);
+            }
+        });
+
+        // Global active users
+        newSocket.on('global-active-users', (data: { users: string[] }) => {
+            if (callbacksRef.current.onGlobalActiveUsers) {
+                callbacksRef.current.onGlobalActiveUsers(data);
             }
         });
 
@@ -173,7 +207,7 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
             newSocket.disconnect();
             socketRef.current = null;
         };
-    }, [user, projectId, onMessage, onUserJoined, onUserLeft, onUserTyping, onError, onActiveUsers]);
+    }, [user, projectId]);
 
     // Send message
     const sendMessage = useCallback(

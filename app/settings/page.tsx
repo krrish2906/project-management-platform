@@ -7,6 +7,8 @@ import Sidebar from '../components/Sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect } from 'react';
 
+import { useAuthStore } from '@/store/useAuthStore';
+
 type SettingsSection = 'account' | 'security' | 'notifications' | 'billing' | 'data' | 'help' | 'signout';
 
 export default function SettingsPage() {
@@ -42,6 +44,7 @@ export default function SettingsPage() {
             const data = res.data;
             if (data.success) {
                 setMessage({ type: 'success', text: 'Profile updated successfully' });
+                useAuthStore.getState().updateUser({ name, email });
             } else {
                 setMessage({ type: 'error', text: data.message || 'Failed to update profile' });
             }

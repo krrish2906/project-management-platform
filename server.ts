@@ -35,6 +35,7 @@ interface SocketUser {
 // Store active users in rooms (project-based)
 const activeUsers = new Map<string, Set<string>>();   // projectId -> Set of userIds
 const userSockets = new Map<string, string>();        // userId -> socketId
+const globalActiveUsers = new Set<string>();          // Set of global connected userIds
 
 // Helper function to verify JWT token from cookie
 function verifyTokenFromCookie(cookieHeader: string | undefined): SocketAuth | null {
@@ -106,6 +107,11 @@ app.prepare().then(() => {
     io.on('connection', async (socket) => {
         const user = socket.data.user as SocketAuth;
         console.log(`User ${user.userId} connected: ${socket.id}`);
+
+        // Track global active users
+        globalActiveUsers.add(user.userId);
+        userSockets.set(user.userId, socket.id);
+        io.emit('global-active-users', { users: Array.from(globalActiveUsers) });
 
         // Join project room
         socket.on('join-project', async (projectId: string) => {
@@ -354,6 +360,20 @@ app.prepare().then(() => {
             }
 
             userSockets.delete(user.userId);
+            
+            // Check if user has any other active sockets (multiple tabs)
+            let hasOtherSockets = false;
+            for (const [userId, sockId] of Array.from(userSockets.entries())) {
+                if (userId === user.userId && sockId !== socket.id) {
+                    hasOtherSockets = true;
+                    break;
+                }
+            }
+            
+            if (!hasOtherSockets) {
+                globalActiveUsers.delete(user.userId);
+                io.emit('global-active-users', { users: Array.from(globalActiveUsers) });
+            }
         });
     });
 

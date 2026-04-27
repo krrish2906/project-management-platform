@@ -12,6 +12,38 @@ export default function HelpPage() {
         setOpenFaq(openFaq === index ? null : index);
     };
 
+    const faqs = [
+        {
+            question: 'How do I use the Kanban Board?',
+            answer: 'Navigate to any project and click "Manage Board". You can drag and drop tasks between "To Do", "In Progress", and "Done" columns. The changes will sync in real-time with your team.'
+        },
+        {
+            question: 'How do I invite team members?',
+            answer: 'Inside a project, click the "Team" tab, then click the "Invite Member" button. Enter their email address and assign them a role.'
+        },
+        {
+            question: 'Does the chatroom support file sharing?',
+            answer: 'Yes! Inside the Team Chats, click the paperclip icon next to the chat input to upload and share files with your team instantly.'
+        },
+        {
+            question: 'How do I update my profile details?',
+            answer: 'Go to the Settings page via the sidebar. Under the "Account" tab, you can update your name and email address. Click "Save Changes" to apply.'
+        },
+        {
+            question: 'How can I change my password?',
+            answer: 'In the Settings page, navigate to the "Security" tab. You will need to enter your current password along with your new password to securely update it.'
+        },
+        {
+            question: 'How do project statuses work?',
+            answer: 'Project statuses (Active, Completed, Archived) provide a quick overview of a project\'s lifecycle. You can view these from the Dashboard or Project Overview.'
+        }
+    ];
+
+    const filteredFaqs = faqs.filter(faq => 
+        faq.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="flex h-screen bg-gray-50">
             <Sidebar />
@@ -174,57 +206,52 @@ export default function HelpPage() {
                         </div>
 
                         <div className="space-y-4">
-                            {[
-                                'How do I reset my password?',
-                                'Can I change my subscription plan?',
-                                'How does the project automation work?',
-                                'Is there a mobile app available?',
-                                'How do I export my project data?',
-                                'What payment methods do you accept?'
-                            ].map((faq, index) => (
-                                <div
-                                    key={index}
-                                    className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow transition-shadow"
-                                >
-                                    <button
-                                        onClick={() => toggleFaq(index)}
-                                        className="w-full px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors group"
-                                        aria-expanded={openFaq === index}
-                                        aria-controls={`faq-${index}`}
-                                    >
-                                        <span className="text-left font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                                            {faq}
-                                        </span>
-                                        <ChevronDown
-                                            className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
-                                                openFaq === index ? 'transform rotate-180 text-blue-600' : ''
-                                            }`}
-                                        />
-                                    </button>
+                            {filteredFaqs.length === 0 ? (
+                                <p className="text-gray-500 text-center py-4">No FAQs found matching your search.</p>
+                            ) : (
+                                filteredFaqs.map((faq, index) => (
                                     <div
-                                        id={`faq-${index}`}
-                                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                                            openFaq === index ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
-                                        }`}
-                                        aria-hidden={openFaq !== index}
+                                        key={index}
+                                        className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow transition-shadow"
                                     >
-                                        <div className="px-6 pb-6 pt-2 border-t border-gray-100 bg-gray-50">
-                                            <p className="text-gray-600 text-sm leading-relaxed">
-                                                This is the answer content for "{faq}". Add your detailed
-                                                answer and instructions here to help users solve their
-                                                questions effectively.
-                                            </p>
-                                            <a 
-                                                href="#" 
-                                                className="mt-3 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 group"
-                                            >
-                                                Read more
-                                                <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                            </a>
+                                        <button
+                                            onClick={() => toggleFaq(index)}
+                                            className="w-full px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors group"
+                                            aria-expanded={openFaq === index}
+                                            aria-controls={`faq-${index}`}
+                                        >
+                                            <span className="text-left font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                                                {faq.question}
+                                            </span>
+                                            <ChevronDown
+                                                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                                                    openFaq === index ? 'transform rotate-180 text-blue-600' : ''
+                                                }`}
+                                            />
+                                        </button>
+                                        <div
+                                            id={`faq-${index}`}
+                                            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                                                openFaq === index ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+                                            }`}
+                                            aria-hidden={openFaq !== index}
+                                        >
+                                            <div className="px-6 pb-6 pt-2 border-t border-gray-100 bg-gray-50">
+                                                <p className="text-gray-600 text-sm leading-relaxed">
+                                                    {faq.answer}
+                                                </p>
+                                                <a 
+                                                    href="#" 
+                                                    className="mt-3 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 group"
+                                                >
+                                                    Read more
+                                                    <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
