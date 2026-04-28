@@ -7,6 +7,7 @@ import connectDB from './lib/mongodb';
 import Message from './lib/models/Message';
 import Project from './lib/models/Project';
 import User from './lib/models/User';
+import Notification from './lib/models/Notification';
 import { Types } from 'mongoose';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -251,6 +252,14 @@ app.prepare().then(() => {
             });
         });
 
+        // Trigger generic notification to a user
+        socket.on('trigger-notification', (data: { userId: string }) => {
+            const recipientSocketId = userSockets.get(data.userId.toString());
+            if (recipientSocketId) {
+                io.to(recipientSocketId).emit('new-notification');
+            }
+        });
+
         // Pin message
         socket.on('pin-message', async (data: { projectId: string; messageId: string }) => {
             try {
@@ -287,6 +296,25 @@ app.prepare().then(() => {
                     messageId,
                     pinned: message.pinned,
                 });
+
+                // Generate notification if the message was pinned (and not by the sender themselves)
+                if (message.pinned && message.sender.toString() !== user.userId) {
+                    const notif = new Notification({
+                        recipient: message.sender,
+                        type: 'pinned',
+                        title: 'Message Pinned',
+                        message: `A message you sent was pinned in the project chat.`,
+                        project: projectId,
+                        actor: user.userId
+                    });
+                    await notif.save();
+
+                    // Send real-time event to the specific recipient's socket if they are online
+                    const recipientSocketId = userSockets.get(message.sender.toString());
+                    if (recipientSocketId) {
+                        io.to(recipientSocketId).emit('new-notification');
+                    }
+                }
             } catch (error: any) {
                 console.error('Error pinning message:', error);
                 socket.emit('error', { message: error.message || 'Failed to pin message' });

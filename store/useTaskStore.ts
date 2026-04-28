@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import type { Task } from '@/types';
+import { io } from 'socket.io-client';
 
 interface TaskState {
     tasks: Task[];
@@ -94,6 +95,14 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
                 set(state => ({
                     tasks: state.tasks.map(t => t._id === id ? updated : t)
                 }));
+
+                // Trigger real-time notification via a temporary socket if assignee changed
+                if (updates.assignee) {
+                    const socket = io();
+                    socket.emit('trigger-notification', { userId: updates.assignee });
+                    setTimeout(() => socket.disconnect(), 1000);
+                }
+
                 return updated;
             }
             return null;

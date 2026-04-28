@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useNotificationStore } from '@/store/useNotificationStore';
 
 interface Message {
     _id: string;
@@ -197,6 +198,12 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
             if (callbacksRef.current.onGlobalActiveUsers) {
                 callbacksRef.current.onGlobalActiveUsers(data);
             }
+        });
+
+        // Notifications
+        newSocket.on('new-notification', () => {
+            // Fetch the latest unread count when a new notification arrives
+            useNotificationStore.getState().fetchNotifications();
         });
 
         // Cleanup on unmount

@@ -130,6 +130,16 @@ export default function ChatRoomPage() {
     const [isMuted, setIsMuted] = useState(false);
     const optionsMenuRef = useRef<HTMLDivElement>(null);
     const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!isLoadingMessages && messagesEndRef.current) {
+            // Using a slight timeout ensures the DOM has updated before scrolling
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+    }, [messages, isLoadingMessages]);
 
     const markAsReadRef = useRef<((id: string) => void) | null>(null);
 
@@ -798,9 +808,50 @@ export default function ChatRoomPage() {
                                                             )}
                                                         </div>
                                                     );
-                                                })() : (
-                                                    <span className="whitespace-pre-wrap">{highlightText(msg.content, debouncedSearchQuery)}</span>
-                                                )}
+                                                })() : (() => {
+                                                    const content = msg.content;
+                                                    const callLinkMatch = content.match(/(https?:\/\/[^\s]+?\/projects\/[^\s]+?\/call\?room=[^\s&]+(?:&type=[a-zA-Z]+)?)/);
+                                                    
+                                                    if (callLinkMatch) {
+                                                        const url = callLinkMatch[0];
+                                                        let type = 'Audio';
+                                                        try {
+                                                            const urlObj = new URL(url);
+                                                            if (urlObj.searchParams.get('type') === 'video') type = 'Video';
+                                                        } catch (e) {
+                                                            if (url.includes('type=video')) type = 'Video';
+                                                        }
+                                                        
+                                                        const beforeText = content.substring(0, callLinkMatch.index).trim();
+                                                        const afterText = content.substring(callLinkMatch.index! + url.length).trim();
+                                                        const remainingText = [beforeText, afterText].filter(Boolean).join(' ');
+
+                                                        return (
+                                                            <div className="flex flex-col gap-2">
+                                                                <span className="whitespace-pre-wrap text-sm">
+                                                                    {highlightText(remainingText || (type === 'Video' ? 'Started a Video Call:' : 'Started an Audio Call:'), debouncedSearchQuery)}
+                                                                </span>
+                                                                <div 
+                                                                    className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex items-center gap-4 mt-1 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all sm:min-w-[280px]" 
+                                                                    onClick={() => window.open(url, '_blank')}
+                                                                >
+                                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${type === 'Video' ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'}`}>
+                                                                        {type === 'Video' ? <Video className="w-5 h-5" /> : <PhoneCall className="w-5 h-5" />}
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <p className="text-[15px] font-semibold text-gray-900 leading-tight">{type} Call</p>
+                                                                        <p className="text-xs text-gray-500 mt-0.5">Click to join</p>
+                                                                    </div>
+                                                                    <button className={`px-4 py-2 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors shrink-0 ${type === 'Video' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-green-600 hover:bg-green-700'}`}>
+                                                                        Join
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    
+                                                    return <span className="whitespace-pre-wrap">{highlightText(msg.content, debouncedSearchQuery)}</span>;
+                                                })()}
                                             </div>
                                             <div className={`mt-1 flex items-center gap-3 text-[11px] text-gray-400 ${isOwnMessage ? 'justify-end' : ''}`}>
                                                 <button
@@ -818,6 +869,7 @@ export default function ChatRoomPage() {
                             );
                         })
                     )}
+                    <div ref={messagesEndRef} className="h-1 shrink-0" />
                 </div>
 
                 {activeTypingUsers.length > 0 && (

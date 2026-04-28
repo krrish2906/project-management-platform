@@ -434,11 +434,11 @@ export default function ProjectPage() {
                         <span className="text-[10px] font-medium text-center leading-tight">Kanban<br />Board</span>
                     </button>
 
-                    <button className="flex flex-col items-center gap-1.5 text-gray-600 hover:text-gray-900 group transition-colors">
+                    <button onClick={() => router.push(`/projects/${id}/calendar`)} className="flex flex-col items-center gap-1.5 text-gray-600 hover:text-gray-900 group transition-colors cursor-pointer">
                         <div className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
-                            <Clock className="w-6 h-6" />
+                            <Calendar className="w-6 h-6" />
                         </div>
-                        <span className="text-[10px] font-medium text-center leading-tight">History</span>
+                        <span className="text-[10px] font-medium text-center leading-tight">Calendar<br />View</span>
                     </button>
 
                     <button onClick={() => router.push(`/projects/${id}/chatroom`)} className="flex flex-col items-center gap-1.5 text-gray-600 hover:text-gray-900 group transition-colors cursor-pointer">

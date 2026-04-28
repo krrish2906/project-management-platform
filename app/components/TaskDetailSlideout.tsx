@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useTaskStore } from '@/store/useTaskStore';
 import { useCommentStore } from '@/store/useCommentStore';
+import { useProjectStore } from '@/store/useProjectStore';
 import { useAuth } from '@/hooks/useAuth';
 import Discussion from './Discussion';
 import RichTextEditor from './RichTextEditor';
@@ -22,7 +23,9 @@ interface TaskDetailSlideoutProps {
 export default function TaskDetailSlideout({ taskId, onClose }: TaskDetailSlideoutProps) {
     const { user } = useAuth(false);
     const { tasks, updateTask, deleteTask } = useTaskStore();
+    const { projects } = useProjectStore();
     const task = tasks.find(t => t._id === taskId);
+    const project = projects.find(p => p._id === (typeof task?.project === 'object' ? (task?.project as any)._id : task?.project));
     
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -312,25 +315,24 @@ export default function TaskDetailSlideout({ taskId, onClose }: TaskDetailSlideo
                         {/* Assignee */}
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Assignee</label>
-                            <div className="flex items-center gap-2 p-2 hover:bg-gray-200 rounded-lg cursor-pointer transition-colors">
-                                {task.assignee ? (
-                                    <>
-                                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold shrink-0">
-                                            {typeof task.assignee === 'object' ? task.assignee.name.charAt(0).toUpperCase() : '?'}
-                                        </div>
-                                        <span className="text-sm font-medium text-gray-900 truncate">
-                                            {typeof task.assignee === 'object' ? task.assignee.name : 'Unknown'}
-                                        </span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="w-6 h-6 rounded-full border border-dashed border-gray-400 flex items-center justify-center text-gray-400 shrink-0">
-                                            <User className="w-3 h-3" />
-                                        </div>
-                                        <span className="text-sm text-gray-500">Unassigned</span>
-                                    </>
-                                )}
-                            </div>
+                            <select 
+                                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                                value={typeof task.assignee === 'object' ? task.assignee?._id : task.assignee || ''}
+                                onChange={(e) => {
+                                    handleUpdate({ assignee: e.target.value as any });
+                                }}
+                            >
+                                <option value="">Unassigned</option>
+                                {project?.members.map(member => {
+                                    const memberUser = typeof member.user === 'object' ? member.user : null;
+                                    if (!memberUser) return null;
+                                    return (
+                                        <option key={memberUser._id} value={memberUser._id}>
+                                            {memberUser.name}
+                                        </option>
+                                    );
+                                })}
+                            </select>
                         </div>
                         
                         {/* Story Points */}

@@ -221,6 +221,13 @@ export default function KanbanPage() {
                                     Filters
                                     {showFilters && <X size={16} />}
                                 </button>
+                                <button
+                                    onClick={() => router.push(`/projects/${projectId}/calendar`)}
+                                    className="px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm font-medium transition-all bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                                >
+                                    <Calendar size={16} />
+                                    Calendar
+                                </button>
                             </div>
 
                             {canEdit && (

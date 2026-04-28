@@ -4,6 +4,7 @@ import Task from '@/lib/models/Task';
 import Project from '@/lib/models/Project';
 import Kanban from '@/lib/models/Kanban';
 import Activity from '@/lib/models/Activity';
+import Notification from '@/lib/models/Notification';
 import { getAuthUser } from '@/lib/auth';
 
 // GET /api/tasks/[id] - Get single task
@@ -96,6 +97,8 @@ export async function PUT(
 
         const oldStatus = task.status;
 
+        const oldAssignee = task.assignee?.toString();
+
         // Update task fields
         if (title) task.title = title;
         if (description !== undefined) task.description = description;
@@ -111,6 +114,19 @@ export async function PUT(
         if (watchers !== undefined) task.watchers = watchers;
 
         await task.save();
+
+        // Check if assignee changed and generate notification
+        if (assignee && assignee.toString() !== oldAssignee && assignee.toString() !== authUser.userId) {
+            await Notification.create({
+                recipient: assignee,
+                type: 'assigned',
+                title: 'Task Assigned',
+                message: `You were assigned to task: ${task.title}`,
+                project: typeof task.project === 'object' ? (task.project as any)._id : task.project,
+                task: task._id,
+                actor: authUser.userId
+            });
+        }
 
         // Update kanban if status changed
         if (status && status !== oldStatus) {

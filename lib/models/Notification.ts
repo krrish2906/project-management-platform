@@ -23,7 +23,7 @@ const NotificationSchema = new Schema<INotification>({
     type: {
         type: String,
         required: [true, 'Notification type is required'],
-        enum: ['assigned', 'mentioned', 'due_soon', 'status_changed', 'comment', 'sprint_started', 'member_added'],
+        enum: ['assigned', 'mentioned', 'due_soon', 'status_changed', 'comment', 'sprint_started', 'member_added', 'pinned'],
     },
     title: {
         type: String,

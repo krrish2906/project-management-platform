@@ -114,6 +114,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Write
         extensions: [
             StarterKit,
         ],
+        immediatelyRender: false,
         content: content,
         editorProps: {
             attributes: {
