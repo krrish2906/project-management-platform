@@ -289,7 +289,7 @@ export default function BacklogPage() {
             {/* Header */}
             <div className="bg-white border-b border-gray-200 px-8 py-6 sticky top-0 z-40">
                 <div className="flex items-center gap-4 mb-4">
-                    <div onClick={() => router.back()} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center cursor-pointer transition-colors">
+                    <div onClick={() => router.push(`/projects/${projectId}`)} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center cursor-pointer transition-colors">
                         <ArrowLeft className="w-4 h-4 text-gray-600" />
                     </div>
                     <span className="text-sm text-gray-500 font-medium">{project?.name || 'Project'} / Backlog</span>

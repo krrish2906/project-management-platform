@@ -56,11 +56,11 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
             }
 
             if (onProjectCreated) {
-                onProjectCreated(json.data);
+                onProjectCreated(json.data.project);
             }
             onClose();
             // Automatically navigate to the new project's backlog or board
-            router.push(`/projects/${json.data._id}`);
+            router.push(`/projects/${json.data.project._id}`);
         } catch (err: any) {
             setError(err.response?.data?.message || err.message);
         } finally {

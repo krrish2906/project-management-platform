@@ -172,7 +172,7 @@ export default function KanbanPage() {
                 <div className="px-8 py-4">
                     <div className="flex justify-between items-center mb-0">
                         <div className="flex items-center gap-4">
-                            <div onClick={() => router.back()} className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30 cursor-pointer">
+                            <div onClick={() => router.push(`/projects/${projectId}`)} className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30 cursor-pointer">
                                 <ArrowLeft className="w-5 h-5 text-white" />
                             </div>
                             <div className="flex flex-col">

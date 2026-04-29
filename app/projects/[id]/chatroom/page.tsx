@@ -520,7 +520,7 @@ export default function ChatRoomPage() {
                     <div className="flex flex-col gap-2">
                         <button
                             type="button"
-                            onClick={() => router.back()}
+                            onClick={() => router.push(`/projects/${projectId}`)}
                             className="inline-flex items-center text-xs text-gray-500 hover:text-gray-700 mb-3 bg-gray-100 rounded px-4 py-2 w-fit cursor-pointer"
                         >
                             <ArrowLeft className="w-4 h-4 mr-1" />
@@ -611,7 +611,7 @@ export default function ChatRoomPage() {
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-gray-900">{chatRoomName}</h2>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 truncate max-w-sm" title={projectDetails?.description ?? 'Native mobile application for iOS and Android platforms'}>
                                 {projectDetails?.description ?? 'Native mobile application for iOS and Android platforms'}
                             </p>
                         </div>
@@ -1164,7 +1164,10 @@ export default function ChatRoomPage() {
                         </button>
                         <button
                             onClick={() => {
-                                router.push(`/projects/${projectId}/call?type=${callTypeSelection}`);
+                                const callUrl = `${window.location.origin}/projects/${projectId}/call?room=${projectId}-call&type=${callTypeSelection}`;
+                                sendMessage(callUrl);
+                                setIsCallModalOpen(false);
+                                router.push(`/projects/${projectId}/call?type=${callTypeSelection}&room=${projectId}-call`);
                             }}
                             className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
                         >

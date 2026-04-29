@@ -129,7 +129,7 @@ export default function ProjectPage() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-4">
-                            <div onClick={() => router.back()} className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30 cursor-pointer">
+                            <div onClick={() => router.push('/projects')} className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30 cursor-pointer">
                                 <ArrowLeft className="w-5 h-5 text-white" />
                             </div>
                             <div className="flex flex-col">

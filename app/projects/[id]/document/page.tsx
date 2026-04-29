@@ -92,7 +92,7 @@ export default function DocumentEditor() {
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-4">
                             <div
-                                onClick={() => router.back()}
+                                onClick={() => router.push(`/projects/${id}`)}
                                 className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30 cursor-pointer"
                             >
                                 <ArrowLeft className="w-5 h-5 text-white" />
