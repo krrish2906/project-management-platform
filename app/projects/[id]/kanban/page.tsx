@@ -328,12 +328,31 @@ export default function KanbanPage() {
                                                                     {/* Task Footer */}
                                                                     <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                                                                         <div className="flex items-center gap-3 text-xs text-gray-500">
-                                                                            {task.dueDate && (
-                                                                                <div className="flex items-center gap-1 text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-md">
-                                                                                    <Calendar size={12} />
-                                                                                    <span>{new Date(task.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
-                                                                                </div>
-                                                                            )}
+                                                                            {task.dueDate && (() => {
+                                                                                const due = new Date(task.dueDate);
+                                                                                const now = new Date();
+                                                                                const diffMs = due.getTime() - now.getTime();
+                                                                                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                                                                                const isOverdue = diffDays < 0 && task.status !== 'done';
+                                                                                const isDueSoon = diffDays >= 0 && diffDays <= 2 && task.status !== 'done';
+                                                                                
+                                                                                return (
+                                                                                    <div className={`flex items-center gap-1 font-medium px-2 py-1 rounded-md ${
+                                                                                        isOverdue 
+                                                                                            ? 'bg-red-50 text-red-600 border border-red-200' 
+                                                                                            : isDueSoon 
+                                                                                                ? 'bg-amber-50 text-amber-600 border border-amber-200' 
+                                                                                                : 'bg-gray-100 text-gray-500'
+                                                                                    }`}>
+                                                                                        {isOverdue ? (
+                                                                                            <AlertCircle size={12} />
+                                                                                        ) : (
+                                                                                            <Calendar size={12} />
+                                                                                        )}
+                                                                                        <span>{due.toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                                                                                    </div>
+                                                                                );
+                                                                            })()}
                                                                         </div>
                                                                         {typeof task.assignee === 'object' && task.assignee && (
                                                                             task.assignee.avatar ? (

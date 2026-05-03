@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationStore } from '@/store/useNotificationStore';
+import toast from 'react-hot-toast';
 
 interface Message {
     _id: string;
@@ -200,10 +201,28 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
             }
         });
 
-        // Notifications
-        newSocket.on('new-notification', () => {
-            // Fetch the latest unread count when a new notification arrives
-            useNotificationStore.getState().fetchNotifications();
+        // Notifications — real-time push with payload
+        newSocket.on('new-notification', (data: { notification?: any } | undefined) => {
+            if (data?.notification) {
+                // Add directly to store — no refetch needed
+                useNotificationStore.getState().addNotification(data.notification);
+
+                // Show a toast so the user sees it even if dropdown is closed
+                toast(data.notification.title || 'New notification', {
+                    icon: '🔔',
+                    duration: 4000,
+                    style: {
+                        borderRadius: '12px',
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                    },
+                });
+            } else {
+                // Fallback: refetch if no payload provided (backward compat)
+                useNotificationStore.getState().fetchNotifications();
+            }
         });
 
         // Cleanup on unmount

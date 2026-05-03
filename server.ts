@@ -224,6 +224,76 @@ app.prepare().then(() => {
                     message: message.toObject(),
                 });
 
+                // Detect @mentions in message content and create notifications
+                if (content && content.includes('@')) {
+                    try {
+                        const project = await Project.findById(projectId)
+                            .populate('members.user', 'name email avatar')
+                            .populate('owner', 'name email avatar');
+
+                        if (project) {
+                            // Collect all project member names and IDs
+                            const memberMap = new Map<string, string>(); // name -> userId
+                            for (const m of project.members) {
+                                const memberUser = m.user as any;
+                                if (memberUser && memberUser.name) {
+                                    memberMap.set(memberUser.name.toLowerCase(), memberUser._id.toString());
+                                }
+                            }
+                            // Include owner
+                            const ownerUser = project.owner as any;
+                            if (ownerUser && ownerUser.name) {
+                                memberMap.set(ownerUser.name.toLowerCase(), ownerUser._id.toString());
+                            }
+
+                            // Find @mentions — match @FirstName or @First Last patterns
+                            const mentionRegex = /@(\w+(?:\s\w+)?)/g;
+                            let match;
+                            const mentionedUserIds = new Set<string>();
+
+                            while ((match = mentionRegex.exec(content)) !== null) {
+                                const mentionName = match[1].toLowerCase();
+                                for (const [name, id] of memberMap.entries()) {
+                                    if (name === mentionName || name.startsWith(mentionName)) {
+                                        if (id !== user.userId) {
+                                            mentionedUserIds.add(id);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Get sender info for notification
+                            const senderUser = await User.findById(user.userId).select('name email avatar').lean();
+
+                            // Create notifications for each mentioned user
+                            for (const recipientId of mentionedUserIds) {
+                                const notif = new Notification({
+                                    recipient: recipientId,
+                                    type: 'mentioned',
+                                    title: 'You were mentioned',
+                                    message: `${(senderUser as any)?.name || 'Someone'} mentioned you in a chat message`,
+                                    project: projectId,
+                                    actor: user.userId,
+                                });
+                                await notif.save();
+
+                                // Populate actor for the frontend payload
+                                const populatedNotif = await Notification.findById(notif._id)
+                                    .populate('actor', 'name email avatar')
+                                    .lean();
+
+                                // Push real-time notification to recipient
+                                const recipientSocketId = userSockets.get(recipientId);
+                                if (recipientSocketId && populatedNotif) {
+                                    io.to(recipientSocketId).emit('new-notification', { notification: populatedNotif });
+                                }
+                            }
+                        }
+                    } catch (mentionErr) {
+                        console.error('Error processing @mentions:', mentionErr);
+                    }
+                }
+
                 console.log(`Message sent in project ${projectId} by user ${user.userId}`);
             } catch (error: any) {
                 console.error('Error sending message:', error);
@@ -253,10 +323,10 @@ app.prepare().then(() => {
         });
 
         // Trigger generic notification to a user
-        socket.on('trigger-notification', (data: { userId: string }) => {
+        socket.on('trigger-notification', (data: { userId: string; notification?: any }) => {
             const recipientSocketId = userSockets.get(data.userId.toString());
             if (recipientSocketId) {
-                io.to(recipientSocketId).emit('new-notification');
+                io.to(recipientSocketId).emit('new-notification', { notification: data.notification || null });
             }
         });
 
@@ -309,10 +379,15 @@ app.prepare().then(() => {
                     });
                     await notif.save();
 
+                    // Populate actor for the frontend payload
+                    const populatedNotif = await Notification.findById(notif._id)
+                        .populate('actor', 'name email avatar')
+                        .lean();
+
                     // Send real-time event to the specific recipient's socket if they are online
                     const recipientSocketId = userSockets.get(message.sender.toString());
-                    if (recipientSocketId) {
-                        io.to(recipientSocketId).emit('new-notification');
+                    if (recipientSocketId && populatedNotif) {
+                        io.to(recipientSocketId).emit('new-notification', { notification: populatedNotif });
                     }
                 }
             } catch (error: any) {

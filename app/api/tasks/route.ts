@@ -4,6 +4,7 @@ import Task from '@/lib/models/Task';
 import Project from '@/lib/models/Project';
 import Kanban from '@/lib/models/Kanban';
 import Activity from '@/lib/models/Activity';
+import Notification from '@/lib/models/Notification';
 import { getAuthUser } from '@/lib/auth';
 
 // GET /api/tasks - Get tasks with filtering and pagination
@@ -195,6 +196,23 @@ export async function POST(request: NextRequest) {
             task: task._id,
             metadata: { taskKey: issueKey, taskTitle: title, taskType: type || 'task' },
         });
+
+        // Notify assignee when task is created with an assignee
+        if (assignee && assignee.toString() !== authUser.userId) {
+            try {
+                await Notification.create({
+                    recipient: assignee,
+                    type: 'assigned',
+                    title: 'Task Assigned',
+                    message: `You were assigned to task: ${title}`,
+                    project: projectId,
+                    task: task._id,
+                    actor: authUser.userId,
+                });
+            } catch (notifErr) {
+                console.error('Failed to create assignment notification:', notifErr);
+            }
+        }
 
         // Populate and return
         await task.populate('project', 'name color key');

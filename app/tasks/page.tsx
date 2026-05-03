@@ -246,12 +246,34 @@ export default function GlobalTasksPage() {
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    {task.dueDate ? (
-                                                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                                                            <Calendar size={14} className="text-gray-400" />
-                                                            {new Date(task.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                        </div>
-                                                    ) : (
+                                                    {task.dueDate ? (() => {
+                                                        const due = new Date(task.dueDate);
+                                                        const now = new Date();
+                                                        const diffMs = due.getTime() - now.getTime();
+                                                        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                                                        const isDone = task.status === 'done';
+                                                        const isOverdue = diffDays < 0 && !isDone;
+                                                        const isDueSoon = diffDays >= 0 && diffDays <= 2 && !isDone;
+
+                                                        return (
+                                                            <div className={`flex items-center gap-1.5 text-sm font-medium ${
+                                                                isOverdue 
+                                                                    ? 'text-red-600' 
+                                                                    : isDueSoon 
+                                                                        ? 'text-amber-600' 
+                                                                        : isDone 
+                                                                            ? 'text-gray-400 line-through' 
+                                                                            : 'text-gray-600'
+                                                            }`}>
+                                                                {isOverdue ? (
+                                                                    <AlertCircle size={14} className="text-red-500" />
+                                                                ) : (
+                                                                    <Calendar size={14} className={isOverdue ? 'text-red-400' : isDueSoon ? 'text-amber-400' : 'text-gray-400'} />
+                                                                )}
+                                                                {due.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                            </div>
+                                                        );
+                                                    })() : (
                                                         <span className="text-sm text-gray-400">-</span>
                                                     )}
                                                 </td>

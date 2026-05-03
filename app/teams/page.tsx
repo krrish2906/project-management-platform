@@ -150,7 +150,7 @@ export default function TeamPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             {teamMembers.map((member) => {
-                                const currentStatus = globalActiveUsers.includes(member.id) ? 'online' : 'offline';
+                                const currentStatus: Status = globalActiveUsers.includes(member.id) ? 'online' : 'offline';
                                 return (
                                 <div key={member.id} className="bg-white rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer border border-gray-200">
                                     <div className="flex items-start gap-4">
@@ -166,9 +166,7 @@ export default function TeamPage() {
                                                     {member.initials}
                                                 </div>
                                             )}
-                                            <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${currentStatus === 'online' ? 'bg-green-500' :
-                                                    currentStatus === 'busy' ? 'bg-amber-500' :
-                                                        'bg-gray-400'
+                                            <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${currentStatus === 'online' ? 'bg-green-500' : 'bg-gray-400'
                                                 }`}></div>
                                         </div>
                                         <div className="flex-1 min-w-0">

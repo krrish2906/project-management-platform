@@ -75,3 +75,31 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ success: false, data: null, message: 'Failed to update notifications', error: error.message }, { status: 500 });
     }
 }
+
+// DELETE /api/notifications - Delete notification(s)
+export async function DELETE(request: NextRequest) {
+    try {
+        await connectDB();
+        const authUser = getAuthUser(request);
+        if (!authUser) {
+            return NextResponse.json({ success: false, data: null, message: 'Not authenticated', error: 'Not authenticated' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const { notificationId, clearAll } = body;
+
+        if (clearAll) {
+            await Notification.deleteMany({ recipient: authUser.userId });
+        } else if (notificationId) {
+            await Notification.findOneAndDelete({ _id: notificationId, recipient: authUser.userId });
+        }
+
+        return NextResponse.json({
+            success: true, data: null,
+            message: 'Notifications deleted', error: null,
+        }, { status: 200 });
+
+    } catch (error: any) {
+        return NextResponse.json({ success: false, data: null, message: 'Failed to delete notifications', error: error.message }, { status: 500 });
+    }
+}

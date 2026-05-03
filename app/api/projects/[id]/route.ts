@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import Kanban from '@/lib/models/Kanban';
 import Task from '@/lib/models/Task';
+import Notification from '@/lib/models/Notification';
 import { getAuthUser } from '@/lib/auth';
 
 // GET /api/projects/[id] - Get single project
@@ -116,6 +117,9 @@ export async function PUT(
         const body = await request.json();
         const { name, description, status, startDate, endDate, color, icon, members } = body;
 
+        // Capture existing member IDs before update (for detecting new additions)
+        const oldMemberIds = new Set(project.members.map((m: any) => m.user.toString()));
+
         // Update fields
         if (name) project.name = name;
         if (description !== undefined) project.description = description;
@@ -130,6 +134,28 @@ export async function PUT(
         await project.populate('owner', 'name email avatar');
         await project.populate('members.user', 'name email avatar');
         await project.populate('kanban');
+
+        // Create notifications for newly added members
+        if (members) {
+            const newMemberIds = members
+                .map((m: any) => m.user?.toString() || m.user)
+                .filter((id: string) => !oldMemberIds.has(id) && id !== authUser.userId);
+
+            for (const newMemberId of newMemberIds) {
+                try {
+                    await Notification.create({
+                        recipient: newMemberId,
+                        type: 'member_added',
+                        title: 'Added to Project',
+                        message: `You were added to the project "${project.name}"`,
+                        project: id,
+                        actor: authUser.userId,
+                    });
+                } catch (notifErr) {
+                    console.error('Failed to create member_added notification:', notifErr);
+                }
+            }
+        }
 
         return NextResponse.json({
             success: true,
