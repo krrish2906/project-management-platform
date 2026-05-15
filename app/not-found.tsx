@@ -84,7 +84,7 @@ export default function NotFoundPage() {
 
                 {/* Additional Info Card */}
                 <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500" suppressHydrationWarning>
                         Timestamp: {new Date().toLocaleString()}
                     </p>
                 </div>

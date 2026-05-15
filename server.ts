@@ -209,15 +209,15 @@ app.prepare().then(() => {
                     attachments: msgType === 'file' && attachments ? attachments : [],
                 });
 
-                await message.save();
-                await message.populate('sender', 'name email avatar');
-
-                // Mark as read by sender
+                // Mark as read by sender immediately
                 message.readBy.push({
                     user: user.userId as unknown as Types.ObjectId,
                     readAt: new Date(),
                 });
+
                 await message.save();
+                await message.populate('sender', 'name email avatar');
+                await message.populate({ path: 'replyTo', populate: { path: 'sender', select: 'name email avatar' } });
 
                 // Emit to all users in the project room
                 io.to(`project:${projectId}`).emit('new-message', {

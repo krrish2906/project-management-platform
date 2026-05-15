@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     Send, Smile, Paperclip, AtSign, Pin, MoreVertical,
     Download, Loader2, Wifi, WifiOff, Search, PhoneCall, ArrowLeft, Video, X, ChevronUp, ChevronDown,
+    Reply, CornerDownRight,
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -128,7 +129,9 @@ export default function ChatRoomPage() {
     const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMuted, setIsMuted] = useState(false);
+    const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
     const optionsMenuRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
     const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -277,15 +280,23 @@ export default function ChatRoomPage() {
     }, [projectId, allProjects]);
 
     const handleSendMessage = useCallback(() => {
+        if (!isConnected) return;
+
         const trimmed = message.trim();
         if (!trimmed) {
             return;
         }
 
-        sendMessage(trimmed);
+        sendMessage(trimmed, replyingTo?._id);
         setMessage('');
+        setReplyingTo(null);
         setTyping(false);
-    }, [message, sendMessage, setTyping]);
+    }, [message, sendMessage, setTyping, replyingTo]);
+
+    const handleReply = useCallback((msg: ChatMessage) => {
+        setReplyingTo(msg);
+        inputRef.current?.focus();
+    }, []);
 
     const handleInputChange = useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -753,7 +764,7 @@ export default function ChatRoomPage() {
                                     )}
                                     <div
                                         ref={(el) => { messageRefs.current[msg._id] = el; }}
-                                        className={`flex space-x-3 transition-colors duration-1000 p-1.5 rounded-lg -mx-1.5 ${isOwnMessage ? 'flex-row-reverse text-right space-x-reverse' : ''}`}
+                                        className={`flex space-x-3 transition-colors duration-1000 p-1.5 rounded-lg -mx-1.5 group ${isOwnMessage ? 'flex-row-reverse text-right space-x-reverse' : ''}`}
                                     >
                                         <div
                                             className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white font-semibold text-sm ${isOwnMessage ? 'bg-blue-500' : 'bg-gray-400'}`}
@@ -772,96 +783,120 @@ export default function ChatRoomPage() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <div
-                                                className={`mt-1 inline-flex max-w-[80%] rounded-lg px-4 py-2 text-sm text-gray-800 ${isOwnMessage ? 'bg-blue-50' : 'bg-gray-100'}`}
-                                            >
-                                                {msg.type === 'file' && msg.attachments?.[0] ? (() => {
-                                                    const att = msg.attachments![0];
-                                                    const isImg = att.mimetype?.startsWith('image/');
-                                                    return (
-                                                        <div className="w-64">
-                                                            {isImg ? (
-                                                                <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                                                                    <img src={att.url} alt={att.filename} loading="lazy"
-                                                                        className="w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                                                        onClick={() => window.open(att.url, '_blank')} />
-                                                                    <div className="flex items-center justify-between p-2 bg-white">
-                                                                        <span className="text-xs text-gray-600 truncate flex-1">{att.filename}</span>
-                                                                        <a href={att.url} download={att.filename} className="p-1 text-gray-400 hover:text-indigo-600 rounded">
-                                                                            <Download className="w-3.5 h-3.5" />
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center gap-3 bg-white p-3 rounded border border-gray-200 shadow-sm">
-                                                                    <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded flex items-center justify-center shrink-0">
-                                                                        <Paperclip className="w-5 h-5" />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="text-sm font-semibold text-gray-900 truncate">{att.filename}</p>
-                                                                        <p className="text-xs text-gray-500">{(att.size / 1024).toFixed(1)} KB</p>
-                                                                    </div>
-                                                                    <a href={att.url} download={att.filename} className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors shrink-0">
-                                                                        <Download className="w-4 h-4" />
-                                                                    </a>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })() : (() => {
-                                                    const content = msg.content;
-                                                    const callLinkMatch = content.match(/(https?:\/\/[^\s]+?\/projects\/[^\s]+?\/call\?room=[^\s&]+(?:&type=[a-zA-Z]+)?)/);
-                                                    
-                                                    if (callLinkMatch) {
-                                                        const url = callLinkMatch[0];
-                                                        let type = 'Audio';
-                                                        try {
-                                                            const urlObj = new URL(url);
-                                                            if (urlObj.searchParams.get('type') === 'video') type = 'Video';
-                                                        } catch (e) {
-                                                            if (url.includes('type=video')) type = 'Video';
-                                                        }
-                                                        
-                                                        const beforeText = content.substring(0, callLinkMatch.index).trim();
-                                                        const afterText = content.substring(callLinkMatch.index! + url.length).trim();
-                                                        const remainingText = [beforeText, afterText].filter(Boolean).join(' ');
-
-                                                        return (
-                                                            <div className="flex flex-col gap-2">
-                                                                <span className="whitespace-pre-wrap text-sm">
-                                                                    {highlightText(remainingText || (type === 'Video' ? 'Started a Video Call:' : 'Started an Audio Call:'), debouncedSearchQuery)}
+                                            {/* Message bubble — unified with reply quote */}
+                                            {(() => {
+                                                const hasReply = msg.replyTo && typeof msg.replyTo === 'object' && (msg.replyTo as ChatMessage).sender;
+                                                const parent = hasReply ? (msg.replyTo as ChatMessage) : null;
+                                                return (
+                                                    <div className={`mt-1 w-fit max-w-[80%] rounded-2xl overflow-hidden ${isOwnMessage ? 'bg-blue-50 ml-auto' : 'bg-gray-100'}`}>
+                                                        {parent && (
+                                                            <div className={`mx-2 mt-2 rounded-lg px-3 py-2 cursor-pointer transition-opacity hover:opacity-75 ${isOwnMessage ? 'bg-blue-100/80 border-l-[3px] border-blue-400' : 'bg-white/80 border-l-[3px] border-indigo-400'}`}>
+                                                                <span className={`text-[11px] font-semibold ${isOwnMessage ? 'text-blue-600' : 'text-indigo-600'}`}>
+                                                                    {parent.sender?.name}
                                                                 </span>
-                                                                <div 
-                                                                    className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex items-center gap-4 mt-1 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all sm:min-w-[280px]" 
-                                                                    onClick={() => window.open(url, '_blank')}
-                                                                >
-                                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${type === 'Video' ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'}`}>
-                                                                        {type === 'Video' ? <Video className="w-5 h-5" /> : <PhoneCall className="w-5 h-5" />}
-                                                                    </div>
-                                                                    <div className="flex-1">
-                                                                        <p className="text-[15px] font-semibold text-gray-900 leading-tight">{type} Call</p>
-                                                                        <p className="text-xs text-gray-500 mt-0.5">Click to join</p>
-                                                                    </div>
-                                                                    <button className={`px-4 py-2 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors shrink-0 ${type === 'Video' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-green-600 hover:bg-green-700'}`}>
-                                                                        Join
-                                                                    </button>
-                                                                </div>
+                                                                <p className="text-[11.5px] text-gray-500 leading-snug line-clamp-1 mt-px">
+                                                                    {parent.content?.substring(0, 100)}
+                                                                </p>
                                                             </div>
-                                                        );
-                                                    }
-                                                    
-                                                    return <span className="whitespace-pre-wrap">{highlightText(msg.content, debouncedSearchQuery)}</span>;
-                                                })()}
-                                            </div>
-                                            <div className={`mt-1 flex items-center gap-3 text-[11px] text-gray-400 ${isOwnMessage ? 'justify-end' : ''}`}>
+                                                        )}
+                                                        <div className={`px-4 ${parent ? 'pt-1.5' : 'pt-2.5'} pb-2.5 text-sm text-gray-800`}>
+                                                            {msg.type === 'file' && msg.attachments?.[0] ? (() => {
+                                                                const att = msg.attachments![0];
+                                                                const isImg = att.mimetype?.startsWith('image/');
+                                                                return (
+                                                                    <div className="w-64">
+                                                                        {isImg ? (
+                                                                            <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                                                                                <img src={att.url} alt={att.filename} loading="lazy"
+                                                                                    className="w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                                                                    onClick={() => window.open(att.url, '_blank')} />
+                                                                                <div className="flex items-center justify-between p-2 bg-white">
+                                                                                    <span className="text-xs text-gray-600 truncate flex-1">{att.filename}</span>
+                                                                                    <a href={att.url} download={att.filename} className="p-1 text-gray-400 hover:text-indigo-600 rounded">
+                                                                                        <Download className="w-3.5 h-3.5" />
+                                                                                    </a>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex items-center gap-3 bg-white p-3 rounded border border-gray-200 shadow-sm">
+                                                                                <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded flex items-center justify-center shrink-0">
+                                                                                    <Paperclip className="w-5 h-5" />
+                                                                                </div>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <p className="text-sm font-semibold text-gray-900 truncate">{att.filename}</p>
+                                                                                    <p className="text-xs text-gray-500">{(att.size / 1024).toFixed(1)} KB</p>
+                                                                                </div>
+                                                                                <a href={att.url} download={att.filename} className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors shrink-0">
+                                                                                    <Download className="w-4 h-4" />
+                                                                                </a>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })() : (() => {
+                                                                const content = msg.content;
+                                                                const callLinkMatch = content.match(/(https?:\/\/[^\s]+?\/projects\/[^\s]+?\/call\?room=[^\s&]+(?:&type=[a-zA-Z]+)?)/);
+                                                                
+                                                                if (callLinkMatch) {
+                                                                    const url = callLinkMatch[0];
+                                                                    let type = 'Audio';
+                                                                    try {
+                                                                        const urlObj = new URL(url);
+                                                                        if (urlObj.searchParams.get('type') === 'video') type = 'Video';
+                                                                    } catch (e) {
+                                                                        if (url.includes('type=video')) type = 'Video';
+                                                                    }
+                                                                    
+                                                                    const beforeText = content.substring(0, callLinkMatch.index).trim();
+                                                                    const afterText = content.substring(callLinkMatch.index! + url.length).trim();
+                                                                    const remainingText = [beforeText, afterText].filter(Boolean).join(' ');
+
+                                                                    return (
+                                                                        <div className="flex flex-col gap-2">
+                                                                            <span className="whitespace-pre-wrap text-sm">
+                                                                                {highlightText(remainingText || (type === 'Video' ? 'Started a Video Call:' : 'Started an Audio Call:'), debouncedSearchQuery)}
+                                                                            </span>
+                                                                            <div 
+                                                                                className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex items-center gap-4 mt-1 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all sm:min-w-[280px]" 
+                                                                                onClick={() => window.open(url, '_blank')}
+                                                                            >
+                                                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${type === 'Video' ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'}`}>
+                                                                                    {type === 'Video' ? <Video className="w-5 h-5" /> : <PhoneCall className="w-5 h-5" />}
+                                                                                </div>
+                                                                                <div className="flex-1">
+                                                                                    <p className="text-[15px] font-semibold text-gray-900 leading-tight">{type} Call</p>
+                                                                                    <p className="text-xs text-gray-500 mt-0.5">Click to join</p>
+                                                                                </div>
+                                                                                <button className={`px-4 py-2 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors shrink-0 ${type === 'Video' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-green-600 hover:bg-green-700'}`}>
+                                                                                    Join
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                }
+                                                                
+                                                                return <span className="whitespace-pre-wrap">{highlightText(msg.content, debouncedSearchQuery)}</span>;
+                                                            })()}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                            <div className={`mt-1.5 flex items-center gap-1 text-[11px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isOwnMessage ? 'justify-end' : ''}`}>
+                                                <button
+                                                    onClick={() => handleReply(msg)}
+                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-all cursor-pointer"
+                                                >
+                                                    <Reply className="w-3.5 h-3.5" />
+                                                    Reply
+                                                </button>
                                                 <button
                                                     onClick={() => handlePinToggle(msg._id)}
-                                                    className="inline-flex items-center gap-1 hover:text-amber-600 transition"
+                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md hover:bg-amber-50 hover:text-amber-600 transition-all cursor-pointer"
                                                 >
                                                     <Pin className="w-3.5 h-3.5" />
                                                     {msg.pinned ? 'Unpin' : 'Pin'}
                                                 </button>
-                                                <span>{msg.readBy?.length ?? 0} read</span>
+                                                <span className="px-2 py-1 text-gray-400">{msg.readBy?.length ?? 0} read</span>
                                             </div>
                                         </div>
                                     </div>
@@ -881,17 +916,41 @@ export default function ChatRoomPage() {
                     </div>
                 )}
 
+                {/* Reply Preview Banner */}
+                {replyingTo && (
+                    <div className="bg-gradient-to-r from-blue-50 via-indigo-50/50 to-transparent px-5 py-3 flex items-center gap-3 animate-slideDown">
+                        <div className="w-[3px] h-10 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full shrink-0"></div>
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                            {replyingTo.sender?.name?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-bold text-blue-700 flex items-center gap-1.5">
+                                <Reply className="w-3.5 h-3.5 text-blue-500" />
+                                Replying to {replyingTo.sender?.name || 'Unknown'}
+                            </p>
+                            <p className="text-[12px] text-gray-500 truncate mt-0.5 leading-snug">{replyingTo.content?.substring(0, 120)}</p>
+                        </div>
+                        <button
+                            onClick={() => setReplyingTo(null)}
+                            className="p-1.5 rounded-lg hover:bg-white/80 text-gray-400 hover:text-red-500 transition-all cursor-pointer border border-transparent hover:border-red-100"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+
                 {/* Message Input */}
                 <div className="border-t border-gray-200 bg-gray-50 p-4">
                     <div className="flex items-center gap-3">
                         <div className="flex-1 bg-white border border-gray-300 rounded-full px-3 py-2 flex items-center gap-2 relative">
                             <input
+                                ref={inputRef}
                                 type="text"
                                 value={message}
                                 onChange={handleInputChange}
                                 onKeyDown={handleInputKeyDown}
                                 onBlur={() => setTyping(false)}
-                                placeholder={isConnected ? 'Type a message…' : 'Waiting for connection…'}
+                                placeholder={replyingTo ? `Reply to ${replyingTo.sender?.name || 'message'}…` : (isConnected ? 'Type a message…' : 'Waiting for connection…')}
                                 className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-sm text-gray-700 placeholder:text-gray-400 px-2"
                                 disabled={!isConnected}
                             />
