@@ -5,10 +5,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     Send, Smile, Paperclip, AtSign, Pin, MoreVertical,
     Download, Loader2, Wifi, WifiOff, Search, PhoneCall, ArrowLeft, Video, X, ChevronUp, ChevronDown,
-    Reply, CornerDownRight,
+    Reply, CornerDownRight, Sparkles,
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import AISummaryModal from '@/app/components/AISummaryModal';
 import { useParams, useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import { useAuth } from '@/hooks/useAuth';
@@ -130,6 +131,11 @@ export default function ChatRoomPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMuted, setIsMuted] = useState(false);
     const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+    const [aiSummaryOpen, setAiSummaryOpen] = useState(false);
+    const [aiSummary, setAiSummary] = useState<string | null>(null);
+    const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+    const [aiSummaryError, setAiSummaryError] = useState<string | null>(null);
+    const [aiMessageCount, setAiMessageCount] = useState(0);
     const optionsMenuRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -524,6 +530,7 @@ export default function ChatRoomPage() {
     };
 
     return (
+        <>
         <div className="flex h-screen bg-gray-100 font-sans">
             {/* Left Sidebar */}
             <div className="w-72 bg-white border-r border-gray-200 flex flex-col">
@@ -706,6 +713,25 @@ export default function ChatRoomPage() {
                                 </button>
                                 <button onClick={handleExportChat} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
                                     Export Chat Transcript
+                                </button>
+                                <button onClick={async () => {
+                                    setIsOptionsOpen(false);
+                                    setAiSummaryOpen(true);
+                                    setAiSummary(null);
+                                    setAiSummaryError(null);
+                                    setAiSummaryLoading(true);
+                                    try {
+                                        const res = await axios.post(`/api/projects/${projectId}/ai/summarize-chat`);
+                                        setAiSummary(res.data.summary);
+                                        setAiMessageCount(res.data.messageCount || 0);
+                                    } catch (err: any) {
+                                        setAiSummaryError(err.response?.data?.error || 'Failed to generate summary');
+                                    } finally {
+                                        setAiSummaryLoading(false);
+                                    }
+                                }} className="w-full text-left px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors font-medium flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4" />
+                                    Summarize Chat (AI)
                                 </button>
                                 {isSearchOpen && (
                                     <>
@@ -1236,5 +1262,18 @@ export default function ChatRoomPage() {
                 </div>
             </div>
         </div>
+
+            {/* AI Summary Modal */}
+            <AISummaryModal
+                isOpen={aiSummaryOpen}
+                onClose={() => setAiSummaryOpen(false)}
+                title="Chat Summary"
+                subtitle="AI-generated summary of recent conversations"
+                summary={aiSummary}
+                isLoading={aiSummaryLoading}
+                error={aiSummaryError}
+                messageCount={aiMessageCount}
+            />
+        </>
     );
 }
