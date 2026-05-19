@@ -88,7 +88,7 @@ export default function Page() {
                                         toast.success('Logged out successfully');
                                         logout();
                                     }}
-                                    className="group w-full sm:w-auto px-12 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                    className="group w-full sm:w-auto px-12 py-4 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                                 >
                                     Logout
                                 </button>
@@ -153,14 +153,14 @@ export default function Page() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="absolute -top-6 -right-6 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-50"></div>
-                            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-purple-200 rounded-full blur-3xl opacity-50"></div>
+                            <div className="absolute -top-6 -right-6 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-70"></div>
+                            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-purple-200 rounded-full blur-3xl opacity-70"></div>
                         </div>
                     </div>
                 </div>
 
                 <footer className="px-8 py-6 text-center text-sm text-gray-500">
-                    <p>© 2025 <span className="font-semibold text-gray-700">ProjectHub</span>. All rights reserved.</p>
+                    <p>© 2025 <span className="font-semibold text-gray-900">ProjectHub</span>. All rights reserved.</p>
                 </footer>
             </div>
         );

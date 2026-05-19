@@ -86,7 +86,7 @@ export default function AnalyticsDashboard() {
                             <p className="text-sm text-gray-500 mt-1">Real-time project insights from your database</p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                            <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 flex items-center gap-2">
                                 <Share2 size={16} />
                                 Share
                             </button>
@@ -154,7 +154,7 @@ export default function AnalyticsDashboard() {
                                                                 className={`w-full ${statusColors[item._id] || 'bg-gray-400'} rounded-t-md transition-all`}
                                                                 style={{ height: `${Math.max(pct, 5)}%` }}
                                                             />
-                                                            <span className="text-gray-400 text-[10px] font-medium text-center leading-tight">
+                                                            <span className="text-gray-500 text-[10px] font-medium text-center leading-tight">
                                                                 {statusLabels[item._id] || item._id}
                                                             </span>
                                                         </div>
@@ -201,7 +201,7 @@ export default function AnalyticsDashboard() {
                                                                 className={`w-full ${priorityColors[item._id] || 'bg-gray-400'} rounded-t-md transition-all`}
                                                                 style={{ height: `${Math.max(pct, 5)}%` }}
                                                             />
-                                                            <span className="text-gray-400 text-[10px] font-medium text-center leading-tight capitalize">
+                                                            <span className="text-gray-500 text-[10px] font-medium text-center leading-tight capitalize">
                                                                 {item._id}
                                                             </span>
                                                         </div>

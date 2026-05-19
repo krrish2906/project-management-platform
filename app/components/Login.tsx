@@ -152,7 +152,7 @@ export default function Login() {
                         {/* Name Input (Signup only) */}
                         {isSignup && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-900 mb-2">
                                     Name
                                 </label>
                                 <div className="relative">
@@ -162,7 +162,7 @@ export default function Login() {
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="John Doe"
                                         disabled={loading}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-70"
                                     />
                                 </div>
                             </div>
@@ -170,41 +170,41 @@ export default function Login() {
 
                         {/* Email Input */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Email
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="john.doe@example.com"
                                     disabled={loading}
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 disabled:opacity-70"
                                 />
                             </div>
                         </div>
 
                         {/* Password Input */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Password
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter your password"
                                     disabled={loading}
-                                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-70"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600 cursor-pointer"
                                 >
                                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
@@ -215,8 +215,8 @@ export default function Login() {
                         {!isSignup && (
                             <div className="flex items-center justify-between">
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-                                    <span className="text-sm text-gray-700">Remember me</span>
+                                    <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 text-gray-900 placeholder:text-gray-500" />
+                                    <span className="text-sm text-gray-900">Remember me</span>
                                 </label>
                                 <button
                                     type="button"
@@ -239,7 +239,7 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 bg-blue-600 hover:bg-blue-600/90 text-white rounded-lg font-semibold shadow-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-600/90 text-white rounded-lg font-semibold shadow-lg hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
                         >
                             {loading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Create account' : 'Sign in')}
                         </button>
@@ -258,7 +258,7 @@ export default function Login() {
                         <div className="grid grid-cols-1 gap-4">
                             <a
                                 href="/api/auth/google"
-                                className="py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 font-medium text-gray-700 cursor-pointer"
+                                className="py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 font-medium text-gray-900 cursor-pointer"
                             >
 
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -284,7 +284,7 @@ export default function Login() {
                                 setPassword('');
                             }}
                             disabled={loading}
-                            className="text-blue-600 hover:text-blue-700 font-semibold disabled:opacity-50 cursor-pointer"
+                            className="text-blue-600 hover:text-blue-700 font-semibold disabled:opacity-70 cursor-pointer"
                         >
                             {isSignup ? 'Sign in' : 'Sign up for free'}
                         </button>

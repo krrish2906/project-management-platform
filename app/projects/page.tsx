@@ -98,7 +98,7 @@ export default function ProjectsPage() {
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
                                 <Filter className="w-4 h-4 text-gray-600" />
-                                <span className="text-sm font-medium text-gray-700">Filter:</span>
+                                <span className="text-sm font-medium text-gray-900">Filter:</span>
                             </div>
                             {statusFilters.map((status) => (
                                 <button
@@ -146,7 +146,7 @@ export default function ProjectsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredProjects.map((project) => {
                                 const statusColor = project.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                    project.status === 'archived' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700';
+                                                    project.status === 'archived' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-900';
                                                     
                                 return (
                                 <div
@@ -169,7 +169,7 @@ export default function ProjectsPage() {
                                                 onClick={(e) => handleToggleStar(project._id, e)}
                                             >
                                                 <Star
-                                                    className={`w-5 h-5 ${project.isStarred ? 'fill-yellow-400 text-yellow-500' : 'text-gray-400'}`}
+                                                    className={`w-5 h-5 ${project.isStarred ? 'fill-yellow-400 text-yellow-500' : 'text-gray-500'}`}
                                                 />
                                             </button>
                                             <div 
@@ -182,7 +182,7 @@ export default function ProjectsPage() {
                                                     className="p-1 hover:bg-gray-100 rounded-full cursor-pointer transition-colors"
                                                     onClick={(e) => toggleDropdown(project._id, e)}
                                                 >
-                                                    <MoreVertical className="w-5 h-5 text-gray-400" />
+                                                    <MoreVertical className="w-5 h-5 text-gray-500" />
                                                 </button>
                                                 <div 
                                                     className={`absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200 overflow-hidden transition-all duration-200 ${

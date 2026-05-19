@@ -162,7 +162,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
             {step === 'email' && (
                 <form onSubmit={handleSendOtp} className="space-y-6">
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-1">
                             Email address
                         </label>
                         <input
@@ -178,7 +178,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 cursor-pointer"
+                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 cursor-pointer"
                     >
                         {loading ? (
                             <>
@@ -195,7 +195,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
             {step === 'otp' && (
                 <form onSubmit={handleVerifyOtp} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                        <label className="block text-sm font-medium text-gray-900 mb-3">
                             Enter the 6-digit code
                         </label>
                         <div className="flex justify-between space-x-2">
@@ -218,7 +218,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 cursor-pointer"
+                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 cursor-pointer"
                     >
                         {loading ? (
                             <>
@@ -247,7 +247,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
             {step === 'newPassword' && (
                 <form onSubmit={handleResetPassword} className="space-y-6">
                     <div>
-                        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-900 mb-1">
                             New Password
                         </label>
                         <input
@@ -262,7 +262,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
                     </div>
 
                     <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900 mb-1">
                             Confirm New Password
                         </label>
                         <input
@@ -279,7 +279,7 @@ export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 cursor-pointer"
+                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 cursor-pointer"
                     >
                         {loading ? (
                             <>

@@ -74,7 +74,7 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
             <div className="flex items-center justify-between mb-5">
                 <h3 className="text-lg font-bold text-gray-900">Task Details</h3>
                 <select 
-                    className="text-sm border border-gray-200 rounded px-2 py-1 max-w-[150px] truncate"
+                    className="text-sm border border-gray-200 rounded px-2 py-1 max-w-[150px] truncate text-gray-900"
                     value={task._id}
                     onChange={(e) => setSelectedTaskId(e.target.value)}
                 >
@@ -88,7 +88,7 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
                 {/* Issue Key */}
                 <div>
                     <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Key</div>
-                    <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-mono font-semibold text-gray-700">
+                    <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-mono font-semibold text-gray-900">
                         {task.key}
                     </div>
                 </div>
@@ -145,7 +145,7 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
                         <span className={`text-sm font-bold ${currentPriority.color}`}>{currentPriority.label}</span>
                         <ChevronDown className={`w-4 h-4 ${currentPriority.color} absolute right-2 opacity-0 group-hover:opacity-100`} />
                         <select 
-                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            className="absolute inset-0 opacity-0 cursor-pointer text-gray-900"
                             value={task.priority}
                             onChange={(e) => handleUpdate(task._id, { priority: e.target.value })}
                         >
@@ -168,7 +168,7 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
                         </div>
                         <input 
                             type="date"
-                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            className="absolute inset-0 opacity-0 cursor-pointer text-gray-900 placeholder:text-gray-500"
                             value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
                             onChange={(e) => handleUpdate(task._id, { dueDate: new Date(e.target.value).toISOString() })}
                         />
@@ -183,7 +183,7 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
                             <span key={label} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold flex items-center gap-1 group">
                                 {label}
                                 <span 
-                                    className="cursor-pointer opacity-50 hover:opacity-100"
+                                    className="cursor-pointer opacity-70 hover:opacity-100"
                                     onClick={() => handleUpdate(task._id, { labels: task.labels.filter(l => l !== label) })}
                                 >
                                     ×
@@ -195,7 +195,7 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
                                 <Plus className="w-3.5 h-3.5 text-gray-500" />
                             </button>
                             <select 
-                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                className="absolute inset-0 opacity-0 cursor-pointer text-gray-900"
                                 value=""
                                 onChange={(e) => {
                                     if (e.target.value && !task.labels.includes(e.target.value)) {
@@ -218,7 +218,7 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
                 {task.storyPoints !== undefined && task.storyPoints > 0 && (
                     <div>
                         <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Story Points</div>
-                        <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-bold text-gray-700">
+                        <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-bold text-gray-900">
                             {task.storyPoints} SP
                         </div>
                     </div>

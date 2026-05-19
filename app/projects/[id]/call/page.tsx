@@ -138,7 +138,7 @@ export default function ProjectCallPage() {
                     <button
                         type="button"
                         onClick={() => router.push(`/projects/${projectId}/chatroom`)}
-                        className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Back to Chat
@@ -194,7 +194,7 @@ export default function ProjectCallPage() {
                                 type="text"
                                 readOnly
                                 value={joinLink}
-                                className="flex-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                                className="flex-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500"
                             />
                             <button
                                 type="button"
@@ -239,7 +239,7 @@ export default function ProjectCallPage() {
                                 <button
                                     type="button"
                                     onClick={handleLeaveLiveCall}
-                                    className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                    className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
                                 >
                                     Leave Call Session
                                 </button>

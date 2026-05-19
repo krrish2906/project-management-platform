@@ -142,7 +142,7 @@ export default function KanbanPage() {
             case 'high': return <AlertCircle className="w-3.5 h-3.5 text-orange-500" />;
             case 'medium': return <Clock className="w-3.5 h-3.5 text-yellow-500" />;
             case 'low': return <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />;
-            case 'lowest': return <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />;
+            case 'lowest': return <CheckCircle2 className="w-3.5 h-3.5 text-gray-500" />;
             default: return null;
         }
     };
@@ -203,18 +203,18 @@ export default function KanbanPage() {
                         <div className="flex items-center gap-3">
                             <div className="flex items-center justify-end gap-3 border-r border-gray-200 pr-3">
                                 <div className="relative flex-1 max-w-md text-gray-600">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                                     <input
                                         type="text"
                                         placeholder="Search tasks..."
-                                        className="pl-10 pr-4 py-2 w-80 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="pl-10 pr-4 py-2 w-80 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
                                     />
                                 </div>
                                 <button
                                     onClick={() => setShowFilters(!showFilters)}
                                     className={`px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm font-medium transition-all ${showFilters
                                         ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                                        : 'bg-white border border-gray-200 text-gray-900 hover:bg-gray-50'
                                         }`}
                                 >
                                     <Filter size={16} />
@@ -223,7 +223,7 @@ export default function KanbanPage() {
                                 </button>
                                 <button
                                     onClick={() => router.push(`/projects/${projectId}/calendar`)}
-                                    className="px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm font-medium transition-all bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                                    className="px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm font-medium transition-all bg-white border border-gray-200 text-gray-900 hover:bg-gray-50 cursor-pointer"
                                 >
                                     <Calendar size={16} />
                                     Calendar
@@ -268,7 +268,7 @@ export default function KanbanPage() {
                                                     </span>
                                                 </div>
                                                 <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-all">
-                                                    <MoreHorizontal size={18} className="text-gray-400" />
+                                                    <MoreHorizontal size={18} className="text-gray-500" />
                                                 </button>
                                             </div>
 
@@ -372,8 +372,8 @@ export default function KanbanPage() {
                                                             )}
                                                         </Draggable>
                                                     ))) : (
-                                                    <div className="h-full flex flex-col items-center justify-center text-gray-400 py-6 border-2 border-dashed border-gray-100 rounded-xl">
-                                                        <PlusCircle className="w-8 h-8 mb-2 opacity-50" />
+                                                    <div className="h-full flex flex-col items-center justify-center text-gray-500 py-6 border-2 border-dashed border-gray-100 rounded-xl">
+                                                        <PlusCircle className="w-8 h-8 mb-2 opacity-70" />
                                                         <p className="text-sm font-medium">Drop tasks here</p>
                                                     </div>
                                                 )}
@@ -405,36 +405,36 @@ export default function KanbanPage() {
                     <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between p-6 border-b border-gray-100">
                             <h3 className="text-xl font-bold text-gray-900">Create New Issue</h3>
-                            <button onClick={() => setIsAddTaskModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                            <button onClick={() => setIsAddTaskModalOpen(false)} className="text-gray-500 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <form onSubmit={handleAddTask} className="p-6 space-y-5">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1.5">Title *</label>
+                                <label className="block text-sm font-bold text-gray-900 mb-1.5">Title *</label>
                                 <input
                                     type="text"
                                     required
                                     value={newTaskData.title}
                                     onChange={e => setNewTaskData({ ...newTaskData, title: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-500"
                                     placeholder="e.g., Update user authentication flow"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1.5">Description</label>
+                                <label className="block text-sm font-bold text-gray-900 mb-1.5">Description</label>
                                 <textarea
                                     value={newTaskData.description}
                                     onChange={e => setNewTaskData({ ...newTaskData, description: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 min-h-[80px] resize-none"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-500 min-h-[80px] resize-none"
                                     placeholder="Describe the issue..."
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Sprint</label>
+                                    <label className="block text-sm font-bold text-gray-900 mb-1.5">Sprint</label>
                                     <select
                                         value={newTaskData.sprint}
                                         onChange={e => setNewTaskData({ ...newTaskData, sprint: e.target.value })}
@@ -447,7 +447,7 @@ export default function KanbanPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Type</label>
+                                    <label className="block text-sm font-bold text-gray-900 mb-1.5">Type</label>
                                     <select
                                         value={newTaskData.type}
                                         onChange={e => setNewTaskData({ ...newTaskData, type: e.target.value })}
@@ -461,7 +461,7 @@ export default function KanbanPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Priority</label>
+                                    <label className="block text-sm font-bold text-gray-900 mb-1.5">Priority</label>
                                     <select
                                         value={newTaskData.priority}
                                         onChange={e => setNewTaskData({ ...newTaskData, priority: e.target.value })}
@@ -479,7 +479,7 @@ export default function KanbanPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Due Date</label>
+                                    <label className="block text-sm font-bold text-gray-900 mb-1.5">Due Date</label>
                                     <input
                                         type="date"
                                         value={newTaskData.dueDate}

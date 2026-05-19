@@ -170,7 +170,7 @@ export default function DocumentEditor() {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">Document Editor</span>
-                                <span className="text-sm text-gray-700">{project?.name || ''}</span>
+                                <span className="text-sm text-gray-900">{project?.name || ''}</span>
                             </div>
                         </div>
                     </div>
@@ -190,7 +190,7 @@ export default function DocumentEditor() {
 
                         <button
                             onClick={handleSummarizeDocument}
-                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 hover:border-blue-200 hover:text-blue-600 shadow-sm transition-all cursor-pointer"
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm font-medium hover:bg-gray-50 hover:border-blue-200 hover:text-blue-600 shadow-sm transition-all cursor-pointer"
                         >
                             <Sparkles className="w-4 h-4 text-blue-500" />
                             <span className="hidden sm:inline">Summarize</span>
@@ -227,7 +227,7 @@ export default function DocumentEditor() {
                                     {userInitials}
                                 </div>
                             )}
-                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                            <ChevronDown className="w-4 h-4 text-gray-500" />
                         </div>
                     </div>
                 </div>
@@ -237,8 +237,8 @@ export default function DocumentEditor() {
                 {/* Left Sidebar Pages Tree */}
                 <div className="w-60 border-r border-gray-200/80 bg-white flex-col hidden md:flex">
                     <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Pages</h3>
-                        <button onClick={handleAddPage} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 cursor-pointer transition-colors"><Plus size={14} /></button>
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Pages</h3>
+                        <button onClick={handleAddPage} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-500 hover:text-blue-600 cursor-pointer transition-colors"><Plus size={14} /></button>
                     </div>
                     <div className="flex-1 overflow-y-auto py-2">
                         <div className="px-2 space-y-0.5">
@@ -248,11 +248,11 @@ export default function DocumentEditor() {
                                     onDoubleClick={() => setEditingPageId(page.id)}
                                     className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all ${activePageId === page.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
                                 >
-                                    <File size={14} className={activePageId === page.id ? 'text-blue-500' : 'text-gray-400'} />
+                                    <File size={14} className={activePageId === page.id ? 'text-blue-500' : 'text-gray-500'} />
                                     {editingPageId === page.id ? (
                                         <input
                                             autoFocus
-                                            className="bg-white border border-blue-300 rounded px-1.5 py-0.5 w-full text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                                            className="bg-white border border-blue-300 rounded px-1.5 py-0.5 w-full text-sm outline-none focus:ring-1 focus:ring-blue-400 text-gray-900 placeholder:text-gray-500"
                                             defaultValue={page.name}
                                             onBlur={(e) => handleRenamePage(page.id, e.target.value)}
                                             onKeyDown={(e) => { if (e.key === 'Enter') handleRenamePage(page.id, e.currentTarget.value) }}
@@ -305,7 +305,7 @@ export default function DocumentEditor() {
                                     <div className="flex items-center gap-2 mb-3 px-2">
                                         <div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
                                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Saved Version</span>
-                                        <span className="text-[10px] text-gray-400 ml-auto">
+                                        <span className="text-[10px] text-gray-500 ml-auto">
                                             {new Date(versions.find((v: any) => v.id === viewingVersionId)?.timestamp || '').toLocaleString()}
                                         </span>
                                     </div>
@@ -317,7 +317,7 @@ export default function DocumentEditor() {
                                     <div className="flex items-center gap-2 mb-3 px-2">
                                         <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
                                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Current Version</span>
-                                        <span className="text-[10px] text-gray-400 ml-auto">Live</span>
+                                        <span className="text-[10px] text-gray-500 ml-auto">Live</span>
                                     </div>
                                     <div className="bg-white rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] border border-green-200/80 p-10 flex-1 overflow-y-auto" style={{ minHeight: '500px' }}>
                                         <div className="prose prose-blue max-w-none" dangerouslySetInnerHTML={{ __html: editor?.getHTML() || '' }} />
@@ -329,7 +329,7 @@ export default function DocumentEditor() {
                             <div className="w-full max-w-[816px] bg-white rounded-sm shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.06)] border border-gray-200/60" style={{ minHeight: '1056px' }}>
                                 <div className="px-16 py-14 tiptap-wrapper">
                                     {/* AI Writing Assistant BubbleMenu Removed */}
-                                    <EditorContent editor={editor} className="prose prose-blue max-w-none focus:outline-none min-h-[900px]" />
+                                    <EditorContent editor={editor} className="prose prose-blue max-w-none min-h-[900px] [&>.ProseMirror]:outline-none [&>.ProseMirror]:ring-0 [&>.ProseMirror]:border-none" />
                                 </div>
                             </div>
                         )}
@@ -344,7 +344,7 @@ export default function DocumentEditor() {
                         <History className="w-5 h-5 text-blue-500" />
                         <h3 className="font-semibold">Version History</h3>
                     </div>
-                    <button onClick={() => setIsHistoryOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                    <button onClick={() => setIsHistoryOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-600 transition-colors cursor-pointer">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
@@ -371,7 +371,7 @@ export default function DocumentEditor() {
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => setViewingVersionId(viewingVersionId === v.id ? null : v.id)}
-                                                className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${viewingVersionId === v.id ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                                className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${viewingVersionId === v.id ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-white border border-gray-200 text-gray-900 hover:bg-gray-50'}`}
                                             >
                                                 {viewingVersionId === v.id ? 'Close Diff' : 'Compare'}
                                             </button>
@@ -406,7 +406,7 @@ export default function DocumentEditor() {
                                 <Sparkles className="w-4 h-4 text-blue-600" />
                                 <span className="font-semibold text-sm text-gray-800">Ask AI</span>
                             </div>
-                            <button onClick={() => setAiFabOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                            <button onClick={() => setAiFabOpen(false)} className="text-gray-500 hover:text-gray-600 transition-colors cursor-pointer">
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
@@ -417,7 +417,7 @@ export default function DocumentEditor() {
                                     value={aiCustomPrompt}
                                     onChange={(e) => setAiCustomPrompt(e.target.value)}
                                     placeholder={editor?.state.selection.empty ? "What would you like me to write?" : "Tell AI what to do with the selected text..."}
-                                    className="w-full h-24 bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                                    className="w-full h-24 bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-500"
                                     disabled={aiWritingLoading}
                                 />
                                 <button
@@ -429,7 +429,7 @@ export default function DocumentEditor() {
                                 </button>
                             </div>
 
-                            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">Quick Actions</div>
+                            <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Quick Actions</div>
                             <div className="grid grid-cols-2 gap-1.5">
                                 {[
                                     { type: 'improve', label: '✨ Improve' },
@@ -443,7 +443,7 @@ export default function DocumentEditor() {
                                         key={action.type}
                                         onClick={() => handleAIWriting(action.type)}
                                         disabled={aiWritingLoading}
-                                        className="text-left px-2.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-100 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                                        className="text-left px-2.5 py-2 text-xs font-medium text-gray-900 bg-white border border-gray-100 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all cursor-pointer disabled:opacity-70"
                                     >
                                         {action.label}
                                     </button>
@@ -459,7 +459,7 @@ export default function DocumentEditor() {
                     className={`flex items-center justify-center w-14 h-14 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] border hover:shadow-[0_4px_25px_rgba(0,0,0,0.12)] hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer group ${aiFabOpen ? 'border-blue-200 shadow-[0_4px_25px_rgba(59,130,246,0.15)]' : 'border-gray-200 hover:border-blue-200'}`}
                 >
                     {aiFabOpen ? (
-                        <X className="w-6 h-6 text-gray-500 group-hover:text-gray-700 transition-colors" />
+                        <X className="w-6 h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
                     ) : (
                         <Sparkles className="w-6 h-6 text-blue-600 group-hover:text-blue-500 transition-colors" />
                     )}

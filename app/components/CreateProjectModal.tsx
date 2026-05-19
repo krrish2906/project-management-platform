@@ -78,7 +78,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                         </div>
                         <h3 className="text-xl font-bold text-gray-900">Create New Project</h3>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -92,18 +92,18 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
 
                     <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-1.5">Project Name *</label>
+                            <label className="block text-sm font-bold text-gray-900 mb-1.5">Project Name *</label>
                             <input
                                 type="text"
                                 required
                                 value={name}
                                 onChange={handleNameChange}
                                 placeholder="e.g. Website Redesign"
-                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 placeholder:text-gray-500"
                             />
                         </div>
                         <div className="col-span-1">
-                            <label className="block text-sm font-bold text-gray-700 mb-1.5">Key</label>
+                            <label className="block text-sm font-bold text-gray-900 mb-1.5">Key</label>
                             <input
                                 type="text"
                                 value={key}
@@ -116,17 +116,17 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1.5">Description</label>
+                        <label className="block text-sm font-bold text-gray-900 mb-1.5">Description</label>
                         <textarea
                             value={description}
                             onChange={e => setDescription(e.target.value)}
                             placeholder="What is this project about?"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 min-h-[80px] resize-none"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 placeholder:text-gray-500 min-h-[80px] resize-none"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-3">Project Color</label>
+                        <label className="block text-sm font-bold text-gray-900 mb-3">Project Color</label>
                         <div className="flex items-center gap-3">
                             {colors.map(color => (
                                 <button
@@ -140,14 +140,14 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-3">Visibility</label>
+                        <label className="block text-sm font-bold text-gray-900 mb-3">Visibility</label>
                         <div className="grid grid-cols-2 gap-4">
                             <button
                                 type="button"
                                 onClick={() => setVisibility('private')}
                                 className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left cursor-pointer transition-colors ${visibility === 'private' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200 bg-white'}`}
                             >
-                                <Lock className={`w-5 h-5 mt-0.5 ${visibility === 'private' ? 'text-blue-600' : 'text-gray-400'}`} />
+                                <Lock className={`w-5 h-5 mt-0.5 ${visibility === 'private' ? 'text-blue-600' : 'text-gray-500'}`} />
                                 <div>
                                     <p className={`font-semibold ${visibility === 'private' ? 'text-blue-900' : 'text-gray-900'}`}>Private</p>
                                     <p className={`text-xs mt-1 ${visibility === 'private' ? 'text-blue-700' : 'text-gray-500'}`}>Only project members can view and edit</p>
@@ -158,7 +158,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                                 onClick={() => setVisibility('public')}
                                 className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left cursor-pointer transition-colors ${visibility === 'public' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200 bg-white'}`}
                             >
-                                <Globe className={`w-5 h-5 mt-0.5 ${visibility === 'public' ? 'text-blue-600' : 'text-gray-400'}`} />
+                                <Globe className={`w-5 h-5 mt-0.5 ${visibility === 'public' ? 'text-blue-600' : 'text-gray-500'}`} />
                                 <div>
                                     <p className={`font-semibold ${visibility === 'public' ? 'text-blue-900' : 'text-gray-900'}`}>Public</p>
                                     <p className={`text-xs mt-1 ${visibility === 'public' ? 'text-blue-700' : 'text-gray-500'}`}>Anyone in the workspace can view</p>
@@ -171,14 +171,14 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+                            className="px-5 py-2.5 text-sm font-medium text-gray-900 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={!name || isSubmitting}
-                            className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl transition-all shadow-sm flex items-center cursor-pointer"
+                            className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-70 rounded-xl transition-all shadow-sm flex items-center cursor-pointer"
                         >
                             {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                             Create Project

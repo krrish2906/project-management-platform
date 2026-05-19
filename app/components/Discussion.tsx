@@ -92,13 +92,13 @@ export default function Discussion({ targetId }: DiscussionProps) {
                                 {(author as any)?.name || 'Unknown'}
                             </span>
                             {c.edited && (
-                                <span className="text-xs text-gray-400">(edited)</span>
+                                <span className="text-xs text-gray-500">(edited)</span>
                             )}
                             <span className="text-xs text-gray-500">
                                 {timeAgo(c.createdAt)}
                             </span>
                         </div>
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                        <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
                             {c.content}
                         </p>
                     </div>
@@ -156,9 +156,9 @@ export default function Discussion({ targetId }: DiscussionProps) {
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     <MessageSquare className="w-5 h-5" />
                     Discussion
-                    <span className="text-sm font-normal text-gray-400">({comments.length})</span>
+                    <span className="text-sm font-normal text-gray-500">({comments.length})</span>
                 </h2>
-                <button className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                <button className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">
                     <Filter className="w-4 h-4" />
                     Filter
                 </button>
@@ -174,7 +174,7 @@ export default function Discussion({ targetId }: DiscussionProps) {
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
                         placeholder="Share your thoughts..."
-                        className="w-full p-4 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-h-[100px] text-gray-700"
+                        className="w-full p-4 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-h-[100px] text-gray-900"
                     />
                     <div className="flex items-center justify-between mt-3">
                         <div className="flex gap-1">

@@ -124,7 +124,7 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-900"
                     disabled={isSubmitting}
                 >
                     <X className="w-6 h-6" />
@@ -142,7 +142,7 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                     <div className="space-y-4">
                         <div className="grid grid-cols-3 gap-4">
                             <div className="col-span-2">
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-1">
                                     Project Name <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -151,13 +151,13 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                                     required
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                                     placeholder="Enter project name"
                                     disabled={isSubmitting}
                                 />
                             </div>
                             <div>
-                                <label htmlFor="key" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="key" className="block text-sm font-medium text-gray-900 mb-1">
                                     Key
                                 </label>
                                 <input
@@ -165,17 +165,17 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                                     id="key"
                                     value={formData.key}
                                     onChange={(e) => setFormData({ ...formData, key: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono uppercase"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono uppercase text-gray-900 placeholder:text-gray-500"
                                     placeholder="AUTO"
                                     disabled={isSubmitting}
                                     maxLength={10}
                                 />
-                                <p className="text-[10px] text-gray-400 mt-1">Leave blank to auto-generate</p>
+                                <p className="text-[10px] text-gray-500 mt-1">Leave blank to auto-generate</p>
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-1">
                                 Description
                             </label>
                             <textarea
@@ -183,7 +183,7 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                                 rows={3}
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                                 placeholder="Enter project description"
                                 disabled={isSubmitting}
                             />
@@ -191,7 +191,7 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="startDate" className="block text-sm font-medium text-gray-900 mb-1">
                                     Start Date <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -201,13 +201,13 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                                     value={formData.startDate}
                                     min={new Date().toISOString().split('T')[0]}
                                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                                     disabled={isSubmitting}
                                 />
                             </div>
 
                             <div>
-                                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="endDate" className="block text-sm font-medium text-gray-900 mb-1">
                                     End Date <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -217,21 +217,21 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                                     value={formData.endDate}
                                     min={formData.startDate}
                                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500"
                                     disabled={isSubmitting || !formData.startDate}
                                 />
                             </div>
                         </div>
 
                         <div className="relative">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Team Members
                             </label>
                             <div className="relative">
                                 <button
                                     type="button"
                                     onClick={() => setIsMembersOpen(!isMembersOpen)}
-                                    className="w-full flex justify-between items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full flex justify-between items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
                                     <span>Select team members</span>
                                     <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${isMembersOpen ? 'transform rotate-180' : ''}`} />
@@ -242,14 +242,14 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                                         <div className="px-4 py-2 border-b sticky top-0 bg-white">
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Search className="h-4 w-4 text-gray-400" />
+                                                    <Search className="h-4 w-4 text-gray-500" />
                                                 </div>
                                                 <input
                                                     type="text"
                                                     placeholder="Search members..."
                                                     value={searchTerm}
                                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 placeholder:text-gray-500"
                                                     onClick={(e) => e.stopPropagation()}
                                                 />
                                             </div>
@@ -322,7 +322,7 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                         </div>
 
                         <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-900 mb-1">
                                 Status <span className="text-red-500">*</span>
                             </label>
                             <select
@@ -330,7 +330,7 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                                 required
                                 value={formData.status}
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                                 disabled={isSubmitting}
                             >
                                 <option value="active">Active</option>
@@ -344,14 +344,14 @@ export default function NewProjectModal({ isOpen, onClose, onProjectCreated }: N
                                 type="button"
                                 onClick={onClose}
                                 disabled={isSubmitting}
-                                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 flex items-center"
+                                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 flex items-center"
                             >
                                 {isSubmitting ? (
                                     <>

@@ -165,11 +165,11 @@ export default function DashboardPage() {
                                         const pct = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
                                         return (
                                             <div key={item._id} className="flex items-center gap-4">
-                                                <span className="text-sm font-medium text-gray-700 w-28">{info.label}</span>
+                                                <span className="text-sm font-medium text-gray-900 w-28">{info.label}</span>
                                                 <div className="flex-1 bg-gray-100 rounded-full h-3">
                                                     <div className={`${info.color} h-3 rounded-full transition-all`} style={{ width: `${pct}%` }} />
                                                 </div>
-                                                <span className="text-sm font-bold text-gray-700 w-10 text-right">{item.count}</span>
+                                                <span className="text-sm font-bold text-gray-900 w-10 text-right">{item.count}</span>
                                             </div>
                                         );
                                     })}
@@ -190,7 +190,7 @@ export default function DashboardPage() {
                                             <div key={task._id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group">
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <span className="text-[10px] font-mono font-bold text-gray-400">{task.key}</span>
+                                                        <span className="text-[10px] font-mono font-bold text-gray-500">{task.key}</span>
                                                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold border ${priorityColors[task.priority] || 'text-gray-500 bg-gray-50 border-gray-200'}`}>
                                                             {task.priority}
                                                         </span>
@@ -199,11 +199,11 @@ export default function DashboardPage() {
                                                         {task.title}
                                                     </h3>
                                                     {project && (
-                                                        <p className="text-xs text-gray-400 mt-0.5">{(project as any).name}</p>
+                                                        <p className="text-xs text-gray-500 mt-0.5">{(project as any).name}</p>
                                                     )}
                                                 </div>
                                                 {task.dueDate && (
-                                                    <span className="text-[10px] text-gray-400 whitespace-nowrap mt-1">
+                                                    <span className="text-[10px] text-gray-500 whitespace-nowrap mt-1">
                                                         {new Date(task.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                                     </span>
                                                 )}

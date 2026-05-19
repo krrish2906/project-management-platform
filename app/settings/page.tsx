@@ -89,7 +89,7 @@ export default function SettingsPage() {
                         )}
                         <form onSubmit={handleAccountSubmit} className="space-y-6">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-900">
                                     Full Name
                                 </label>
                                 <input
@@ -101,7 +101,7 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-900">
                                     Email Address
                                 </label>
                                 <input
@@ -134,7 +134,7 @@ export default function SettingsPage() {
                         )}
                         <form onSubmit={handleSecuritySubmit} className="space-y-6">
                             <div>
-                                <label htmlFor="current-password" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="current-password" className="block text-sm font-medium text-gray-900">
                                     Current Password
                                 </label>
                                 <input
@@ -146,7 +146,7 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <div>
-                                <label htmlFor="new-password" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="new-password" className="block text-sm font-medium text-gray-900">
                                     New Password
                                 </label>
                                 <input
@@ -158,7 +158,7 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <div>
-                                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-900">
                                     Confirm New Password
                                 </label>
                                 <input
@@ -253,7 +253,7 @@ export default function SettingsPage() {
                                 </p>
                                 <button
                                     type="button"
-                                    className="mt-4 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                    className="mt-4 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                 >
                                     Request Data
                                 </button>
@@ -291,7 +291,7 @@ export default function SettingsPage() {
                             <div className="mt-4 space-x-3">
                                 <button
                                     type="button"
-                                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                 >
                                     Help Center
                                 </button>

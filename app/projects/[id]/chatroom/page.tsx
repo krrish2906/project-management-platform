@@ -539,7 +539,7 @@ export default function ChatRoomPage() {
                         <button
                             type="button"
                             onClick={() => router.push(`/projects/${projectId}`)}
-                            className="inline-flex items-center text-xs text-gray-500 hover:text-gray-700 mb-3 bg-gray-100 rounded px-4 py-2 w-fit cursor-pointer"
+                            className="inline-flex items-center text-xs text-gray-500 hover:text-gray-900 mb-3 bg-gray-100 rounded px-4 py-2 w-fit cursor-pointer"
                         >
                             <ArrowLeft className="w-4 h-4 mr-1" />
                             Back
@@ -581,7 +581,7 @@ export default function ChatRoomPage() {
                 <div className="flex-1 overflow-y-auto px-6 py-5">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Members</span>
-                        <span className="text-xs text-gray-400">{activeUsers.length} online</span>
+                        <span className="text-xs text-gray-500">{activeUsers.length} online</span>
                     </div>
                     <div className="mt-4 space-y-3">
                         {isLoadingProject ? (
@@ -651,7 +651,7 @@ export default function ChatRoomPage() {
                                 placeholder="Search messages..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-gray-400 focus:ring-0"
+                                className="bg-transparent border-none outline-none text-sm w-full text-gray-900 placeholder:text-gray-500 focus:ring-0"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                         if (e.shiftKey) handlePrevResult();
@@ -671,10 +671,10 @@ export default function ChatRoomPage() {
                                 <span className="text-xs font-medium text-red-400 mr-2 whitespace-nowrap">0 / 0</span>
                             )}
                             <div className="flex items-center border-l border-gray-300 pl-1 ml-1 shrink-0">
-                                <button onClick={handlePrevResult} disabled={searchResults.length === 0} className="p-1 hover:bg-gray-200 rounded text-gray-500 disabled:opacity-50 transition-colors">
+                                <button onClick={handlePrevResult} disabled={searchResults.length === 0} className="p-1 hover:bg-gray-200 rounded text-gray-500 disabled:opacity-70 transition-colors">
                                     <ChevronUp className="w-4 h-4" />
                                 </button>
-                                <button onClick={handleNextResult} disabled={searchResults.length === 0} className="p-1 hover:bg-gray-200 rounded text-gray-500 disabled:opacity-50 transition-colors">
+                                <button onClick={handleNextResult} disabled={searchResults.length === 0} className="p-1 hover:bg-gray-200 rounded text-gray-500 disabled:opacity-70 transition-colors">
                                     <ChevronDown className="w-4 h-4" />
                                 </button>
                                 <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }} className="p-1 hover:bg-gray-200 hover:text-gray-800 rounded text-gray-500 ml-1 transition-colors">
@@ -695,10 +695,10 @@ export default function ChatRoomPage() {
                             </button>
 
                             <div className={`absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] z-50 py-1.5 transition-all duration-200 origin-top-right ${isOptionsOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-                                <button onClick={() => { setIsSidebarOpen(true); setIsOptionsOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                <button onClick={() => { setIsSidebarOpen(true); setIsOptionsOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 transition-colors font-medium">
                                     View Shared Files
                                 </button>
-                                <button onClick={() => { setIsSidebarOpen(true); setIsOptionsOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                <button onClick={() => { setIsSidebarOpen(true); setIsOptionsOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 transition-colors font-medium">
                                     Pinned Messages
                                 </button>
                                 <div className="my-1 border-t border-gray-100"></div>
@@ -707,11 +707,11 @@ export default function ChatRoomPage() {
                                     setIsMuted(newMuted); 
                                     setIsOptionsOpen(false);
                                     toast.success(newMuted ? 'Notifications muted' : 'Notifications unmuted', { icon: newMuted ? '🔕' : '🔔' });
-                                }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between font-medium">
+                                }} className="w-full text-left px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 transition-colors flex items-center justify-between font-medium">
                                     <span>{isMuted ? 'Unmute Notifications' : 'Mute Notifications'}</span>
                                     {isMuted && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
                                 </button>
-                                <button onClick={handleExportChat} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                <button onClick={handleExportChat} className="w-full text-left px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 transition-colors font-medium">
                                     Export Chat Transcript
                                 </button>
                                 <button onClick={async () => {
@@ -838,7 +838,7 @@ export default function ChatRoomPage() {
                                                                                     onClick={() => window.open(att.url, '_blank')} />
                                                                                 <div className="flex items-center justify-between p-2 bg-white">
                                                                                     <span className="text-xs text-gray-600 truncate flex-1">{att.filename}</span>
-                                                                                    <a href={att.url} download={att.filename} className="p-1 text-gray-400 hover:text-indigo-600 rounded">
+                                                                                    <a href={att.url} download={att.filename} className="p-1 text-gray-500 hover:text-indigo-600 rounded">
                                                                                         <Download className="w-3.5 h-3.5" />
                                                                                     </a>
                                                                                 </div>
@@ -907,7 +907,7 @@ export default function ChatRoomPage() {
                                                     </div>
                                                 );
                                             })()}
-                                            <div className={`mt-1.5 flex items-center gap-1 text-[11px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isOwnMessage ? 'justify-end' : ''}`}>
+                                            <div className={`mt-1.5 flex items-center gap-1 text-[11px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isOwnMessage ? 'justify-end' : ''}`}>
                                                 <button
                                                     onClick={() => handleReply(msg)}
                                                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-all cursor-pointer"
@@ -922,7 +922,7 @@ export default function ChatRoomPage() {
                                                     <Pin className="w-3.5 h-3.5" />
                                                     {msg.pinned ? 'Unpin' : 'Pin'}
                                                 </button>
-                                                <span className="px-2 py-1 text-gray-400">{msg.readBy?.length ?? 0} read</span>
+                                                <span className="px-2 py-1 text-gray-500">{msg.readBy?.length ?? 0} read</span>
                                             </div>
                                         </div>
                                     </div>
@@ -958,7 +958,7 @@ export default function ChatRoomPage() {
                         </div>
                         <button
                             onClick={() => setReplyingTo(null)}
-                            className="p-1.5 rounded-lg hover:bg-white/80 text-gray-400 hover:text-red-500 transition-all cursor-pointer border border-transparent hover:border-red-100"
+                            className="p-1.5 rounded-lg hover:bg-white/80 text-gray-500 hover:text-red-500 transition-all cursor-pointer border border-transparent hover:border-red-100"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -977,7 +977,7 @@ export default function ChatRoomPage() {
                                 onKeyDown={handleInputKeyDown}
                                 onBlur={() => setTyping(false)}
                                 placeholder={replyingTo ? `Reply to ${replyingTo.sender?.name || 'message'}…` : (isConnected ? 'Type a message…' : 'Waiting for connection…')}
-                                className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-sm text-gray-700 placeholder:text-gray-400 px-2"
+                                className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-sm text-gray-900 placeholder:text-gray-500 px-2"
                                 disabled={!isConnected}
                             />
 
@@ -1023,7 +1023,7 @@ export default function ChatRoomPage() {
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                className="hidden"
+                                className="hidden text-gray-900 placeholder:text-gray-500"
                                 accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"
                                 onChange={handleFileInputChange}
                                 disabled={!isConnected || isUploading}
@@ -1091,11 +1091,11 @@ export default function ChatRoomPage() {
                     <div className="h-1/2 p-5 border-b border-gray-200 flex flex-col">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-[11px] uppercase tracking-wider text-gray-400">Shared Files & Media</p>
+                                <p className="text-[11px] uppercase tracking-wider text-gray-500">Shared Files & Media</p>
                                 <h3 className="text-base font-semibold text-gray-900 mt-1">Library</h3>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 font-medium">{messages.filter(m => m.type === 'file').length}</span>
+                                <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5 font-medium">{messages.filter(m => m.type === 'file').length}</span>
                                 <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-gray-100 rounded text-gray-500 transition-colors">
                                     <X className="w-4 h-4" />
                                 </button>
@@ -1114,7 +1114,7 @@ export default function ChatRoomPage() {
                                     {['all', 'images', 'files'].map(tab => (
                                         <button key={tab}
                                             className={`flex-1 text-[11px] font-medium py-1.5 rounded-md capitalize transition-colors ${
-                                                libraryTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                                                libraryTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
                                             }`}
                                             onClick={() => setLibraryTab(tab)}
                                         >
@@ -1151,9 +1151,9 @@ export default function ChatRoomPage() {
                                                         )}
                                                         <div className="flex-1 min-w-0">
                                                             <p className="text-xs font-semibold text-gray-900 truncate">{att.filename}</p>
-                                                            <p className="text-[10px] text-gray-400">{(att.size / 1024).toFixed(1)} KB · {msg.sender?.name}</p>
+                                                            <p className="text-[10px] text-gray-500">{(att.size / 1024).toFixed(1)} KB · {msg.sender?.name}</p>
                                                         </div>
-                                                        <a href={att.url} download={att.filename} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors opacity-0 group-hover:opacity-100">
+                                                        <a href={att.url} download={att.filename} className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors opacity-0 group-hover:opacity-100">
                                                             <Download className="w-3.5 h-3.5" />
                                                         </a>
                                                     </div>
@@ -1171,7 +1171,7 @@ export default function ChatRoomPage() {
                 <div className="h-1/2 flex-1 overflow-y-auto p-5">
                     <div className="flex items-center justify-between mb-4">
                         <div>
-                            <p className="text-[11px] uppercase tracking-wider text-gray-400">Pinned</p>
+                            <p className="text-[11px] uppercase tracking-wider text-gray-500">Pinned</p>
                             <h3 className="text-base font-semibold text-gray-900">Pinned Messages</h3>
                         </div>
                         <Pin className="w-4 h-4 text-amber-500" />
@@ -1229,9 +1229,9 @@ export default function ChatRoomPage() {
                             <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-semibold">Online Members ({activeUsers.length})</p>
                             <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
                                 {uniqueMembers.filter(m => activeUsers.includes(String(m._id))).map(member => (
-                                    <div key={member._id} className="flex items-center gap-3 text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
+                                    <div key={member._id} className="flex items-center gap-3 text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
                                         <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]"></div>
-                                        <span className="font-medium">{member.name} {member._id === user?._id ? <span className="text-gray-400 font-normal ml-1">(You)</span> : ''}</span>
+                                        <span className="font-medium">{member.name} {member._id === user?._id ? <span className="text-gray-500 font-normal ml-1">(You)</span> : ''}</span>
                                     </div>
                                 ))}
                                 {uniqueMembers.filter(m => activeUsers.includes(String(m._id))).length === 0 && (

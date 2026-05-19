@@ -51,14 +51,14 @@ export default function GlobalTasksPage() {
             case 'high': return <AlertCircle className="w-4 h-4 text-orange-500" />;
             case 'medium': return <Clock className="w-4 h-4 text-yellow-500" />;
             case 'low': return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-            case 'lowest': return <CheckCircle2 className="w-4 h-4 text-gray-400" />;
+            case 'lowest': return <CheckCircle2 className="w-4 h-4 text-gray-500" />;
             default: return null;
         }
     };
 
     const getStatusPill = (status: string) => {
         const styles: Record<string, string> = {
-            backlog: "bg-gray-100 text-gray-700 border-gray-200",
+            backlog: "bg-gray-100 text-gray-900 border-gray-200",
             todo: "bg-blue-50 text-blue-700 border-blue-200",
             inprogress: "bg-orange-50 text-orange-700 border-orange-200",
             review: "bg-purple-50 text-purple-700 border-purple-200",
@@ -95,7 +95,7 @@ export default function GlobalTasksPage() {
                 <div className="bg-white border-b border-gray-200 p-6 flex-shrink-0">
                     <div className="flex items-center justify-between mb-4">
                         <div>
-                            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">Issues</h1>
+                            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">Tasks</h1>
                             <p className="text-sm text-gray-500 mt-1">Manage and track all tasks across all your projects.</p>
                         </div>
                     </div>
@@ -103,20 +103,20 @@ export default function GlobalTasksPage() {
                     <div className="flex items-center justify-between flex-wrap gap-4">
                         <div className="flex-1 max-w-3xl flex gap-3">
                             <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Search by title or key (e.g. ENG-1)..."
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
                                 />
                             </div>
                             
                             <select 
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium shadow-sm transition-all cursor-pointer"
+                                className="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 font-medium shadow-sm transition-all cursor-pointer"
                             >
                                 <option value="all">All Statuses</option>
                                 <option value="backlog">Backlog</option>
@@ -130,7 +130,7 @@ export default function GlobalTasksPage() {
                             <select 
                                 value={typeFilter}
                                 onChange={(e) => setTypeFilter(e.target.value)}
-                                className="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium shadow-sm transition-all cursor-pointer"
+                                className="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 font-medium shadow-sm transition-all cursor-pointer"
                             >
                                 <option value="all">All Types</option>
                                 <option value="task">Task</option>
@@ -143,7 +143,7 @@ export default function GlobalTasksPage() {
                             <select 
                                 value={assigneeFilter}
                                 onChange={(e) => setAssigneeFilter(e.target.value)}
-                                className="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 font-medium shadow-sm transition-all cursor-pointer"
+                                className="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 font-medium shadow-sm transition-all cursor-pointer"
                             >
                                 <option value="all">All Assignees</option>
                                 <option value="unassigned">Unassigned</option>
@@ -232,10 +232,10 @@ export default function GlobalTasksPage() {
                                                                     {assignee.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2)}
                                                                 </div>
                                                             )}
-                                                            <span className="text-sm text-gray-700">{assignee.name}</span>
+                                                            <span className="text-sm text-gray-900">{assignee.name}</span>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-sm text-gray-400 italic">Unassigned</span>
+                                                        <span className="text-sm text-gray-500 italic">Unassigned</span>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -262,19 +262,19 @@ export default function GlobalTasksPage() {
                                                                     : isDueSoon 
                                                                         ? 'text-amber-600' 
                                                                         : isDone 
-                                                                            ? 'text-gray-400 line-through' 
+                                                                            ? 'text-gray-500 line-through' 
                                                                             : 'text-gray-600'
                                                             }`}>
                                                                 {isOverdue ? (
                                                                     <AlertCircle size={14} className="text-red-500" />
                                                                 ) : (
-                                                                    <Calendar size={14} className={isOverdue ? 'text-red-400' : isDueSoon ? 'text-amber-400' : 'text-gray-400'} />
+                                                                    <Calendar size={14} className={isOverdue ? 'text-red-400' : isDueSoon ? 'text-amber-400' : 'text-gray-500'} />
                                                                 )}
                                                                 {due.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                                                             </div>
                                                         );
                                                     })() : (
-                                                        <span className="text-sm text-gray-400">-</span>
+                                                        <span className="text-sm text-gray-500">-</span>
                                                     )}
                                                 </td>
                                             </tr>

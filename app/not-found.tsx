@@ -34,7 +34,7 @@ export default function NotFoundPage() {
                         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
                             <button
                                 onClick={() => router.back()}
-                                className="inline-flex items-center justify-center space-x-2 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all hover:shadow-md"
+                                className="inline-flex items-center justify-center space-x-2 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-900 px-6 py-3 rounded-lg font-medium transition-all hover:shadow-md"
                             >
                                 <ArrowLeft className="w-5 h-5" />
                                 <span>Go Back</span>
@@ -62,7 +62,7 @@ export default function NotFoundPage() {
                                     <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
                                         <Home className="w-6 h-6 text-blue-600" />
                                     </div>
-                                    <span className="text-sm font-medium text-gray-700">Home</span>
+                                    <span className="text-sm font-medium text-gray-900">Home</span>
                                 </button>
                             </div>
                         </div> */}

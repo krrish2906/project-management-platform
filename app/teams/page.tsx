@@ -120,15 +120,15 @@ export default function TeamPage() {
                                 All Roles
                                 <ChevronDown className="w-4 h-4" />
                             </button>
-                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Design</button>
-                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Engineering</button>
-                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">On Leave</button>
-                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Available</button>
+                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-lg">Design</button>
+                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-lg">Engineering</button>
+                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-lg">On Leave</button>
+                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-lg">Available</button>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
                                 suppressHydrationWarning={true}
-                                className="px-4 py-2 border border-gray-200 rounded-lg flex items-center gap-2 text-gray-700 hover:bg-gray-50"
+                                className="px-4 py-2 border border-gray-200 rounded-lg flex items-center gap-2 text-gray-900 hover:bg-gray-50"
                                 onClick={() => setTeamMembers((prev) => [...prev].sort((a, b) => a.name.localeCompare(b.name)))}
                             >
                                 <SlidersHorizontal className="w-4 h-4" />

@@ -156,7 +156,7 @@ export default function CalendarPage() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <button onClick={today} className="px-3.5 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                            <button onClick={today} className="px-3.5 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                                 Today
                             </button>
                             <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -183,7 +183,7 @@ export default function CalendarPage() {
                         {/* Days of Week */}
                         <div className="grid grid-cols-7 border-b border-gray-100 bg-white shrink-0">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                                <div key={day} className="py-3 px-3 text-right text-[11px] font-bold text-gray-400 uppercase tracking-[0.1em] border-r border-gray-100 last:border-r-0">
+                                <div key={day} className="py-3 px-3 text-right text-[11px] font-bold text-gray-500 uppercase tracking-[0.1em] border-r border-gray-100 last:border-r-0">
                                     {day}
                                 </div>
                             ))}
@@ -198,7 +198,7 @@ export default function CalendarPage() {
                                 return (
                                     <div key={`empty-${index}`} className="p-1.5 border-r border-b border-gray-100 bg-gray-50/40 relative overflow-hidden">
                                         <div className="flex justify-start px-1 mb-1.5">
-                                            <span className="text-[12px] font-medium text-gray-400/50 w-6 h-6 flex items-center justify-center">{day}</span>
+                                            <span className="text-[12px] font-medium text-gray-500/50 w-6 h-6 flex items-center justify-center">{day}</span>
                                         </div>
                                         {/* Stripes minimal aesthetic for trailing days */}
                                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 10px, #000 10px, #000 11px)' }}></div>
@@ -216,11 +216,11 @@ export default function CalendarPage() {
                                     <div key={day} className={`p-1.5 border-r border-b border-gray-100 transition-colors flex flex-col group relative ${isCurrentDay ? 'bg-blue-50/20' : 'hover:bg-gray-50/60'}`}>
                                         {isCurrentDay && <div className="absolute top-0 left-0 w-full h-[2px] bg-blue-500"></div>}
                                         <div className="flex justify-between items-center mb-1.5 shrink-0 px-1 mt-1">
-                                            <span className={`text-[12px] font-semibold flex items-center justify-center ${isCurrentDay ? 'w-6 h-6 bg-blue-600 text-white rounded-full shadow-sm shadow-blue-500/30' : 'w-6 h-6 text-gray-700 group-hover:text-blue-600 transition-colors'}`}>
+                                            <span className={`text-[12px] font-semibold flex items-center justify-center ${isCurrentDay ? 'w-6 h-6 bg-blue-600 text-white rounded-full shadow-sm shadow-blue-500/30' : 'w-6 h-6 text-gray-900 group-hover:text-blue-600 transition-colors'}`}>
                                                 {day}
                                             </span>
                                             {dayTasks.length > 0 && (
-                                                <span className="text-[10px] font-semibold text-gray-400">
+                                                <span className="text-[10px] font-semibold text-gray-500">
                                                     {dayTasks.length} {dayTasks.length === 1 ? 'task' : 'tasks'}
                                                 </span>
                                             )}
@@ -241,7 +241,7 @@ export default function CalendarPage() {
                                                         {deadlineStatus === 'overdue' && (
                                                             <AlertCircle className="w-3 h-3 text-red-500 shrink-0" />
                                                         )}
-                                                        <div className="opacity-60 group-hover/task:opacity-100 transition-opacity shrink-0">
+                                                        <div className="opacity-70 group-hover/task:opacity-100 transition-opacity shrink-0">
                                                             {getTypeIcon(task.type)}
                                                         </div>
                                                         <span className="text-[11px] font-medium truncate leading-tight flex-1">
@@ -275,7 +275,7 @@ export default function CalendarPage() {
                                 return (
                                     <div key={`empty-end-${index}`} className="p-1.5 border-r border-b border-gray-100 bg-gray-50/40 relative overflow-hidden">
                                         <div className="flex justify-start px-1 mb-1.5">
-                                            <span className="text-[12px] font-medium text-gray-400/50 w-6 h-6 flex items-center justify-center">{day}</span>
+                                            <span className="text-[12px] font-medium text-gray-500/50 w-6 h-6 flex items-center justify-center">{day}</span>
                                         </div>
                                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 10px, #000 10px, #000 11px)' }}></div>
                                     </div>
@@ -301,7 +301,7 @@ export default function CalendarPage() {
                             )}
                         </div>
                         {deadlineSummary.overdue.length === 0 ? (
-                            <p className="text-xs text-gray-400 italic pl-4">None — great job!</p>
+                            <p className="text-xs text-gray-500 italic pl-4">None — great job!</p>
                         ) : (
                             <div className="space-y-2">
                                 {deadlineSummary.overdue.map(task => (
@@ -340,7 +340,7 @@ export default function CalendarPage() {
                             )}
                         </div>
                         {deadlineSummary.dueToday.length === 0 ? (
-                            <p className="text-xs text-gray-400 italic pl-4">Nothing due today</p>
+                            <p className="text-xs text-gray-500 italic pl-4">Nothing due today</p>
                         ) : (
                             <div className="space-y-2">
                                 {deadlineSummary.dueToday.map(task => (
@@ -374,7 +374,7 @@ export default function CalendarPage() {
                             )}
                         </div>
                         {deadlineSummary.upcoming.length === 0 ? (
-                            <p className="text-xs text-gray-400 italic pl-4">No upcoming deadlines</p>
+                            <p className="text-xs text-gray-500 italic pl-4">No upcoming deadlines</p>
                         ) : (
                             <div className="space-y-2">
                                 {deadlineSummary.upcoming.map(task => (

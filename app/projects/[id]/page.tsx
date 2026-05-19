@@ -108,8 +108,8 @@ export default function ProjectPage() {
         switch (status) {
             case 'active': return 'bg-green-100 text-green-700 border-green-200';
             case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200';
-            case 'archived': return 'bg-gray-100 text-gray-700 border-gray-200';
-            default: return 'bg-gray-100 text-gray-700 border-gray-200';
+            case 'archived': return 'bg-gray-100 text-gray-900 border-gray-200';
+            default: return 'bg-gray-100 text-gray-900 border-gray-200';
         }
     };
 
@@ -134,18 +134,18 @@ export default function ProjectPage() {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">Project Desk</span>
-                                <span className="text-sm text-gray-700">{project?.name}</span>
+                                <span className="text-sm text-gray-900">{project?.name}</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
                         <div className="relative text-gray-600">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                             <input
                                 type="text"
                                 placeholder="Search projects, tasks..."
-                                className="pl-10 pr-4 py-2 w-80 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="pl-10 pr-4 py-2 w-80 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
                             />
                         </div>
 
@@ -168,7 +168,7 @@ export default function ProjectPage() {
                                          notifications.slice(0, 5).map(n => (
                                              <div key={n._id} className={`p-4 border-b border-gray-50 text-sm ${n.read ? 'text-gray-500' : 'text-gray-900 bg-blue-50/30'}`}>
                                                  {n.message}
-                                                 <div className="text-xs text-gray-400 mt-1">{new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                                 <div className="text-xs text-gray-500 mt-1">{new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                                              </div>
                                          ))
                                      )}
@@ -184,7 +184,7 @@ export default function ProjectPage() {
                                     {userInitials}
                                 </div>
                             )}
-                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                            <ChevronDown className="w-4 h-4 text-gray-500" />
                         </div>
                     </div>
                 </div>
@@ -193,7 +193,7 @@ export default function ProjectPage() {
             <div className="flex">
                 <div className="flex-1 p-8 max-w-5xl">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                        <span className="hover:text-gray-700 cursor-pointer">Projects</span>
+                        <span className="hover:text-gray-900 cursor-pointer">Projects</span>
                         <span>/</span>
                         <span className="text-gray-900 font-medium">{project.name}</span>
                     </div>
@@ -221,10 +221,10 @@ export default function ProjectPage() {
                                     </button>
                                     {showProjectMenu && (
                                         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1">
-                                            <button onClick={() => router.push(`/projects/${id}/backlog`)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                                            <button onClick={() => router.push(`/projects/${id}/backlog`)} className="w-full text-left px-4 py-2 text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2">
                                                 <ListChecks className="w-4 h-4" /> Backlog
                                             </button>
-                                            <button onClick={() => router.push(`/projects/${id}/kanban`)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                                            <button onClick={() => router.push(`/projects/${id}/kanban`)} className="w-full text-left px-4 py-2 text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2">
                                                 <Users className="w-4 h-4" /> Manage Board
                                             </button>
                                             <button onClick={() => {
@@ -399,11 +399,11 @@ export default function ProjectPage() {
                                             </div>
                                         )}
                                         <div className="flex-1 pb-2">
-                                            <p className="text-xs text-gray-700">
+                                            <p className="text-xs text-gray-900">
                                                 <span className="font-semibold">{actorName}</span>{' '}
                                                 {ev.type.replace(/_/g, ' ')}
                                             </p>
-                                            <p className="text-xs text-gray-400 mt-1">
+                                            <p className="text-xs text-gray-500 mt-1">
                                                 {new Date(ev.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                             </p>
                                         </div>

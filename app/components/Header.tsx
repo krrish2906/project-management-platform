@@ -101,12 +101,12 @@ export default function Header({
                 <div className="flex items-center gap-4">
                     {showSearch && (
                         <div className="relative text-gray-600">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                             <input
                                 suppressHydrationWarning={true}
                                 type="text"
                                 placeholder="Search projects, tasks..."
-                                className="pl-10 pr-4 py-2 w-80 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="pl-10 pr-4 py-2 w-80 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
                             />
                         </div>
                     )}
@@ -114,7 +114,7 @@ export default function Header({
                     <div className="relative" ref={popoverRef}>
                         <button
                             suppressHydrationWarning={true}
-                            className={`relative p-2 rounded-lg cursor-pointer transition-all duration-200 ${isNotificationOpen ? 'bg-blue-50 text-blue-600 shadow-sm' : 'hover:bg-gray-100 text-gray-700'}`}
+                            className={`relative p-2 rounded-lg cursor-pointer transition-all duration-200 ${isNotificationOpen ? 'bg-blue-50 text-blue-600 shadow-sm' : 'hover:bg-gray-100 text-gray-900'}`}
                             onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                         >
                             <Bell className="w-6 h-6" />
@@ -151,7 +151,7 @@ export default function Header({
                                                 <span className="text-gray-300">|</span>
                                                 <button 
                                                     onClick={() => clearAll()}
-                                                    className="text-xs font-medium text-gray-400 hover:text-red-500 transition-colors cursor-pointer flex items-center gap-0.5"
+                                                    className="text-xs font-medium text-gray-500 hover:text-red-500 transition-colors cursor-pointer flex items-center gap-0.5"
                                                 >
                                                     <Trash2 className="w-3 h-3" />
                                                     Clear
@@ -175,7 +175,7 @@ export default function Header({
                                             </div>
                                             <div>
                                                 <p className="text-sm font-medium text-gray-500">You&apos;re all caught up!</p>
-                                                <p className="text-xs text-gray-400 mt-0.5">No new notifications</p>
+                                                <p className="text-xs text-gray-500 mt-0.5">No new notifications</p>
                                             </div>
                                         </div>
                                     ) : (
@@ -216,7 +216,7 @@ export default function Header({
                                                         <div className="flex-1 min-w-0">
                                                             <p className="text-sm text-gray-900 font-medium leading-snug">{notification.title}</p>
                                                             <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">{notification.message}</p>
-                                                            <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
+                                                            <p className="text-[10px] text-gray-500 mt-1.5 font-medium">
                                                                 {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                                                             </p>
                                                         </div>
@@ -234,7 +234,7 @@ export default function Header({
                                                                 className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded-md cursor-pointer"
                                                                 title="Remove notification"
                                                             >
-                                                                <X className="w-3 h-3 text-gray-400" />
+                                                                <X className="w-3 h-3 text-gray-500" />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -247,7 +247,7 @@ export default function Header({
                                 {/* Footer */}
                                 {notifications.length > 0 && (
                                     <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50 text-center">
-                                        <p className="text-[10px] text-gray-400">
+                                        <p className="text-[10px] text-gray-500">
                                             Showing {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
                                         </p>
                                     </div>

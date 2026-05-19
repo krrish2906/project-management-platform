@@ -39,7 +39,7 @@ export default function Sidebar() {
                             key={item.name}
                             href={item.href}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg transition-colors ${
-                                isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
+                                isActive ? "bg-blue-50 text-blue-600" : "text-gray-900 hover:bg-gray-50"
                             }`}
                         >
                             <Icon className="w-5 h-5" />
@@ -50,11 +50,11 @@ export default function Sidebar() {
             </nav>
 
             <div className="p-4 border-t border-gray-200">
-                <Link href="/settings" className="w-full flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg text-gray-700 hover:bg-gray-50">
+                <Link href="/settings" className="w-full flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg text-gray-900 hover:bg-gray-50">
                     <Settings className="w-5 h-5" />
                     <span className="font-medium">Settings</span>
                 </Link>
-                <Link href="/help" className="w-full flex items-center gap-3 px-3 py-2.5 mb-4 rounded-lg text-gray-700 hover:bg-gray-50">
+                <Link href="/help" className="w-full flex items-center gap-3 px-3 py-2.5 mb-4 rounded-lg text-gray-900 hover:bg-gray-50">
                     <HelpCircle className="w-5 h-5" />
                     <span className="font-medium">Help</span>
                 </Link>

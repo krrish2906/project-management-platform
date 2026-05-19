@@ -5,7 +5,7 @@ import axios from 'axios';
 import { 
     X, MoreHorizontal, Clock, CheckCircle2, AlertCircle, 
     Calendar, User, Tag, Activity as ActivityIcon, MessageSquare, 
-    Layers, Bug, Zap, BookOpen, ListChecks, Trash2, Eye
+    Layers, Bug, Zap, BookOpen, ListChecks, Trash2, Eye, Pencil
 } from 'lucide-react';
 import { useTaskStore } from '@/store/useTaskStore';
 import { useCommentStore } from '@/store/useCommentStore';
@@ -108,7 +108,7 @@ export default function TaskDetailSlideout({ taskId, onClose }: TaskDetailSlideo
             case 'high': return <AlertCircle className="w-4 h-4 text-orange-500" />;
             case 'medium': return <Clock className="w-4 h-4 text-yellow-500" />;
             case 'low': return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-            case 'lowest': return <CheckCircle2 className="w-4 h-4 text-gray-400" />;
+            case 'lowest': return <CheckCircle2 className="w-4 h-4 text-gray-500" />;
             default: return null;
         }
     };
@@ -154,11 +154,11 @@ export default function TaskDetailSlideout({ taskId, onClose }: TaskDetailSlideo
                     {/* Main Content Area */}
                     <div className="flex-1 p-6 border-r border-gray-100">
                         {/* Title */}
-                        <div className="mb-6">
+                        <div className="mb-5 relative group">
                             {isEditingTitle ? (
                                 <input
                                     autoFocus
-                                    className="w-full text-2xl font-bold text-gray-900 px-2 py-1 border-2 border-blue-500 rounded outline-none"
+                                    className="w-full text-[24px] font-bold text-gray-900 px-4 py-2 bg-white border border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm rounded-xl outline-none placeholder:text-gray-400 transition-all"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     onBlur={() => {
@@ -174,27 +174,34 @@ export default function TaskDetailSlideout({ taskId, onClose }: TaskDetailSlideo
                                 />
                             ) : (
                                 <h1 
-                                    className="text-2xl font-bold text-gray-900 px-2 py-1 hover:bg-gray-50 rounded cursor-text transition-colors"
-                                    onClick={() => setIsEditingTitle(true)}
+                                    className="text-[24px] font-bold text-gray-900 px-4 py-2 bg-gray-50 border border-gray-200 hover:bg-white hover:border-gray-300 rounded-xl transition-all flex items-center justify-between group shadow-sm"
                                 >
-                                    {task.title}
+                                    <span>{task.title}</span>
+                                    <button 
+                                        onClick={() => setIsEditingTitle(true)}
+                                        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-200 hover:border-blue-300 p-1.5 rounded-md cursor-pointer"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
                                 </h1>
                             )}
                         </div>
 
                         {/* Description */}
-                        <div className="mb-8">
-                            <h3 className="text-sm font-bold text-gray-900 mb-2">Description</h3>
+                        <div className="mb-5">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</h3>
                             {isEditingDesc ? (
-                                <div className="space-y-2">
-                                    <RichTextEditor
-                                        content={description}
-                                        onChange={setDescription}
+                                <div className="space-y-3">
+                                    <textarea
+                                        className="w-full bg-white border border-blue-500 rounded-xl px-4 py-3 text-[15px] leading-relaxed text-gray-900 outline-none focus:ring-4 focus:ring-blue-500/10 shadow-sm min-h-[120px] resize-y placeholder:text-gray-400 transition-all"
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Add a more detailed description..."
                                         autoFocus
                                     />
-                                    <div className="flex gap-2">
+                                    <div className="flex items-center gap-2">
                                         <button 
-                                            className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded shadow-sm"
+                                            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
                                             onClick={() => {
                                                 setIsEditingDesc(false);
                                                 if (description !== task.description) handleUpdate({ description });
@@ -203,7 +210,7 @@ export default function TaskDetailSlideout({ taskId, onClose }: TaskDetailSlideo
                                             Save
                                         </button>
                                         <button 
-                                            className="px-3 py-1.5 text-gray-600 text-sm font-medium hover:bg-gray-100 rounded"
+                                            className="px-4 py-1.5 text-gray-600 text-sm font-medium hover:bg-gray-100 rounded-lg transition-colors"
                                             onClick={() => {
                                                 setIsEditingDesc(false);
                                                 setDescription(task.description || '');
@@ -215,52 +222,58 @@ export default function TaskDetailSlideout({ taskId, onClose }: TaskDetailSlideo
                                 </div>
                             ) : (
                                 <div 
-                                    className="min-h-[80px] p-3 hover:bg-gray-50 rounded cursor-text border border-transparent hover:border-gray-200 transition-all"
-                                    onClick={() => setIsEditingDesc(true)}
+                                    className="group relative min-h-[80px] p-4 bg-gray-50 border border-gray-200 hover:bg-white hover:border-gray-300 rounded-xl transition-all flex justify-between shadow-sm"
                                 >
                                     {task.description && task.description !== '<p></p>' ? (
-                                        <div 
-                                            className="prose prose-sm max-w-none text-gray-700" 
-                                            dangerouslySetInnerHTML={{ __html: task.description }} 
-                                        />
+                                        <div className="text-[15px] leading-relaxed text-gray-700 whitespace-pre-wrap font-sans flex-1">
+                                            {task.description.replace(/<[^>]+>/g, '')}
+                                        </div>
                                     ) : (
-                                        <p className="text-gray-400 italic">Add a description...</p>
+                                        <div className="text-gray-400 text-[15px] flex items-center gap-2 flex-1 italic">
+                                            Add a detailed description...
+                                        </div>
                                     )}
+                                    <button 
+                                        onClick={() => setIsEditingDesc(true)}
+                                        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-blue-600 self-start bg-white shadow-sm border border-gray-200 hover:border-blue-300 p-1.5 rounded-md ml-2 shrink-0 cursor-pointer"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
                                 </div>
                             )}
                         </div>
 
                         {/* Subtasks */}
-                        <div className="mb-8">
-                            <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <Layers className="w-4 h-4 text-gray-500" />
+                        <div className="mb-6">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <Layers className="w-4 h-4 text-gray-400" />
                                 Subtasks ({subtasks.length})
                             </h3>
                             
                             <div className="space-y-2 mb-3">
                                 {subtasks.map(subtask => (
-                                    <div key={subtask._id} className="flex items-center justify-between p-2 hover:bg-gray-50 border border-gray-200 rounded-lg group">
+                                    <div key={subtask._id} className="flex items-center justify-between p-3 hover:bg-gray-50 border border-gray-100 hover:border-gray-200 rounded-xl group transition-all">
                                         <div className="flex items-center gap-3">
                                             {getPriorityIcon(subtask.priority)}
-                                            <span className="text-sm text-gray-500 font-mono">{subtask.key}</span>
-                                            <span className={`text-sm font-medium ${subtask.status === 'done' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                                            <span className="text-sm text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded">{subtask.key}</span>
+                                            <span className={`text-[15px] font-medium ${subtask.status === 'done' ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
                                                 {subtask.title}
                                             </span>
                                         </div>
-                                        <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 font-medium capitalize">
+                                        <span className="text-xs px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 font-medium capitalize border border-gray-200 shadow-sm">
                                             {subtask.status.replace('inprogress', 'in progress')}
                                         </span>
                                     </div>
                                 ))}
                             </div>
 
-                            <form onSubmit={handleCreateSubtask} className="relative">
+                            <form onSubmit={handleCreateSubtask} className="relative mt-2">
                                 <input
                                     type="text"
                                     placeholder="Add a subtask..."
                                     value={newSubtaskTitle}
                                     onChange={e => setNewSubtaskTitle(e.target.value)}
-                                    className="w-full px-4 py-2 bg-gray-50 border border-transparent hover:border-gray-200 focus:border-blue-500 focus:bg-white rounded-lg outline-none text-sm transition-all"
+                                    className="w-full px-4 py-2.5 bg-gray-50 hover:bg-white border border-gray-200 hover:border-gray-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl outline-none text-[15px] text-gray-900 placeholder:text-gray-500 transition-all shadow-sm"
                                     disabled={isCreatingSubtask}
                                 />
                             </form>
@@ -340,7 +353,7 @@ export default function TaskDetailSlideout({ taskId, onClose }: TaskDetailSlideo
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Story Points</label>
                             <input 
                                 type="number"
-                                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
                                 value={task.storyPoints || ''}
                                 placeholder="e.g. 5"
                                 onChange={(e) => handleUpdate({ storyPoints: parseInt(e.target.value) || 0 })}
@@ -352,7 +365,7 @@ export default function TaskDetailSlideout({ taskId, onClose }: TaskDetailSlideo
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Due Date</label>
                             <input 
                                 type="date"
-                                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
                                 value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
                                 onChange={(e) => handleUpdate({ dueDate: e.target.value })}
                             />

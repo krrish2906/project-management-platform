@@ -54,17 +54,17 @@ export default function HelpPage() {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                         <div className="max-w-3xl">
                             <h1 className="text-4xl font-bold tracking-tight mb-1 text-blue-600">How can we help you today ?</h1>
-                            <p className="text-gray-700 text-lg mb-6">Find answers, guides, and tutorials for ProjectHub</p>
+                            <p className="text-gray-900 text-lg mb-6">Find answers, guides, and tutorials for ProjectHub</p>
                             
                             <div className="relative max-w-2xl">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search className="h-5 w-5 text-gray-400" />
+                                    <Search className="h-5 w-5 text-gray-500" />
                                 </div>
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     placeholder="Search help articles..."
                                 />
                             </div>
@@ -224,7 +224,7 @@ export default function HelpPage() {
                                                 {faq.question}
                                             </span>
                                             <ChevronDown
-                                                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                                                className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
                                                     openFaq === index ? 'transform rotate-180 text-blue-600' : ''
                                                 }`}
                                             />
