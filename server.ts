@@ -3,11 +3,11 @@ import { parse } from 'url';
 import next from 'next';
 import { Server as SocketIOServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import connectDB from './lib/mongodb';
-import Message from './lib/models/Message';
-import Project from './lib/models/Project';
-import User from './lib/models/User';
-import Notification from './lib/models/Notification';
+import connectDB from './src/services/db/mongodb';
+import Message from './src/services/db/models/Message';
+import Project from './src/services/db/models/Project';
+import User from './src/services/db/models/User';
+import Notification from './src/services/db/models/Notification';
 import { Types } from 'mongoose';
 
 const dev = process.env.NODE_ENV !== 'production';
