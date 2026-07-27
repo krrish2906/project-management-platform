@@ -4,18 +4,21 @@ import path from 'path';
 import { getAuthUser } from '@/lib/auth';
 
 const ALLOWED_MIME: Record<string, string[]> = {
-    image: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'],
+    image: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
     document: [
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/vnd.ms-excel',
         'text/plain',
     ],
 };
 
-const ALL_ALLOWED = [...ALLOWED_MIME.image, ...ALLOWED_MIME.document];
+const ALLOWED_EXTENSIONS = new Set([
+    'png', 'jpg', 'jpeg', 'webp', 'pdf', 'docx', 'doc', 'txt', 'xls', 'xlsx'
+]);
+
 const MAX_IMAGE = 10 * 1024 * 1024; // 10MB
 const MAX_DOC = 20 * 1024 * 1024;   // 20MB
 
@@ -38,21 +41,28 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'File and projectId are required' }, { status: 400 });
         }
 
-        if (!ALL_ALLOWED.includes(file.type)) {
-            return NextResponse.json({ success: false, error: `File type ${file.type} is not supported` }, { status: 400 });
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+
+        const isMimeAllowed = [...ALLOWED_MIME.image, ...ALLOWED_MIME.document].includes(file.type);
+        const isExtAllowed = ALLOWED_EXTENSIONS.has(ext);
+
+        if (!isMimeAllowed && !isExtAllowed) {
+            return NextResponse.json({
+                success: false,
+                error: `File type (.${ext}) is not supported. Supported formats are Images (PNG, JPG, WEBP) and Documents (PDF, DOCX, TXT, XLSX).`
+            }, { status: 400 });
         }
 
-        const isImage = ALLOWED_MIME.image.includes(file.type);
+        const isImage = ALLOWED_MIME.image.includes(file.type) || ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
         const maxSize = isImage ? MAX_IMAGE : MAX_DOC;
 
         if (file.size > maxSize) {
             return NextResponse.json({
                 success: false,
-                error: `File too large. Max ${isImage ? '10MB' : '20MB'} for ${isImage ? 'images' : 'documents'}`
+                error: `File is too large. Maximum size is ${isImage ? '10MB for images' : '20MB for documents'}.`
             }, { status: 400 });
         }
 
-        const ext = file.name.split('.').pop() || 'bin';
         const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}-${sanitizeFilename(file.name)}`;
         
         const uploadDir = path.join(process.cwd(), 'public', 'uploads');
@@ -70,13 +80,16 @@ export async function POST(request: NextRequest) {
                 url,
                 filename: uniqueName,
                 originalName: file.name,
-                mimetype: file.type,
+                mimetype: file.type || 'application/octet-stream',
                 size: file.size,
                 extension: ext,
             }
         });
     } catch (error: any) {
         console.error('Upload error:', error);
-        return NextResponse.json({ success: false, error: 'Upload failed' }, { status: 500 });
+        return NextResponse.json({
+            success: false,
+            error: 'Failed to upload file. Please try again later.'
+        }, { status: 500 });
     }
 }

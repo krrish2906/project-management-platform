@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import User from '@/services/db/models/User';
 import bcrypt from 'bcryptjs';
+import { prisma } from '@/services/db/prisma';
 import { generateToken, setAuthCookie } from '@/lib/auth';
+import { createDefaultWorkspace, getUserWorkspaces } from '@/services/workspaceService';
 import { sendEmail } from '@/services/mail/mailer';
 
-// POST /api/auth/signup - Register new user
+// POST /api/auth/signup - Register new user & auto-create workspace
 export async function POST(request: NextRequest) {
     try {
-        await connectDB();
-
         const body = await request.json();
         const { name, email, password } = body;
 
@@ -45,7 +43,10 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        const existingUser = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() },
+        });
+
         if (existingUser) {
             return NextResponse.json({
                 success: false,
@@ -59,48 +60,65 @@ export async function POST(request: NextRequest) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create user
-        const user = await User.create({
-            name, email, password: hashedPassword, role: 'user'
+        // Create user in Prisma PostgreSQL
+        const user = await prisma.user.create({
+            data: {
+                name: name.trim(),
+                email: email.toLowerCase().trim(),
+                password: hashedPassword,
+            },
         });
 
-        // Remove password from response
-        const { password: _, ...userWithoutPassword } = user.toObject();
+        // Auto-create default personal workspace
+        const defaultWorkspace = await createDefaultWorkspace(user.id, user.name);
+        const userWorkspaces = await getUserWorkspaces(user.id);
 
-        // Generate JWT token
+        // Generate user JWT token
         const token = generateToken({
-            userId: String(user._id),
+            userId: user.id,
             email: user.email,
-            role: user.role,
+            role: user.isSuperAdmin ? 'super_admin' : 'user',
         });
 
-        // Set as HttpOnly cookie
+        // Set HttpOnly cookie
         await setAuthCookie(token);
 
         // Send welcome email
-        await sendEmail({
-            to: user.email,
-            subject: 'Welcome to ProjectHub',
-            template: 'welcome',
-            data: {
-                name: user.name,
-                title: 'Welcome to ProjectHub',
-                message: 'Thank you for signing up to ProjectHub. We are excited to have you on board!',
-                buttonText: 'Login',
-                buttonUrl: '/login',
-            },
-        });
+        try {
+            await sendEmail({
+                to: user.email,
+                subject: 'Welcome to ProjectHub',
+                template: 'welcome',
+                data: {
+                    name: user.name,
+                    title: 'Welcome to ProjectHub',
+                    message: 'Thank you for signing up to ProjectHub. Your personal workspace is ready!',
+                    buttonText: 'Login',
+                    buttonUrl: '/login',
+                },
+            });
+        } catch (emailErr) {
+            console.error('Failed to send welcome email:', emailErr);
+        }
+
+        const { password: _, ...userWithoutPassword } = user;
 
         return NextResponse.json({
             success: true,
             data: {
-                user: userWithoutPassword,
+                user: {
+                    ...userWithoutPassword,
+                    _id: user.id,
+                },
+                activeWorkspaceId: defaultWorkspace.id,
+                workspaces: userWorkspaces,
             },
             message: 'Account created successfully',
             error: null,
         }, { status: 201 });
 
     } catch (error: any) {
+        console.error('Signup error:', error);
         return NextResponse.json({
             success: false,
             data: null,

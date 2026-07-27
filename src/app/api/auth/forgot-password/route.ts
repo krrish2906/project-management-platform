@@ -1,31 +1,33 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import User from '@/services/db/models/User';
+import { prisma } from '@/services/db/prisma';
 import { sendEmail } from '@/services/mail/mailer';
 
 export async function POST(request: Request) {
     try {
         const { email } = await request.json();
-        await connectDB();
+        if (!email) {
+            return NextResponse.json({ success: false, data: null, message: 'Email required', error: 'Email required' }, { status: 400 });
+        }
 
-        // Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+        const otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
-        // Update user with OTP
-        await User.findOneAndUpdate({ email }, { 
-            resetToken: otp,
-            resetTokenExpiry: otpExpiry
-        }, { new: true, runValidators: true });
+        const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase().trim() },
+        });
 
-        // Don't reveal if email exists or not
-        const message = 'If an account exists with this email, you will receive an OTP';
+        if (user) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    resetToken: otp,
+                    resetTokenExpiry: otpExpiry,
+                },
+            });
 
-        try {
-            const user = await User.findOne({ email });
-            if (user) {
+            try {
                 await sendEmail({
-                    to: email,
+                    to: user.email,
                     subject: 'Your Password Reset OTP',
                     template: 'reset-password',
                     data: {
@@ -38,25 +40,25 @@ export async function POST(request: Request) {
                         expiry: '15 minutes'
                     }
                 });
+            } catch (emailError) {
+                console.error('Error sending email:', emailError);
             }
-        } catch (emailError) {
-            console.error('Error sending email:', emailError);
         }
 
         return NextResponse.json({
             success: true,
-            data: message,
+            data: 'If an account exists with this email, you will receive an OTP',
             message: 'OTP sent successfully',
             error: null
         }, { status: 200 });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Forgot password error:', error);
         return NextResponse.json({
             success: false,
             data: null,
             message: 'Failed to process request',
-            error: error
+            error: error.message || 'Failed to process request',
         }, { status: 500 });
     }
 }

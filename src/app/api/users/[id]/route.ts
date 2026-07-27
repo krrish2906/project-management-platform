@@ -1,29 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import User from '@/services/db/models/User';
-import mongoose from 'mongoose';
+import { prisma } from '@/services/db/prisma';
 
-// GET /api/users/[id] - Get a single user by ID
+// GET /api/users/[id] - Get user profile by ID
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
         const { id } = await params;
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Invalid user ID',
-                error: 'Invalid user ID',
-            }, { status: 400 });
-        }
-
-        const user = await User.findById(id)
-            .select('-password')
-            .populate('projects', 'name status color');
+        const user = await prisma.user.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+                jobTitle: true,
+                department: true,
+                createdAt: true,
+            },
+        });
 
         if (!user) {
             return NextResponse.json({
@@ -36,7 +33,7 @@ export async function GET(
 
         return NextResponse.json({
             success: true,
-            data: user,
+            data: { ...user, _id: user.id },
             message: 'User fetched successfully',
             error: null
         }, { status: 200 });
@@ -50,30 +47,20 @@ export async function GET(
     }
 }
 
-// PUT /api/users/[id] - Update a user by ID
+// PUT /api/users/[id] - Update user profile by ID
 export async function PUT(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
         const { id } = await params;
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Invalid user ID',
-                error: 'Invalid user ID',
-            }, { status: 400 });
-        }
-
         const body = await request.json();
-        const { name, email, role, avatar } = body;
+        const { name, email, avatar, jobTitle, department } = body;
 
-        // Check if email is being changed and if it's already taken
         if (email) {
-            const existingUser = await User.findOne({ email, _id: { $ne: id } });
+            const existingUser = await prisma.user.findFirst({
+                where: { email: email.toLowerCase().trim(), NOT: { id } },
+            });
             if (existingUser) {
                 return NextResponse.json({
                     success: false,
@@ -84,33 +71,33 @@ export async function PUT(
             }
         }
 
-        const updateData: any = {};
-        if (name) updateData.name = name;
-        if (email) updateData.email = email;
-        if (role) updateData.role = role;
-        if (avatar !== undefined) updateData.avatar = avatar;
-
-        const user = await User.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true, runValidators: true }
-        ).select('-password');
-
-        if (!user) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'User not found',
-                error: 'User not found',
-            }, { status: 404 });
-        }
+        const user = await prisma.user.update({
+            where: { id },
+            data: {
+                name: name ? name.trim() : undefined,
+                email: email ? email.toLowerCase().trim() : undefined,
+                avatar: avatar !== undefined ? avatar : undefined,
+                jobTitle: jobTitle !== undefined ? jobTitle : undefined,
+                department: department !== undefined ? department : undefined,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+                jobTitle: true,
+                department: true,
+                createdAt: true,
+            },
+        });
 
         return NextResponse.json({
             success: true,
-            data: user,
+            data: { ...user, _id: user.id },
             message: 'User updated successfully',
             error: null
         }, { status: 200 });
+        
     } catch (error: any) {
         return NextResponse.json({
             success: false,
@@ -121,37 +108,21 @@ export async function PUT(
     }
 }
 
-// DELETE /api/users/[id] - Delete a user by ID
+// DELETE /api/users/[id] - Delete user by ID
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
         const { id } = await params;
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Invalid user ID',
-                error: 'Invalid user ID',
-            }, { status: 400 });
-        }
-
-        const user = await User.findByIdAndDelete(id);
-        if (!user) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'User not found',
-                error: 'User not found',
-            }, { status: 404 });
-        }
+        await prisma.user.delete({
+            where: { id },
+        });
 
         return NextResponse.json({
             success: true,
-            data: user,
+            data: null,
             message: 'User deleted successfully',
             error: null
         }, { status: 200 });

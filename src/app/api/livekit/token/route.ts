@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
                 {
                     success: false,
                     data: null,
-                    message: 'LiveKit is not configured',
-                    error: 'Missing LIVEKIT_API_KEY, LIVEKIT_API_SECRET, and LIVEKIT_URL (or NEXT_PUBLIC_LIVEKIT_URL)',
+                    message: 'Team call service is currently unavailable',
+                    error: 'Team call service is currently unavailable. Please contact support or your workspace administrator.',
                 },
                 { status: 503 }
             );
@@ -98,8 +98,8 @@ export async function POST(request: NextRequest) {
             {
                 success: false,
                 data: null,
-                message: 'Failed to generate LiveKit token',
-                error: error?.message || 'Failed to generate LiveKit token',
+                message: 'Failed to join team call',
+                error: error?.message || 'Failed to join team call. Please try again later.',
             },
             { status: 500 }
         );

@@ -81,8 +81,8 @@ export default function Page() {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        toast.success('Logged out successfully');
                                         logout();
+                                        toast.success('Logged out successfully');
                                     }}
                                     className="group w-full sm:w-auto px-12 py-4 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                                 >

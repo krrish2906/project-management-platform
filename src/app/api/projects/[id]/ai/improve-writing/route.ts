@@ -29,7 +29,9 @@ export async function POST(request: NextRequest) {
         }
 
         if (!promptType || !SYSTEM_PROMPTS[promptType as PromptType]) {
-            return NextResponse.json({ error: 'Invalid prompt type' }, { status: 400 });
+            return NextResponse.json({
+                error: 'Invalid prompt type'
+            }, { status: 400 });
         }
 
         const ai = getAIClient();
@@ -54,11 +56,11 @@ export async function POST(request: NextRequest) {
         const result = completion.choices[0]?.message?.content || text;
 
         return NextResponse.json({ result });
+
     } catch (error: any) {
         console.error('AI Writing Improve Error:', error);
-        if (error.message?.includes('AI_API_KEY')) {
-            return NextResponse.json({ error: 'AI is not configured. Please set AI_API_KEY in your environment.' }, { status: 503 });
-        }
-        return NextResponse.json({ error: 'Failed to improve text' }, { status: 500 });
+        return NextResponse.json({
+            error: error.message || 'AI writing assistant is currently unavailable. Please try again later.'
+        }, { status: 503 });
     }
 }

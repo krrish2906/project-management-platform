@@ -1,37 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import Project from '@/services/db/models/Project';
 import { getAuthUser } from '@/lib/auth';
+import { toggleProjectStar } from '@/services/projectService';
 
-// PUT /api/projects/[id]/star - Toggle project star
+// PUT /api/projects/[id]/star - Toggle project star per user
 export async function PUT(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
         const { id } = await params;
         const authUser = getAuthUser(request);
         if (!authUser) {
             return NextResponse.json({ success: false, data: null, message: 'Not authenticated', error: 'Not authenticated' }, { status: 401 });
         }
 
-        const project = await Project.findById(id);
-        if (!project) {
-            return NextResponse.json({ success: false, data: null, message: 'Project not found', error: 'Not found' }, { status: 404 });
-        }
-
-        project.isStarred = !project.isStarred;
-        await project.save();
+        const isStarred = await toggleProjectStar(id, authUser.userId);
 
         return NextResponse.json({
             success: true,
-            data: { isStarred: project.isStarred },
-            message: 'Star toggled',
+            data: { isStarred },
+            message: 'Star toggled successfully',
             error: null,
         }, { status: 200 });
 
     } catch (error: any) {
-        return NextResponse.json({ success: false, data: null, message: 'Failed to toggle star', error: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, data: null, message: error.message || 'Failed to toggle star', error: error.message }, { status: 400 });
     }
 }

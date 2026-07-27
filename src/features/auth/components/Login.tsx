@@ -8,13 +8,13 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { toast } from 'react-hot-toast';
 import { ForgotPassword } from './ForgotPassword';
 
-export default function Login() {
+export default function Login({ initialMode }: { initialMode?: 'login' | 'signup' | 'forgot_password' }) {
     const router = useRouter();
     const setUser = useAuthStore((state) => state.setUser);
 
     const [isSignup, setIsSignup] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [showForgotPassword, setShowForgotPassword] = useState(initialMode === 'forgot_password');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

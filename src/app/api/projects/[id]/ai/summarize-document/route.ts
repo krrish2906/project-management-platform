@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Document content is too short to summarize' }, { status: 400 });
         }
 
-        // Strip HTML tags to get plain text for the LLM
         const plainText = content
             .replace(/<[^>]*>/g, ' ')
             .replace(/&nbsp;/g, ' ')
@@ -63,9 +62,8 @@ Format as clean markdown. Use **bold** for emphasis. Be concise but don't miss c
         return NextResponse.json({ summary });
     } catch (error: any) {
         console.error('AI Document Summarize Error:', error);
-        if (error.message?.includes('AI_API_KEY')) {
-            return NextResponse.json({ error: 'AI is not configured. Please set AI_API_KEY in your environment.' }, { status: 503 });
-        }
-        return NextResponse.json({ error: 'Failed to generate summary' }, { status: 500 });
+        return NextResponse.json({
+            error: error.message || 'AI document summarization is currently unavailable. Please try again later.'
+        }, { status: 503 });
     }
 }

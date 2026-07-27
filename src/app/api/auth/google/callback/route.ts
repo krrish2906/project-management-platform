@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import User from '@/services/db/models/User';
+import { prisma } from '@/services/db/prisma';
 import { generateToken, setAuthCookie } from '@/lib/auth';
+import { createDefaultWorkspace, getUserWorkspaces } from '@/services/workspaceService';
+import { AuthProvider } from '@prisma/client';
 
-/**
- * GET /api/auth/google/callback
- * Handles the redirect from Google, verifies the user, and creates a session.
- */
 export async function GET(request: NextRequest) {
     try {
-        await connectDB();
-
         const { searchParams } = new URL(request.url);
         const code = searchParams.get('code');
 
@@ -21,7 +16,6 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // 1. Exchange code for access token
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -42,7 +36,6 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // 2. Fetch user info using the access token
         const userResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
             headers: { Authorization: `Bearer ${tokenData.access_token}` },
         });
@@ -55,40 +48,47 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // 3. Find or create user in database
-        let user = await User.findOne({ email: googleUser.email });
+        let user = await prisma.user.findUnique({
+            where: { email: googleUser.email.toLowerCase().trim() },
+        });
 
         if (!user) {
-            user = await User.create({
-                name: googleUser.name,
-                email: googleUser.email,
-                avatar: googleUser.picture,
-                role: 'developer',
+            user = await prisma.user.create({
+                data: {
+                    name: googleUser.name || 'Google User',
+                    email: googleUser.email.toLowerCase().trim(),
+                    avatar: googleUser.picture || null,
+                    googleId: googleUser.sub || null,
+                    authProvider: AuthProvider.GOOGLE,
+                },
             });
+            await createDefaultWorkspace(user.id, user.name);
         } else {
             if (!user.avatar && googleUser.picture) {
-                user.avatar = googleUser.picture;
-                await user.save();
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: { avatar: googleUser.picture },
+                });
+            }
+
+            const userWorkspaces = await getUserWorkspaces(user.id);
+            if (userWorkspaces.length === 0) {
+                await createDefaultWorkspace(user.id, user.name);
             }
         }
 
-        // 4. Generate custom JWT and set session cookie
         const token = generateToken({
-            userId: String(user._id),
+            userId: user.id,
             email: user.email,
-            role: user.role,
+            role: user.isSuperAdmin ? 'super_admin' : 'user',
         });
 
         await setAuthCookie(token);
 
-        // 5. Redirect to home page
         return NextResponse.redirect(new URL('/', request.url));
 
     } catch (error: any) {
         console.error('Google Callback Error:', error);
-        return NextResponse.json(
-            { success: false, message: 'Internal server error during Google authentication' },
-            { status: 500 }
-        );
+        return NextResponse.redirect(new URL('/login?error=google_failed', request.url));
     }
 }

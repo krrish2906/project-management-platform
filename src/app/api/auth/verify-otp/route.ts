@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import User from '@/services/db/models/User';
+import { prisma } from '@/services/db/prisma';
 
 export async function POST(request: Request) {
     try {
         const { email, otp } = await request.json();
-        await connectDB();
+        if (!email || !otp) {
+            return NextResponse.json({ success: false, data: null, message: 'Email and OTP are required', error: 'Missing fields' }, { status: 400 });
+        }
 
-        const user = await User.findOne({
-            email,
-            resetToken: otp,
-            resetTokenExpiry: { $gt: new Date() }
+        const user = await prisma.user.findFirst({
+            where: {
+                email: email.toLowerCase().trim(),
+                resetToken: otp,
+                resetTokenExpiry: { gt: new Date() },
+            },
         });
 
         if (!user) {
@@ -18,7 +21,7 @@ export async function POST(request: Request) {
                 success: false,
                 data: null,
                 message: 'Invalid or expired OTP',
-                error: null
+                error: 'Invalid or expired OTP',
             }, { status: 400 });
         }
 
@@ -26,15 +29,16 @@ export async function POST(request: Request) {
             success: true,
             data: null,
             message: 'OTP verified successfully',
-            error: null
+            error: null,
         }, { status: 200 });
-    } catch (error) {
+
+    } catch (error: any) {
         console.error('Verify OTP error:', error);
         return NextResponse.json({
             success: false,
             data: null,
-            message: 'Failed to verify OTP',
-            error: error
+            message: error.message || 'Failed to verify OTP',
+            error: error.message || 'Failed to verify OTP',
         }, { status: 500 });
     }
 }

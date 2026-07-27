@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import User from '@/services/db/models/User';
-import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { prisma } from '@/services/db/prisma';
 import { getAuthUser } from '@/lib/auth';
 
 // PUT /api/users/[id]/password - Update user password
@@ -11,19 +9,9 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
         const { id } = await params;
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Invalid user ID',
-                error: 'Invalid user ID',
-            }, { status: 400 });
-        }
-
         const authUser = getAuthUser(request);
+
         if (!authUser || authUser.userId !== id) {
             return NextResponse.json({
                 success: false,
@@ -54,8 +42,11 @@ export async function PUT(
             }, { status: 400 });
         }
 
-        const user = await User.findById(id);
-        if (!user) {
+        const user = await prisma.user.findUnique({
+            where: { id },
+        });
+
+        if (!user || !user.password) {
             return NextResponse.json({
                 success: false,
                 data: null,
@@ -64,7 +55,6 @@ export async function PUT(
             }, { status: 404 });
         }
 
-        // Verify current password
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) {
             return NextResponse.json({
@@ -75,13 +65,13 @@ export async function PUT(
             }, { status: 401 });
         }
 
-        // Hash new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        // Update password
-        user.password = hashedPassword;
-        await user.save();
+        await prisma.user.update({
+            where: { id },
+            data: { password: hashedPassword },
+        });
 
         return NextResponse.json({
             success: true,
@@ -94,7 +84,7 @@ export async function PUT(
         return NextResponse.json({
             success: false,
             data: null,
-            message: 'Failed to update password',
+            message: error.message || 'Failed to update password',
             error: error.message || 'Failed to update password',
         }, { status: 500 });
     }

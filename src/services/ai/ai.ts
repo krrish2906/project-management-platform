@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 const getAIClient = () => {
     const apiKey = process.env.AI_API_KEY;
     if (!apiKey) {
-        throw new Error('AI_API_KEY is not set in environment variables. Please add it to .env.local');
+        throw new Error('AI assistant is currently unavailable. Please contact your workspace administrator to enable AI features.');
     }
 
     const config: { apiKey: string; baseURL?: string } = { apiKey };

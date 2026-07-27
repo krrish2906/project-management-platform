@@ -1,34 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import User from '@/services/db/models/User';
 import bcrypt from 'bcryptjs';
+import { prisma } from '@/services/db/prisma';
+import { createDefaultWorkspace } from '@/services/workspaceService';
 
 // GET /api/users - Get all users
 export async function GET(request: NextRequest) {
     try {
-        await connectDB();
-
         const { searchParams } = new URL(request.url);
         const search = searchParams.get('search');
 
-        const query: any = {};
-        if (search) {
-            query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } }
-            ];
-        }
-
-        const users = await User.find(query)
-            .select('-password')
-            .sort({ createdAt: -1 });
+        const users = await prisma.user.findMany({
+            where: search ? {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { email: { contains: search, mode: 'insensitive' } },
+                ],
+            } : undefined,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+                jobTitle: true,
+                department: true,
+                createdAt: true,
+            },
+            orderBy: { createdAt: 'desc' },
+        });
 
         return NextResponse.json({
             success: true,
-            data: users,
+            data: users.map(u => ({ ...u, _id: u.id })),
             message: 'Users fetched successfully',
-            error: null
+            error: null,
         }, { status: 200 });
+
     } catch (error: any) {
         return NextResponse.json({
             success: false,
@@ -42,12 +48,9 @@ export async function GET(request: NextRequest) {
 // POST /api/users - Create a new user
 export async function POST(request: NextRequest) {
     try {
-        await connectDB();
-
         const body = await request.json();
         const { name, email, password } = body;
 
-        // Validation
         if (!name || !email || !password) {
             return NextResponse.json({
                 success: false,
@@ -57,8 +60,10 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        const existingUser = await prisma.user.findUnique({
+            where: { email: email.toLowerCase().trim() },
+        });
+
         if (existingUser) {
             return NextResponse.json({
                 success: false,
@@ -68,27 +73,28 @@ export async function POST(request: NextRequest) {
             }, { status: 409 });
         }
 
-        // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create user
-        const user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            role: 'user'
+        const user = await prisma.user.create({
+            data: {
+                name: name.trim(),
+                email: email.toLowerCase().trim(),
+                password: hashedPassword,
+            },
         });
 
-        // Remove password from response
-        const { password: _, ...userResponse } = user.toObject();
+        await createDefaultWorkspace(user.id, user.name);
+
+        const { password: _, ...userResponse } = user;
 
         return NextResponse.json({
             success: true,
-            data: userResponse,
+            data: { ...userResponse, _id: user.id },
             message: 'User created successfully',
-            error: null
+            error: null,
         }, { status: 201 });
+        
     } catch (error: any) {
         return NextResponse.json({
             success: false,

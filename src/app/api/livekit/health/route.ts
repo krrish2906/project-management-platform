@@ -24,8 +24,8 @@ export async function GET() {
                 {
                     success: false,
                     data: null,
-                    message: 'LiveKit configuration missing',
-                    error: 'Missing LIVEKIT_URL (or NEXT_PUBLIC_LIVEKIT_URL), LIVEKIT_API_KEY, or LIVEKIT_API_SECRET',
+                    message: 'Team call service is currently unavailable',
+                    error: 'Team call service is currently unavailable. Please contact support or your workspace administrator.',
                 },
                 { status: 503 }
             );
@@ -43,7 +43,7 @@ export async function GET() {
                     ready: true,
                     url,
                 },
-                message: 'LiveKit credentials are valid',
+                message: 'Team call service is active and operational',
                 error: null,
             },
             { status: 200 }
@@ -55,8 +55,8 @@ export async function GET() {
                 data: {
                     ready: false,
                 },
-                message: 'LiveKit credential validation failed',
-                error: error?.message || 'LiveKit credential validation failed',
+                message: 'Team call service is experiencing technical difficulties',
+                error: 'Unable to connect to the team calling service. Please try again later.',
             },
             { status: 502 }
         );

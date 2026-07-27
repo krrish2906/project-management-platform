@@ -1,195 +1,107 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import Kanban from '@/services/db/models/Kanban';
-import Project from '@/services/db/models/Project';
-import Task from '@/services/db/models/Task';
 import { getAuthUser } from '@/lib/auth';
+import { getProjectById } from '@/services/projectService';
+import { getProjectTasks, updateTask } from '@/services/taskService';
+import { TaskStatus } from '@prisma/client';
 
-// GET /api/kanban/[id] - Get kanban board by project ID
+// GET /api/kanban/[id] - Get kanban columns & tasks by project ID
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
-        const { id } = await params;
-
+        const { id: projectId } = await params;
         const authUser = getAuthUser(request);
+
         if (!authUser) {
             return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Not authenticated',
-                error: 'Not authenticated',
+                success: false, data: null,
+                message: 'Not authenticated', error: 'Not authenticated',
             }, { status: 401 });
         }
 
-        // Find kanban by project ID
-        const kanban = await Kanban.findOne({ project: id })
-            .populate('project', 'name color')
-            .populate({
-                path: 'tasks.taskId',
-                populate: [
-                    { path: 'assignee', select: 'name email avatar' },
-                    { path: 'reporter', select: 'name email avatar' }
-                ]
-            });
+        const project = await getProjectById(projectId, authUser.userId);
+        const tasks = await getProjectTasks(projectId, authUser.userId);
 
-        if (!kanban) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Kanban board not found',
-                error: 'Kanban board not found',
-            }, { status: 404 });
-        }
-
-        // Check user has access to project
-        const project = await Project.findById(id);
-        if (!project) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Project not found',
-                error: 'Project not found',
-            }, { status: 404 });
-        }
-
-        const hasAccess = project.owner.toString() === authUser.userId ||
-            project.members.some(m => m.user.toString() === authUser.userId);
-
-        if (!hasAccess) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Not authorized to access this kanban board',
-                error: 'Not authorized to access this kanban board',
-            }, { status: 403 });
-        }
+        const columns = [
+            { id: 'todo', title: 'To Do', color: '#94a3b8', tasks: tasks.filter(t => t.status === TaskStatus.TODO) },
+            { id: 'inprogress', title: 'In Progress', color: '#3b82f6', tasks: tasks.filter(t => t.status === TaskStatus.IN_PROGRESS) },
+            { id: 'review', title: 'In Review', color: '#a855f7', tasks: tasks.filter(t => t.status === TaskStatus.IN_REVIEW) },
+            { id: 'done', title: 'Done', color: '#22c55e', tasks: tasks.filter(t => t.status === TaskStatus.DONE) },
+        ];
 
         return NextResponse.json({
             success: true,
-            data: { kanban },
+            data: {
+                kanban: {
+                    id: projectId,
+                    name: `${project.name} Board`,
+                    columns,
+                    tasks,
+                },
+            },
             message: 'Kanban board fetched successfully',
             error: null,
         }, { status: 200 });
 
     } catch (error: any) {
         return NextResponse.json({
-            success: false,
-            data: null,
-            message: 'Failed to fetch kanban board',
+            success: false, data: null,
+            message: error.message || 'Failed to fetch kanban board',
             error: error.message || 'Failed to fetch kanban board',
-        }, { status: 500 });
+        }, { status: 400 });
     }
 }
 
-// PUT /api/kanban/[id] - Update kanban board (columns, task positions)
+// PUT /api/kanban/[id] - Update task position/status in kanban
 export async function PUT(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await connectDB();
-        const { id } = await params;
-
+        const { id: projectId } = await params;
         const authUser = getAuthUser(request);
+
         if (!authUser) {
             return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Not authenticated',
-                error: 'Not authenticated',
+                success: false, data: null,
+                message: 'Not authenticated', error: 'Not authenticated',
             }, { status: 401 });
         }
 
-        // Find kanban by project ID
-        const kanban = await Kanban.findOne({ project: id });
-
-        if (!kanban) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Kanban board not found',
-                error: 'Kanban board not found',
-            }, { status: 404 });
-        }
-
-        // Check user has access to project
-        const project = await Project.findById(id);
-        if (!project) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Project not found',
-                error: 'Project not found',
-            }, { status: 404 });
-        }
-
-        const hasAccess = project.owner.toString() === authUser.userId ||
-            project.members.some(m => m.user.toString() === authUser.userId);
-
-        if (!hasAccess) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Not authorized to update this kanban board',
-                error: 'Not authorized to update this kanban board',
-            }, { status: 403 });
-        }
-
+        await getProjectById(projectId, authUser.userId);
         const body = await request.json();
-        const { name, columns, tasks } = body;
+        const { taskId, status, order } = body;
 
-        // Update fields
-        if (name) kanban.name = name;
-        if (columns) kanban.columns = columns;
-        if (tasks) {
-            kanban.tasks = tasks;
-            
-            // Update task status based on column
-            for (const taskEntry of tasks) {
-                const task = await Task.findById(taskEntry.taskId);
-                if (task) {
-                    const statusMap: { [key: string]: string } = {
-                        'backlog': 'backlog',
-                        'todo': 'todo',
-                        'inprogress': 'inprogress',
-                        'completed': 'completed',
-                    };
+        if (taskId && status) {
+            let taskStatus: TaskStatus = TaskStatus.TODO;
+            if (status === 'inprogress' || status === 'IN_PROGRESS')
+                taskStatus = TaskStatus.IN_PROGRESS;
+            else if (status === 'review' || status === 'IN_REVIEW')
+                taskStatus = TaskStatus.IN_REVIEW;
+            else if (status === 'done' || status === 'DONE')
+                taskStatus = TaskStatus.DONE;
 
-                    const newStatus = statusMap[taskEntry.columnId];
-                    if (newStatus && task.status !== newStatus) {
-                        task.status = newStatus as any;
-                        await task.save();
-                    }
-                }
-            }
+            await updateTask(taskId, authUser.userId, {
+                status: taskStatus,
+                order: typeof order === 'number' ? order : undefined,
+            });
         }
 
-        await kanban.save();
-        await kanban.populate('project', 'name color');
-        await kanban.populate({
-            path: 'tasks.taskId',
-            populate: [
-                { path: 'assignee', select: 'name email avatar' },
-                { path: 'reporter', select: 'name email avatar' }
-            ]
-        });
+        const tasks = await getProjectTasks(projectId, authUser.userId);
 
         return NextResponse.json({
             success: true,
-            data: { kanban },
+            data: { tasks },
             message: 'Kanban board updated successfully',
             error: null,
         }, { status: 200 });
 
     } catch (error: any) {
         return NextResponse.json({
-            success: false,
-            data: null,
-            message: 'Failed to update kanban board',
+            success: false, data: null,
+            message: error.message || 'Failed to update kanban board',
             error: error.message || 'Failed to update kanban board',
-        }, { status: 500 });
+        }, { status: 400 });
     }
 }

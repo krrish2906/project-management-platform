@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import Activity from '@/services/db/models/Activity';
+import { prisma } from '@/services/db/prisma';
 import { getAuthUser } from '@/lib/auth';
 
 // GET /api/activity - Get activity log for a project
 export async function GET(request: NextRequest) {
     try {
-        await connectDB();
         const authUser = getAuthUser(request);
         if (!authUser) {
-            return NextResponse.json({ success: false, data: null, message: 'Not authenticated', error: 'Not authenticated' }, { status: 401 });
+            return NextResponse.json({
+                success: false,
+                data: null,
+                message: 'Not authenticated',
+                error: 'Not authenticated'
+            }, { status: 401 });
         }
 
         const { searchParams } = new URL(request.url);
@@ -17,25 +20,34 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '20', 10);
         const page = parseInt(searchParams.get('page') || '1', 10);
 
-        const query: any = {};
-        if (projectId) query.project = projectId;
-
         const skip = (page - 1) * limit;
-        const total = await Activity.countDocuments(query);
 
-        const activities = await Activity.find(query)
-            .populate('actor', 'name email avatar')
-            .populate('task', 'key title')
-            .populate('project', 'name key')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .lean();
+        const total = await prisma.activity.count({
+            where: projectId ? { projectId } : undefined,
+        });
+
+        const activities = await prisma.activity.findMany({
+            where: projectId ? { projectId } : undefined,
+            include: {
+                actor: {
+                    select: { id: true, name: true, email: true, avatar: true },
+                },
+                project: {
+                    select: { id: true, name: true, key: true },
+                },
+                task: {
+                    select: { id: true, number: true, title: true },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+            skip,
+            take: limit,
+        });
 
         return NextResponse.json({
             success: true,
             data: {
-                activities,
+                activities: activities.map(a => ({ ...a, _id: a.id })),
                 count: activities.length,
                 total,
                 page,
@@ -46,6 +58,11 @@ export async function GET(request: NextRequest) {
         }, { status: 200 });
 
     } catch (error: any) {
-        return NextResponse.json({ success: false, data: null, message: 'Failed to fetch activity', error: error.message }, { status: 500 });
+        return NextResponse.json({
+            success: false,
+            data: null,
+            message: error.message || 'Failed to fetch activity',
+            error: error.message
+        }, { status: 500 });
     }
 }

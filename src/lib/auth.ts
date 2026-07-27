@@ -2,8 +2,8 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-const JWT_EXPIRES_IN = '1d';
+const JWT_SECRET = process.env.JWT_SECRET || 'project-management-tool';
+const JWT_EXPIRES_IN = '7d';
 const COOKIE_NAME = 'auth-token';
 
 export interface TokenPayload {
@@ -33,7 +33,7 @@ export async function setAuthCookie(token: string) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 1,
+        maxAge: 60 * 60 * 24 * 7,
         path: '/',
     });
 }

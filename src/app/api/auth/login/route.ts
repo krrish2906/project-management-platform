@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import User from '@/services/db/models/User';
 import bcrypt from 'bcryptjs';
+import { prisma } from '@/services/db/prisma';
 import { generateToken, setAuthCookie } from '@/lib/auth';
+import { getUserWorkspaces, createDefaultWorkspace } from '@/services/workspaceService';
 
 // POST /api/auth/login - Authenticate user
 export async function POST(request: NextRequest) {
     try {
-        await connectDB();
-
         const body = await request.json();
         const { email, password } = body;
 
@@ -22,9 +20,12 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Find user with password field
-        const user = await User.findOne({ email }).select('+password');
-        if (!user) {
+        // Find user by email
+        const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase().trim() },
+        });
+
+        if (!user || !user.password) {
             return NextResponse.json({
                 success: false,
                 data: null,
@@ -44,29 +45,43 @@ export async function POST(request: NextRequest) {
             }, { status: 401 });
         }
 
-        // Remove password from response
-        const { password: _, ...userWithoutPassword } = user.toObject();
+        // Fetch user's workspaces or auto-create if missing
+        let userWorkspaces = await getUserWorkspaces(user.id);
+        if (userWorkspaces.length === 0) {
+            const defaultWs = await createDefaultWorkspace(user.id, user.name);
+            userWorkspaces = await getUserWorkspaces(user.id);
+        }
+
+        const activeWorkspaceId = userWorkspaces[0]?.id || null;
 
         // Generate JWT token
         const token = generateToken({
-            userId: String(user._id),
+            userId: user.id,
             email: user.email,
-            role: user.role,
+            role: user.isSuperAdmin ? 'super_admin' : 'user',
         });
 
         // Set as HttpOnly cookie
         await setAuthCookie(token);
 
+        const { password: _, ...userWithoutPassword } = user;
+
         return NextResponse.json({
             success: true,
             data: {
-                user: userWithoutPassword,
+                user: {
+                    ...userWithoutPassword,
+                    _id: user.id,
+                },
+                activeWorkspaceId,
+                workspaces: userWorkspaces,
             },
             message: 'Login successful',
             error: null,
         }, { status: 200 });
 
     } catch (error: any) {
+        console.error('Login error:', error);
         return NextResponse.json({
             success: false,
             data: null,

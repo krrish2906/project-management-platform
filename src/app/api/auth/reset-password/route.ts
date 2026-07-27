@@ -1,42 +1,47 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/services/db/mongodb';
-import User from '@/services/db/models/User';
-import { hash } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/services/db/prisma';
 import { sendEmail } from '@/services/mail/mailer';
 
 export async function POST(request: Request) {
     try {
         const { email, otp, newPassword } = await request.json();
-        await connectDB();
+        if (!email || !otp || !newPassword) {
+            return NextResponse.json({ success: false, data: null, message: 'All fields are required', error: 'Missing fields' }, { status: 400 });
+        }
 
-        // Verify OTP
-        const user = await User.findOne({
-            email,
-            resetToken: otp,
-            resetTokenExpiry: { $gt: new Date() }
+        const user = await prisma.user.findFirst({
+            where: {
+                email: email.toLowerCase().trim(),
+                resetToken: otp,
+                resetTokenExpiry: { gt: new Date() },
+            },
         });
 
         if (!user) {
-            return NextResponse.json(
-                { message: 'Invalid or expired OTP' },
-                { status: 400 }
-            );
+            return NextResponse.json({
+                success: false,
+                data: null,
+                message: 'Invalid or expired OTP',
+                error: 'Invalid or expired OTP',
+            }, { status: 400 });
         }
 
-        // Hash new password
-        const hashedPassword = await hash(newPassword, 12);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        // Update password and clear reset token
-        await User.findByIdAndUpdate(user._id, {
-            password: hashedPassword,
-            resetToken: undefined,
-            resetTokenExpiry: undefined
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                resetToken: null,
+                resetTokenExpiry: null,
+            },
         });
 
-        // Send password changed notification
         try {
             await sendEmail({
-                to: email,
+                to: user.email,
                 subject: 'Your Password Has Been Changed',
                 template: 'notification',
                 data: {
@@ -57,13 +62,14 @@ export async function POST(request: Request) {
             message: 'Password reset successful',
             error: null
         }, { status: 200 });
-    } catch (error) {
+
+    } catch (error: any) {
         console.error('Reset password error:', error);
         return NextResponse.json({
             success: false,
             data: null,
-            message: 'Failed to reset password',
-            error: error
+            message: error.message || 'Failed to reset password',
+            error: error.message || 'Failed to reset password',
         }, { status: 500 });
     }
 }
