@@ -1,11 +1,11 @@
 'use client'
 
-import { ForgotPassword } from '@/features/auth/components/ForgotPassword';
+import { ResetPassword } from '@/features/auth/components/ResetPassword';
 
-export default function ForgotPasswordPage() {
+export default function ResetPasswordPage() {
     return (
         <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8 text-[#1b1b24] bg-[#F8FAFC]">
-            <ForgotPassword />
+            <ResetPassword />
         </div>
     );
 }

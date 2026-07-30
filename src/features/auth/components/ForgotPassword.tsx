@@ -1,297 +1,172 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
-interface ForgotPasswordProps {
-    onBack: () => void;
-    onSuccess: () => void;
-}
-
-export function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
-    const [step, setStep] = useState<'email' | 'otp' | 'newPassword'>('email');
+export function ForgotPassword() {
+    const router = useRouter();
     const [email, setEmail] = useState('');
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleSendOtp = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
 
-        try {
-            const res = await axios.post('/api/auth/forgot-password', { email });
-            const data = res.data;
-            
-            if (data.success) {
-                setStep('otp');
-                toast.success('OTP sent to your email');
-            }
-            else {
-                toast.error(data.message);
-            }
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.message || 'Failed to send OTP');
-            toast.error('Failed to send OTP');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleVerifyOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const otpString = otp.join('');
-
-        if (otpString.length !== 6) {
-            setError('Please enter a valid 6-digit OTP');
+        if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            setError('Please enter a valid email address');
             return;
         }
 
         setLoading(true);
-        setError('');
         try {
-            const res = await axios.post('/api/auth/verify-otp', { email, otp: otpString });
-            const data = res.data;
-            
-            if (data.success) {
-                setStep('newPassword');
-                toast.success('OTP verified successfully');
-            }
-            else {
-                toast.error(data.message);
-            }
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.message || 'Invalid OTP. Please try again.');
-            toast.error('Invalid OTP');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleResetPassword = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (newPassword.length < 8) {
-            setError('Password must be at least 8 characters long');
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-        try {
-            const res = await axios.post('/api/auth/reset-password', {
-                email,
-                otp: otp.join(''),
-                newPassword
-            });
-            const data = res.data;
-
-            if (data.success) {
-                toast.success('Password reset successfully');
-                onSuccess();
+            const response = await axios.post('/api/auth/forgot-password', { email });
+            if (response.data.success) {
+                toast.success('Verification code sent to your email!');
+                // Store email in sessionStorage for the next step (secure, not in URL)
+                sessionStorage.setItem('reset_email', email);
+                router.push('/verify-otp');
             } else {
-                throw new Error(data.message || 'Failed to reset password');
+                setError(response.data.error || 'Failed to send verification code');
+                toast.error(response.data.error || 'Failed to send verification code');
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || err.message || 'Failed to reset password');
-            toast.error('Failed to reset password');
+            const errorMsg = err.response?.data?.error || err.message || 'Something went wrong';
+            setError(errorMsg);
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleOtpChange = (index: number, value: string) => {
-        if (value && !/^\d+$/.test(value)) return;
-
-        const newOtp = [...otp];
-        newOtp[index] = value;
-        setOtp(newOtp);
-
-        if (value && index < 5) {
-            const nextInput = document.getElementById(`otp-${index + 1}`);
-            if (nextInput) nextInput.focus();
-        }
-    };
-
-    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-        e.preventDefault();
-        const pasteData = e.clipboardData.getData('text/plain').trim();
-        if (/^\d{6}$/.test(pasteData)) {
-            const otpArray = pasteData.split('').slice(0, 6);
-            setOtp(otpArray);
         }
     };
 
     return (
-        <div className="w-full max-w-md mx-auto">
-            <button
-                onClick={onBack}
-                className="flex items-center text-blue-600 hover:text-blue-800 mb-6 cursor-pointer"
-            >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to login
-            </button>
-
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {step === 'email' && 'Reset your password'}
-                {step === 'otp' && 'Enter verification code'}
-                {step === 'newPassword' && 'Create new password'}
-            </h2>
-
-            <p className="text-gray-600 mb-8">
-                {step === 'email' && 'Enter your email address and we\'ll send you a verification code.'}
-                {step === 'otp' && `We've sent a 6-digit code to ${email}`}
-                {step === 'newPassword' && 'Create a new password for your account.'}
-            </p>
-
-            {error && (
-                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
-                    {error}
+        <div className="w-full max-w-120 mx-auto py-4">
+            {/* Brand / Header */}
+            <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#4f46e5] text-white mb-3 shadow-sm">
+                    <span className="material-symbols-outlined text-[24px]">lock_reset</span>
                 </div>
-            )}
+                <h1 className="text-[24px] leading-8 font-bold text-[#1b1b24] mb-1">
+                    Recover your account
+                </h1>
+                <p className="text-[15px] leading-6 text-[#464555]">
+                    Enter your registered email address to receive a verification code.
+                </p>
+            </div>
 
-            {step === 'email' && (
-                <form onSubmit={handleSendOtp} className="space-y-6">
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-1">
-                            Email address
-                        </label>
-                        <input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                        />
+            {/* Main Card */}
+            <div className="bg-white rounded-3xl border border-[#e4e1ee] shadow-level-2 p-6 sm:p-8">
+                {/* 3-Step Stepper Progress Bar */}
+                <div className="flex items-center justify-between mb-6 relative">
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-[#e2e8f0] z-0"></div>
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0 h-0.5 bg-[#4f46e5] z-0 transition-all duration-300"></div>
+
+                    {/* Step 1: Email (Active) */}
+                    <div className="flex flex-col items-center gap-1 relative z-10">
+                        <div className="w-6 h-6 rounded-full bg-[#4f46e5] text-white flex items-center justify-center text-[12px] font-semibold shadow-xs ring-4 ring-white">
+                            1
+                        </div>
+                        <span className="text-[12px] leading-4 font-semibold text-[#4f46e5]">Email</span>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 cursor-pointer"
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" />
-                                Sending OTP...
-                            </>
-                        ) : (
-                            'Send Verification Code'
-                        )}
-                    </button>
-                </form>
-            )}
+                    {/* Step 2: Verify (Inactive) */}
+                    <div className="flex flex-col items-center gap-1 relative z-10">
+                        <div className="w-6 h-6 rounded-full bg-[#e2e8f0] text-[#64748b] flex items-center justify-center text-[12px] font-medium ring-4 ring-white">
+                            2
+                        </div>
+                        <span className="text-[12px] leading-4 text-[#64748b]">Verify</span>
+                    </div>
 
-            {step === 'otp' && (
-                <form onSubmit={handleVerifyOtp} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-3">
-                            Enter the 6-digit code
+                    {/* Step 3: Reset (Inactive) */}
+                    <div className="flex flex-col items-center gap-1 relative z-10">
+                        <div className="w-6 h-6 rounded-full bg-[#e2e8f0] text-[#64748b] flex items-center justify-center text-[12px] font-medium ring-4 ring-white">
+                            3
+                        </div>
+                        <span className="text-[12px] leading-4 text-[#64748b]">Reset</span>
+                    </div>
+                </div>
+
+                {/* Security Notice */}
+                <div className="bg-[#f5f2ff] border border-[#e4e1ee] rounded-lg p-3.5 flex items-start gap-3 mb-6">
+                    <span className="material-symbols-outlined text-[#4f46e5] text-[20px] mt-0.5">
+                        shield_lock
+                    </span>
+                    <div className="flex-1">
+                        <p className="text-[13px] font-semibold text-[#4f46e5] mb-0.5">Secure account recovery</p>
+                        <p className="text-[12px] leading-4 text-[#464555]">
+                            We'll send a secure, one-time code to verify your identity before allowing a password reset.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-1.5">
+                        <label className="block text-[14px] leading-5 font-medium text-[#1b1b24]" htmlFor="email">
+                            Email Address
                         </label>
-                        <div className="flex justify-between space-x-2">
-                            {otp.map((digit, index) => (
-                                <input
-                                    key={index}
-                                    id={`otp-${index}`}
-                                    type="text"
-                                    maxLength={1}
-                                    value={digit}
-                                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                                    onPaste={index === 0 ? handlePaste : undefined}
-                                    className="w-12 h-12 text-center text-xl border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    autoFocus={index === 0}
-                                />
-                            ))}
+                        <div className="relative input-ring rounded-lg border border-[#e4e1ee] bg-white transition-all duration-200">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#777587]">
+                                <span className="material-symbols-outlined text-[20px]">mail</span>
+                            </div>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Your email"
+                                required
+                                disabled={loading}
+                                className="block w-full h-12.5 pl-11 pr-4 py-2 bg-transparent border-none rounded-lg focus:ring-0 text-[15px] leading-6 text-[#1b1b24] placeholder:text-[#c7c4d8] outline-none disabled:opacity-70"
+                            />
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 cursor-pointer"
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" />
-                                Verifying...
-                            </>
-                        ) : (
-                            'Verify Code'
-                        )}
-                    </button>
+                    {error && (
+                        <div className="p-2.5 bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#93000a] rounded-lg text-sm font-medium">
+                            {error}
+                        </div>
+                    )}
 
-                    <div className="text-center text-sm text-gray-600">
-                        Didn't receive a code?{' '}
+                    <div className="pt-2 space-y-3">
                         <button
-                            type="button"
-                            onClick={handleSendOtp}
-                            className="text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+                            type="submit"
                             disabled={loading}
+                            className="w-full h-12.5 bg-[#4f46e5] hover:bg-[#4338CA] text-white rounded-lg text-[14px] leading-5 font-semibold transition-all duration-200 shadow-sm flex justify-center items-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Resend code
+                            {loading ? 'Sending Code...' : (
+                                <>
+                                    Send Verification Code
+                                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                                </>
+                            )}
                         </button>
+
+                        <Link
+                            href="/login"
+                            className="w-full h-12.5 bg-transparent hover:bg-[#f5f2ff] text-[#4f46e5] rounded-lg text-[14px] leading-5 font-medium transition-colors duration-200 flex justify-center items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                            Back to Sign In
+                        </Link>
                     </div>
                 </form>
-            )}
+            </div>
 
-            {step === 'newPassword' && (
-                <form onSubmit={handleResetPassword} className="space-y-6">
-                    <div>
-                        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-900 mb-1">
-                            New Password
-                        </label>
-                        <input
-                            id="newPassword"
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                            minLength={8}
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900 mb-1">
-                            Confirm New Password
-                        </label>
-                        <input
-                            id="confirmPassword"
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                            minLength={8}
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 cursor-pointer"
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" />
-                                Updating...
-                            </>
-                        ) : (
-                            'Reset Password'
-                        )}
-                    </button>
-                </form>
-            )}
+            {/* Footer Links */}
+            <div className="mt-6 text-center flex justify-center gap-6">
+                <a href="#" className="text-[12px] leading-4 text-[#777587] hover:text-[#1b1b24] transition-colors">
+                    Help Center
+                </a>
+                <span className="text-[#c7c4d8]">•</span>
+                <a href="#" className="text-[12px] leading-4 text-[#777587] hover:text-[#1b1b24] transition-colors">
+                    Contact Support
+                </a>
+            </div>
         </div>
     );
 }

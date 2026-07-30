@@ -7,7 +7,12 @@ export async function POST(request: Request) {
     try {
         const { email, otp, newPassword } = await request.json();
         if (!email || !otp || !newPassword) {
-            return NextResponse.json({ success: false, data: null, message: 'All fields are required', error: 'Missing fields' }, { status: 400 });
+            return NextResponse.json({
+                success: false,
+                data: null,
+                message: 'All fields are required',
+                error: 'Missing fields'
+            }, { status: 400 });
         }
 
         const user = await prisma.user.findFirst({
