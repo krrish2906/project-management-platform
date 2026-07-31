@@ -1,7 +1,10 @@
+'use client'
+
 import React, { useState } from 'react';
 import axios from 'axios';
-import { X, Loader2, Target, Globe, Lock, Palette } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { useProjectStore } from '../store/useProjectStore';
 
 interface CreateProjectModalProps {
     isOpen: boolean;
@@ -9,9 +12,22 @@ interface CreateProjectModalProps {
     onProjectCreated?: (project: any) => void;
 }
 
-const colors = [
-    'bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-red-500', 
-    'bg-yellow-500', 'bg-orange-500', 'bg-pink-500', 'bg-indigo-500'
+const HEX_COLORS = [
+    { label: 'Blue', hex: '#3b82f6' },
+    { label: 'Indigo', hex: '#6366f1' },
+    { label: 'Purple', hex: '#8b5cf6' },
+    { label: 'Emerald', hex: '#10b981' },
+    { label: 'Amber', hex: '#f59e0b' },
+    { label: 'Rose', hex: '#f43f5e' },
+];
+
+const ICONS = [
+    { name: 'folder', label: 'Folder' },
+    { name: 'rocket_launch', label: 'Rocket' },
+    { name: 'code', label: 'Code' },
+    { name: 'palette', label: 'Design' },
+    { name: 'terminal', label: 'DevOps' },
+    { name: 'bolt', label: 'Sprint' },
 ];
 
 export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }: CreateProjectModalProps) {
@@ -19,10 +35,12 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
     const [name, setName] = useState('');
     const [key, setKey] = useState('');
     const [description, setDescription] = useState('');
-    const [visibility, setVisibility] = useState<'public' | 'private'>('private');
-    const [selectedColor, setSelectedColor] = useState(colors[0]);
+    const [selectedColor, setSelectedColor] = useState(HEX_COLORS[0].hex);
+    const [selectedIcon, setSelectedIcon] = useState(ICONS[0].name);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    const { fetchProjects } = useProjectStore();
 
     if (!isOpen) return null;
 
@@ -30,155 +48,185 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         const newName = e.target.value;
         setName(newName);
         if (!key || key === name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase()) {
-            setKey(newName.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase());
+            setKey(newName.replace(/[^a-zA-Z]/g, '').substring(0, 4).toUpperCase());
         }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        if (!name.trim()) return;
+
         setIsSubmitting(true);
 
         try {
             const res = await axios.post('/api/projects', {
-                name,
-                key: key || undefined,
-                description,
-                visibility,
-                color: selectedColor.replace('bg-', ''),
-                icon: 'Folder'
+                name: name.trim(),
+                key: key.trim().toUpperCase() || undefined,
+                description: description.trim() || undefined,
+                color: selectedColor,
+                icon: selectedIcon,
             });
 
             const json = res.data;
-            if (!json.success) {
+            if (!json.success || !json.data?.project) {
                 throw new Error(json.message || 'Failed to create project');
             }
 
+            const createdProject = json.data.project;
+            toast.success(`Project "${createdProject.name}" created successfully!`);
+
+            // Fetch updated projects list in store
+            fetchProjects();
+
             if (onProjectCreated) {
-                onProjectCreated(json.data.project);
+                onProjectCreated(createdProject);
             }
+
+            // Reset form fields
+            setName('');
+            setKey('');
+            setDescription('');
             onClose();
-            router.push(`/projects/${json.data.project._id}`);
         } catch (err: any) {
-            setError(err.response?.data?.message || err.message);
+            const msg = err.response?.data?.message || err.message;
+            if (msg.toLowerCase().includes('limit reached') || msg.toLowerCase().includes('upgrade')) {
+                onClose();
+                toast.error(`${msg} Redirecting to Billing page...`, { duration: 4000 });
+                router.push('/billing');
+                return;
+            }
+            setError(msg);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <div className="bg-white rounded-3xl shadow-2xl border border-[#E2E8F0] w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                            <Target className="w-5 h-5" />
+                        <div className="w-10 h-10 rounded-xl bg-[#4F46E5]/10 text-[#4F46E5] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[24px]">{selectedIcon}</span>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900">Create New Project</h3>
+                        <div>
+                            <h3 className="text-lg font-bold text-[#1b1b24]">Create New Project</h3>
+                            <p className="text-xs text-[#777587]">Add a new project to your current workspace</p>
+                        </div>
                     </div>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                        <X className="w-5 h-5" />
+                    <button
+                        onClick={onClose}
+                        className="text-[#777587] hover:text-[#1b1b24] p-1.5 rounded-lg hover:bg-[#e4e1ee]/50 transition-colors cursor-pointer"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>
                 </div>
-                
-                <form onSubmit={handleSubmit} className="p-6 flex-1 overflow-y-auto space-y-6">
+
+                {/* Form Body */}
+                <form onSubmit={handleSubmit} className="p-6 flex-1 overflow-y-auto space-y-5">
                     {error && (
-                        <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs font-medium">
                             {error}
                         </div>
                     )}
 
                     <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-2">
-                            <label className="block text-sm font-bold text-gray-900 mb-1.5">Project Name *</label>
+                            <label className="block text-xs font-bold text-[#1b1b24] mb-1.5">Project Name *</label>
                             <input
                                 type="text"
                                 required
                                 value={name}
                                 onChange={handleNameChange}
-                                placeholder="e.g. Website Redesign"
-                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 placeholder:text-gray-500"
+                                placeholder="e.g. Mobile App V2"
+                                className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#E2E8F0] rounded-xl text-xs text-[#1b1b24] focus:border-[#4F46E5] outline-none"
                             />
                         </div>
-                        <div className="col-span-1">
-                            <label className="block text-sm font-bold text-gray-900 mb-1.5">Key</label>
+                        <div>
+                            <label className="block text-xs font-bold text-[#1b1b24] mb-1.5">Project Key</label>
                             <input
                                 type="text"
+                                maxLength={6}
                                 value={key}
-                                onChange={e => setKey(e.target.value.toUpperCase())}
-                                placeholder="e.g. WEB"
-                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 uppercase"
-                                maxLength={5}
+                                onChange={(e) => setKey(e.target.value.toUpperCase())}
+                                placeholder="e.g. MOB"
+                                className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#E2E8F0] rounded-xl text-xs font-mono text-[#1b1b24] focus:border-[#4F46E5] outline-none uppercase"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-900 mb-1.5">Description</label>
+                        <label className="block text-xs font-bold text-[#1b1b24] mb-1.5">Description (Optional)</label>
                         <textarea
+                            rows={3}
                             value={description}
-                            onChange={e => setDescription(e.target.value)}
-                            placeholder="What is this project about?"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 placeholder:text-gray-500 min-h-20 resize-none"
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Brief description of the project goals..."
+                            className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#E2E8F0] rounded-xl text-xs text-[#1b1b24] focus:border-[#4F46E5] outline-none resize-none"
                         />
                     </div>
 
+                    {/* Color Theme Selector */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-900 mb-3">Project Color</label>
+                        <label className="block text-xs font-bold text-[#1b1b24] mb-2">Project Color Badge</label>
                         <div className="flex items-center gap-3">
-                            {colors.map(color => (
+                            {HEX_COLORS.map((c) => (
                                 <button
-                                    key={color}
+                                    key={c.hex}
                                     type="button"
-                                    onClick={() => setSelectedColor(color)}
-                                    className={`w-8 h-8 rounded-full ${color} transition-transform ${selectedColor === color ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'hover:scale-110 cursor-pointer'}`}
-                                />
+                                    onClick={() => setSelectedColor(c.hex)}
+                                    className={`w-7 h-7 rounded-full transition-transform cursor-pointer flex items-center justify-center ${
+                                        selectedColor === c.hex ? 'ring-2 ring-offset-2 ring-[#4F46E5] scale-110' : 'hover:scale-105'
+                                    }`}
+                                    style={{ backgroundColor: c.hex }}
+                                    title={c.label}
+                                >
+                                    {selectedColor === c.hex && (
+                                        <span className="material-symbols-outlined text-[14px] text-white">check</span>
+                                    )}
+                                </button>
                             ))}
                         </div>
                     </div>
 
+                    {/* Icon Selector */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-900 mb-3">Visibility</label>
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                type="button"
-                                onClick={() => setVisibility('private')}
-                                className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left cursor-pointer transition-colors ${visibility === 'private' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200 bg-white'}`}
-                            >
-                                <Lock className={`w-5 h-5 mt-0.5 ${visibility === 'private' ? 'text-blue-600' : 'text-gray-500'}`} />
-                                <div>
-                                    <p className={`font-semibold ${visibility === 'private' ? 'text-blue-900' : 'text-gray-900'}`}>Private</p>
-                                    <p className={`text-xs mt-1 ${visibility === 'private' ? 'text-blue-700' : 'text-gray-500'}`}>Only project members can view and edit</p>
-                                </div>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setVisibility('public')}
-                                className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left cursor-pointer transition-colors ${visibility === 'public' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200 bg-white'}`}
-                            >
-                                <Globe className={`w-5 h-5 mt-0.5 ${visibility === 'public' ? 'text-blue-600' : 'text-gray-500'}`} />
-                                <div>
-                                    <p className={`font-semibold ${visibility === 'public' ? 'text-blue-900' : 'text-gray-900'}`}>Public</p>
-                                    <p className={`text-xs mt-1 ${visibility === 'public' ? 'text-blue-700' : 'text-gray-500'}`}>Anyone in the workspace can view</p>
-                                </div>
-                            </button>
+                        <label className="block text-xs font-bold text-[#1b1b24] mb-2">Project Icon</label>
+                        <div className="grid grid-cols-6 gap-2">
+                            {ICONS.map((ic) => (
+                                <button
+                                    key={ic.name}
+                                    type="button"
+                                    onClick={() => setSelectedIcon(ic.name)}
+                                    className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                                        selectedIcon === ic.name
+                                            ? 'border-[#4F46E5] bg-[#4F46E5]/10 text-[#4F46E5]'
+                                            : 'border-[#E2E8F0] bg-white text-[#777587] hover:bg-[#f5f2ff]'
+                                    }`}
+                                >
+                                    <span className="material-symbols-outlined text-[20px]">{ic.name}</span>
+                                </button>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                    {/* Modal Footer Actions */}
+                    <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#E2E8F0]">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-5 py-2.5 text-sm font-medium text-gray-900 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+                            className="px-4 py-2 bg-white border border-[#E2E8F0] text-[#464555] text-xs font-semibold rounded-xl hover:bg-[#e4e1ee]/40 transition-colors cursor-pointer"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            disabled={!name || isSubmitting}
-                            className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-70 rounded-xl transition-all shadow-sm flex items-center cursor-pointer"
+                            disabled={isSubmitting}
+                            className="px-5 py-2 bg-[#4F46E5] text-white text-xs font-semibold rounded-xl hover:bg-[#3525cd] transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-2"
                         >
-                            {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                            {isSubmitting && <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>}
                             Create Project
                         </button>
                     </div>

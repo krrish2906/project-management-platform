@@ -96,10 +96,10 @@ export async function verifyWorkspaceAccess(userId: string, workspaceId: string)
     return member;
 }
 
-export const PLAN_LIMITS: Record<Plan, { maxProjects: number }> = {
-    FREE: { maxProjects: 3 },
-    PRO: { maxProjects: Infinity },
-    MAX: { maxProjects: Infinity },
+export const PLAN_LIMITS: Record<Plan, { maxProjects: number; maxMembersPerProject: number }> = {
+    FREE: { maxProjects: 3, maxMembersPerProject: 5 },
+    PRO: { maxProjects: 10, maxMembersPerProject: 25 },
+    MAX: { maxProjects: Infinity, maxMembersPerProject: Infinity },
 };
 
 // Check if a workspace can create new projects based on its Plan limits
@@ -119,7 +119,31 @@ export async function checkProjectLimit(workspaceId: string): Promise<boolean> {
 
     const limit = PLAN_LIMITS[workspace.plan]?.maxProjects ?? 3;
     if (workspace._count.projects >= limit) {
-        throw new Error(`Project limit reached for ${workspace.plan} plan (max ${limit} projects). Please upgrade to create more projects.`);
+        throw new Error(`Project limit reached for ${workspace.plan} plan (max ${limit} projects). Please upgrade your workspace plan.`);
+    }
+
+    return true;
+}
+
+// Check if a project can add more members based on its Workspace Plan limits
+export async function checkProjectMemberLimit(projectId: string): Promise<boolean> {
+    const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: {
+            workspace: true,
+            _count: {
+                select: { members: true },
+            },
+        },
+    });
+
+    if (!project) {
+        throw new Error('Project not found.');
+    }
+
+    const limit = PLAN_LIMITS[project.workspace.plan]?.maxMembersPerProject ?? 5;
+    if (project._count.members >= limit) {
+        throw new Error(`Member limit reached for ${project.workspace.plan} plan (max ${limit} members per project). Please upgrade your workspace plan.`);
     }
 
     return true;
@@ -138,10 +162,12 @@ export async function deleteWorkspace(workspaceId: string, userId: string) {
     });
 
     if (projectCount > 0) {
-        throw new Error(`Cannot delete workspace while it still contains ${projectCount} active project(s). Delete or move projects first.`);
+        throw new Error('Cannot delete a workspace that contains active projects. Please delete all projects first.');
     }
 
-    return prisma.workspace.delete({
+    await prisma.workspace.delete({
         where: { id: workspaceId },
     });
+
+    return true;
 }

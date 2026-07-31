@@ -30,13 +30,7 @@ export default function ProjectCalendarPage() {
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    const [extraEvents, setExtraEvents] = useState<CalendarEventItem[]>([
-        { id: 'ev-1', title: 'Task: UI Review', date: 1, type: 'task', color: 'blue' },
-        { id: 'ev-2', title: 'Sync Meeting', date: 2, type: 'meeting', color: 'purple' },
-        { id: 'ev-3', title: 'Beta Launch', date: 3, type: 'milestone', color: 'amber' },
-        { id: 'ev-4', title: 'v2.4 Release', date: 10, type: 'release', color: 'green' },
-        { id: 'ev-5', title: 'Design Workshop', date: 11, type: 'meeting', color: 'purple' },
-    ]);
+    const [extraEvents, setExtraEvents] = useState<CalendarEventItem[]>([]);
 
     useEffect(() => {
         if (projectId) {

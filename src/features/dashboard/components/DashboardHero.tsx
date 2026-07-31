@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@/types';
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 
 interface DashboardHeroProps {
     user: User | null;
@@ -11,7 +12,12 @@ interface DashboardHeroProps {
 
 export function DashboardHero({ user, onOpenCreateProject }: DashboardHeroProps) {
     const router = useRouter();
-    const userName = user?.name || "Krish";
+    const { currentWorkspace } = useWorkspaceStore();
+    const userName = user?.name || "Team Member";
+
+    const workspaceName = currentWorkspace?.name || (user?.name ? `${user.name}'s Workspace` : 'Workspace');
+    const planName = currentWorkspace?.plan || 'FREE';
+    const memberCount = currentWorkspace?._count?.members || 1;
 
     return (
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -21,13 +27,13 @@ export function DashboardHero({ user, onOpenCreateProject }: DashboardHeroProps)
                 </p>
                 <div className="flex flex-wrap gap-2 mt-2 mb-3">
                     <span className="text-[10px] font-medium px-2 py-0.5 bg-[#eae6f4] text-[#464555] rounded-full border border-[#c7c4d8]/30">
-                        {user?.name ? `${user.name}'s Workspace` : "Krish's Workspace"}
+                        {workspaceName}
                     </span>
-                    <span className="text-[10px] font-medium px-2 py-0.5 bg-[#4f46e5]/10 text-[#4f46e5] rounded-full border border-[#4f46e5]/20">
-                        FREE Plan
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-[#4f46e5]/10 text-[#4f46e5] rounded-full border border-[#4f46e5]/20">
+                        {planName} Plan
                     </span>
                     <span className="text-[10px] font-medium px-2 py-0.5 bg-[#eae6f4] text-[#464555] rounded-full border border-[#c7c4d8]/30">
-                        4 Members
+                        {memberCount} {memberCount === 1 ? 'Member' : 'Members'}
                     </span>
                 </div>
                 <h2 className="text-[28px] sm:text-[36px] md:text-[48px] leading-tight font-bold text-[#1b1b24] tracking-tight">

@@ -1,19 +1,22 @@
 'use client';
 
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { ControlBar, LiveKitRoom, RoomAudioRenderer, VideoConference } from '@livekit/components-react';
 import '@livekit/components-styles';
-import axios from 'axios';
-import { ArrowLeft, Check, Copy, Loader2, PhoneCall } from 'lucide-react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Header from '@/components/layout/Header';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
 
 export default function ProjectCallPage() {
     const router = useRouter();
     const { id: projectId } = useParams();
     const searchParams = useSearchParams();
-    const projects = useProjectStore((state) => state.projects);
-    const [copied, setCopied] = useState(false);
+    const { user } = useAuth(true);
+    const { projects, fetchProjects } = useProjectStore();
+
     const [token, setToken] = useState<string | null>(null);
     const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
     const [callError, setCallError] = useState<string | null>(null);
@@ -21,78 +24,59 @@ export default function ProjectCallPage() {
     const [isConnected, setIsConnected] = useState(false);
     const [isCheckingConfig, setIsCheckingConfig] = useState(true);
     const [isConfigReady, setIsConfigReady] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const room = searchParams.get('room') || (typeof projectId === 'string' ? `project-${projectId}` : 'project-room');
-    const callType = searchParams.get('type') === 'video' ? 'video' : 'audio';
+    const callType = searchParams.get('type') === 'audio' ? 'audio' : 'video';
 
-    const projectName = useMemo(() => {
-        if (typeof projectId !== 'string') {
-            return 'Project Call';
-        }
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
 
-        const project = projects.find((item) => item._id === projectId);
-        return project?.name || 'Project Call';
-    }, [projectId, projects]);
+    const project = projects.find((p) => (p._id || p.id) === projectId);
+    const projectName = project?.name || 'Project Call';
 
     const joinLink = useMemo(() => {
-        if (typeof window === 'undefined' || typeof projectId !== 'string') {
-            return '';
-        }
-
+        if (typeof window === 'undefined' || typeof projectId !== 'string') return '';
         return `${window.location.origin}/projects/${projectId}/call?room=${encodeURIComponent(room)}&type=${callType}`;
     }, [callType, projectId, room]);
 
     const handleCopy = async () => {
-        if (!joinLink) {
-            return;
-        }
-
+        if (!joinLink) return;
         await navigator.clipboard.writeText(joinLink);
         setCopied(true);
-        window.setTimeout(() => setCopied(false), 1600);
+        toast.success('Meeting link copied to clipboard!');
+        setTimeout(() => setCopied(false), 2000);
     };
 
     useEffect(() => {
         let isMounted = true;
-
         const checkLiveKitConfig = async () => {
             setIsCheckingConfig(true);
             try {
                 const response = await axios.get('/api/livekit/health');
                 const ready = Boolean(response.data?.data?.ready);
-                if (!isMounted) {
-                    return;
-                }
-
+                if (!isMounted) return;
                 setIsConfigReady(ready);
                 if (!ready) {
-                    setCallError('LiveKit is not ready. Please verify server URL and API credentials.');
+                    setCallError('LiveKit service is not configured properly.');
                 }
             } catch (error: any) {
-                if (!isMounted) {
-                    return;
-                }
-
+                if (!isMounted) return;
                 setIsConfigReady(false);
-                const serverMessage = error?.response?.data?.error || error?.response?.data?.message;
-                setCallError(serverMessage || 'LiveKit credentials are invalid for the configured server.');
+                setCallError(error?.response?.data?.message || 'LiveKit server health check failed.');
             } finally {
-                if (isMounted) {
-                    setIsCheckingConfig(false);
-                }
+                if (isMounted) setIsCheckingConfig(false);
             }
         };
 
         checkLiveKitConfig();
-
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, []);
 
     const handleJoinCall = useCallback(async () => {
         if (!isConfigReady) {
-            setCallError('LiveKit is not ready yet. Please fix configuration and refresh this page.');
+            setCallError('LiveKit configuration is not ready. Please check server credentials.');
             return;
         }
 
@@ -102,151 +86,144 @@ export default function ProjectCallPage() {
         try {
             const response = await axios.post('/api/livekit/token', {
                 room,
-                callType,
+                identity: user?._id || user?.email || `user-${Date.now()}`,
+                name: user?.name || 'Team Member',
             });
 
-            const data = response.data?.data;
-            if (!data?.token || !data?.url) {
-                setCallError('Unable to join call: token response is incomplete.');
-                return;
+            if (!response.data?.data?.token) {
+                throw new Error(response.data?.error || 'Failed to issue LiveKit room access token');
             }
 
-            setToken(data.token);
-            setLivekitUrl(data.url);
+            setToken(response.data.data.token);
+            setLivekitUrl(response.data.data.url);
+            setIsConnected(true);
         } catch (error: any) {
-            const serverMessage = error?.response?.data?.error || error?.response?.data?.message;
-            setToken(null);
-            setCallError(serverMessage || 'Unable to join call right now.');
+            setCallError(error?.response?.data?.error || error.message || 'Could not connect to call room.');
         } finally {
             setIsJoining(false);
         }
-    }, [room, callType, isConfigReady]);
+    }, [isConfigReady, room, user]);
 
-    const handleLeaveLiveCall = useCallback(() => {
+    const handleLeaveCall = () => {
         setToken(null);
+        setLivekitUrl(null);
         setIsConnected(false);
-    }, []);
+        toast('Left conference session', { icon: '👋' });
+    };
 
     return (
-        <div className="min-h-screen bg-gray-100 p-4 sm:p-8">
-            <div className="mx-auto w-full max-w-3xl rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between gap-3">
-                    <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Call Room</p>
-                        <h1 className="text-xl font-semibold text-gray-900 mt-1">{projectName}</h1>
+        <div className="h-screen w-screen bg-[#F8FAFC] overflow-hidden flex flex-col text-[#1b1b24] relative">
+            {/* Standard Single Header with Go Back Button */}
+            <Header user={user} />
+
+            {/* Meeting Sub-Header Toolbar */}
+            <div className="h-14 px-6 bg-white border-b border-[#E2E8F0] flex items-center justify-between z-10 shrink-0 shadow-xs">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-[#10B981]/10 text-[#047857] px-2.5 py-1 rounded-full text-xs font-bold border border-[#10B981]/20">
+                        <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+                        LIVE CONFERENCE
                     </div>
+                    <h1 className="text-sm font-bold text-[#1b1b24] truncate max-w-xs md:max-w-md">
+                        {projectName}
+                    </h1>
+                    <span className="text-xs text-[#777587] font-mono hidden sm:inline-block">
+                        ({room})
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-3">
                     <button
-                        type="button"
-                        onClick={() => router.push(`/projects/${projectId}/chatroom`)}
-                        className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
+                        onClick={handleCopy}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f2ff] hover:bg-[#eae6f4] border border-[#e4e1ee] text-[#4f46e5] rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                     >
-                        <ArrowLeft className="h-4 w-4" />
+                        <span className="material-symbols-outlined text-[16px]">
+                            {copied ? 'check' : 'content_copy'}
+                        </span>
+                        {copied ? 'Copied' : 'Share Link'}
+                    </button>
+                    <button
+                        onClick={() => router.push(`/projects/${projectId}/chatroom`)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs font-semibold hover:bg-rose-100 transition-colors cursor-pointer"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">arrow_back</span>
                         Back to Chat
                     </button>
                 </div>
+            </div>
 
-                <div className="px-6 py-8 space-y-6">
-                    {callError && (
-                        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                            {callError}
+            {/* Standalone Full-Width Video Canvas */}
+            <div className="flex-1 overflow-hidden p-4 md:p-6 bg-[#F8FAFC] flex flex-col items-center justify-center">
+                {!isConnected ? (
+                    /* Pre-Join Card */
+                    <div className="max-w-md w-full bg-white rounded-3xl border border-[#E2E8F0] p-8 shadow-level-1 text-center space-y-6 animate-in fade-in zoom-in duration-200">
+                        <div className="w-20 h-20 rounded-full bg-[#4f46e5]/10 border border-[#4f46e5]/20 text-[#4f46e5] flex items-center justify-center mx-auto">
+                            <span className="material-symbols-outlined text-4xl">
+                                {callType === 'video' ? 'videocam' : 'mic'}
+                            </span>
                         </div>
-                    )}
 
-                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                        <div className="flex items-start gap-3">
-                            <div className="rounded-full bg-blue-600 text-white p-2">
-                                <PhoneCall className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <h2 className="text-base font-semibold text-blue-900">{callType === 'video' ? 'Video' : 'Audio'} call room</h2>
-                                <p className="text-sm text-blue-800 mt-1">Room: {room}</p>
-                                <p className="text-sm text-blue-800">Share the link below so members can join the same room.</p>
-                            </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-[#1b1b24] mb-1">
+                                Join {projectName} Meeting
+                            </h2>
+                            <p className="text-xs text-[#777587] leading-relaxed">
+                                Click below to enter the live {callType === 'video' ? 'video' : 'voice'} call session with your team.
+                            </p>
                         </div>
-                    </div>
 
-                    {!isConnected && (
-                        <div className="rounded-lg border border-gray-200 bg-white p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-900">Ready to join this call</p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {isCheckingConfig
-                                        ? 'Checking LiveKit configuration...'
-                                        : 'Microphone and camera permissions may be requested by your browser.'}
-                                </p>
+                        {callError && (
+                            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs font-medium">
+                                {callError}
                             </div>
+                        )}
+
+                        <div className="pt-2">
                             <button
-                                type="button"
                                 onClick={handleJoinCall}
-                                disabled={isJoining || isCheckingConfig || !isConfigReady}
-                                className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed"
+                                disabled={isJoining || isCheckingConfig}
+                                className="w-full py-3 px-6 bg-[#4f46e5] hover:bg-[#4338CA] text-white font-bold rounded-2xl transition-all shadow-xs text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                             >
-                                {isJoining ? <Loader2 className="h-4 w-4 animate-spin" /> : <PhoneCall className="h-4 w-4" />}
-                                {isJoining ? 'Joining...' : `Join ${callType === 'video' ? 'Video' : 'Audio'} Call`}
-                            </button>
-                        </div>
-                    )}
-
-                    <div>
-                        <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Join Link</p>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            <input
-                                type="text"
-                                readOnly
-                                value={joinLink}
-                                className="flex-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500"
-                            />
-                            <button
-                                type="button"
-                                onClick={handleCopy}
-                                className="inline-flex items-center justify-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800"
-                            >
-                                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                                {copied ? 'Copied' : 'Copy link'}
+                                {isJoining ? (
+                                    <>
+                                        <span className="material-symbols-outlined text-base animate-spin">
+                                            progress_activity
+                                        </span>
+                                        Connecting to LiveKit...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-base">
+                                            meeting_room
+                                        </span>
+                                        Enter Meeting Room
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
-
-                    {!token && !livekitUrl && (
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                            {isCheckingConfig
-                                ? 'Validating LiveKit configuration...'
-                                : isConfigReady
-                                    ? 'LiveKit is configured and ready.'
-                                    : 'LiveKit credentials do not match the configured server. Update env values and restart the server.'}
-                        </div>
-                    )}
-
-                    {token && livekitUrl && (
-                        <div className="rounded-xl overflow-hidden border border-gray-200">
-                            <div className="h-[70vh] min-h-115 bg-gray-950" data-lk-theme="default">
+                ) : (
+                    /* Active Fullscreen Meeting Stage */
+                    <div className="w-full h-full bg-white rounded-3xl border border-[#E2E8F0] shadow-level-1 overflow-hidden flex flex-col relative">
+                        {token && livekitUrl && (
+                            <div className="flex-1 relative overflow-hidden" data-lk-theme="default">
                                 <LiveKitRoom
                                     token={token}
                                     serverUrl={livekitUrl}
                                     connect
                                     video={callType === 'video'}
                                     audio
-                                    onConnected={() => setIsConnected(true)}
-                                    onDisconnected={() => setIsConnected(false)}
-                                    onError={(error) => setCallError(error.message || 'LiveKit connection failed')}
+                                    onDisconnected={handleLeaveCall}
+                                    onError={(err) => setCallError(err.message)}
+                                    className="h-full w-full flex flex-col"
                                 >
                                     <VideoConference />
                                     <RoomAudioRenderer />
                                     <ControlBar variation="minimal" />
                                 </LiveKitRoom>
                             </div>
-                            <div className="bg-white px-4 py-3 border-t border-gray-200 flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={handleLeaveLiveCall}
-                                    className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
-                                >
-                                    Leave Call Session
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

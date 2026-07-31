@@ -55,6 +55,7 @@ export function ChatAreaHeader({
             </div>
 
             <div className="flex items-center gap-3">
+                {/* Standalone Video/Voice Call Action */}
                 <Link
                     href={`/projects/${projectId}/call`}
                     className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#4F46E5] text-white text-xs font-semibold hover:bg-[#3525cd] transition-all shadow-xs cursor-pointer"
@@ -73,28 +74,40 @@ export function ChatAreaHeader({
                     <span className="material-symbols-outlined text-[20px]">search</span>
                 </button>
 
-                {/* Three Dots Menu Container */}
+                {/* Three Dots Options Dropdown Menu */}
                 <div className="relative" ref={menuRef}>
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         className="w-9 h-9 flex items-center justify-center rounded-full text-[#464555] hover:bg-[#f5f2ff] hover:text-[#4F46E5] transition-colors cursor-pointer"
-                        title="Chat Options"
+                        title="Channel options"
                     >
                         <span className="material-symbols-outlined text-[20px]">more_vert</span>
                     </button>
 
-                    {/* Options Popover Menu */}
                     {isMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-[#E2E8F0] z-50 py-2 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-[#E2E8F0] z-50 py-2 animate-in fade-in zoom-in-95 duration-150">
+                            <button
+                                onClick={() => {
+                                    setIsMenuOpen(false);
+                                    onSummarizeAI?.();
+                                }}
+                                className="w-full px-4 py-2 text-left text-xs font-bold text-[#4F46E5] hover:bg-[#f5f2ff] flex items-center gap-2 cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+                                Summarize Chat (AI)
+                            </button>
+
+                            <div className="my-1 border-t border-[#E2E8F0]" />
+
                             <button
                                 onClick={() => {
                                     setIsMenuOpen(false);
                                     onViewSharedFiles?.();
                                 }}
-                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-[#1b1b24] hover:bg-[#f5f2ff] hover:text-[#4F46E5] flex items-center gap-2.5 transition-colors cursor-pointer"
+                                className="w-full px-4 py-2 text-left text-xs text-[#1b1b24] hover:bg-[#fcf8ff] flex items-center gap-2 cursor-pointer"
                             >
                                 <span className="material-symbols-outlined text-[18px] text-[#777587]">folder_open</span>
-                                View Shared Files
+                                Shared Files & Media
                             </button>
 
                             <button
@@ -102,7 +115,7 @@ export function ChatAreaHeader({
                                     setIsMenuOpen(false);
                                     onViewPinnedMessages?.();
                                 }}
-                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-[#1b1b24] hover:bg-[#f5f2ff] hover:text-[#4F46E5] flex items-center gap-2.5 transition-colors cursor-pointer"
+                                className="w-full px-4 py-2 text-left text-xs text-[#1b1b24] hover:bg-[#fcf8ff] flex items-center gap-2 cursor-pointer"
                             >
                                 <span className="material-symbols-outlined text-[18px] text-[#777587]">push_pin</span>
                                 Pinned Messages
@@ -113,34 +126,23 @@ export function ChatAreaHeader({
                                     setIsMenuOpen(false);
                                     onMuteNotifications?.();
                                 }}
-                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-[#1b1b24] hover:bg-[#f5f2ff] hover:text-[#4F46E5] flex items-center gap-2.5 transition-colors cursor-pointer"
+                                className="w-full px-4 py-2 text-left text-xs text-[#1b1b24] hover:bg-[#fcf8ff] flex items-center gap-2 cursor-pointer"
                             >
                                 <span className="material-symbols-outlined text-[18px] text-[#777587]">notifications_off</span>
-                                Mute Notifications
+                                Mute Channel
                             </button>
+
+                            <div className="my-1 border-t border-[#E2E8F0]" />
 
                             <button
                                 onClick={() => {
                                     setIsMenuOpen(false);
                                     onExportTranscript?.();
                                 }}
-                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-[#1b1b24] hover:bg-[#f5f2ff] hover:text-[#4F46E5] flex items-center gap-2.5 transition-colors cursor-pointer"
+                                className="w-full px-4 py-2 text-left text-xs text-[#1b1b24] hover:bg-[#fcf8ff] flex items-center gap-2 cursor-pointer"
                             >
                                 <span className="material-symbols-outlined text-[18px] text-[#777587]">download</span>
-                                Export Chat Transcript
-                            </button>
-
-                            <div className="h-px bg-[#E2E8F0] my-1" />
-
-                            <button
-                                onClick={() => {
-                                    setIsMenuOpen(false);
-                                    onSummarizeAI?.();
-                                }}
-                                className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#4F46E5] hover:bg-[#4F46E5]/10 flex items-center gap-2.5 transition-colors cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-[18px] text-[#4F46E5]">auto_awesome</span>
-                                Summarize Chat (AI)
+                                Export Transcript
                             </button>
                         </div>
                     )}

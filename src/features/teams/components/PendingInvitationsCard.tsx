@@ -17,11 +17,7 @@ interface PendingInvitationsCardProps {
 }
 
 export function PendingInvitationsCard({
-    invites = [
-        { id: '1', email: 'alex.chen@example.com', invitedBy: 'Sarah Jenkins', role: 'Developer', sentDate: 'Oct 24, 2023' },
-        { id: '2', email: 'm.rodriguez@example.com', invitedBy: 'Sarah Jenkins', role: 'Designer', sentDate: 'Oct 22, 2023' },
-        { id: '3', email: 'james.wilson@example.com', invitedBy: 'David Kim', role: 'Manager', sentDate: 'Oct 20, 2023' },
-    ],
+    invites = [],
     onResend,
     onCancel,
 }: PendingInvitationsCardProps) {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useWorkspaceStore } from "@/features/workspaces/store/useWorkspaceStore";
+import { useProjectStore } from "@/features/projects/store/useProjectStore";
 import { CreateWorkspaceModal } from "@/features/workspaces/components/CreateWorkspaceModal";
 
 const navItems = [
@@ -22,6 +23,7 @@ export default function Sidebar() {
     const pathname = usePathname();
     const { user } = useAuth(true);
     const { workspaces, currentWorkspace, fetchWorkspaces, setCurrentWorkspace } = useWorkspaceStore();
+    const { projects, fetchProjects } = useProjectStore();
 
     const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -29,7 +31,8 @@ export default function Sidebar() {
 
     useEffect(() => {
         fetchWorkspaces();
-    }, [fetchWorkspaces]);
+        fetchProjects();
+    }, [fetchWorkspaces, fetchProjects]);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -47,12 +50,12 @@ export default function Sidebar() {
         slug: 'personal-workspace',
         plan: 'FREE' as const,
         role: 'OWNER' as const,
-        _count: { projects: 2, members: 1 },
+        _count: { projects: 0, members: 1 },
     };
 
     const planMaxProjects = activeWs.plan === 'PRO' ? 10 : activeWs.plan === 'MAX' ? Infinity : 3;
-    const projectCount = activeWs._count?.projects || 0;
-    const usagePercent = planMaxProjects === Infinity ? 20 : Math.min(100, Math.round((projectCount / planMaxProjects) * 100));
+    const realProjectCount = projects.length;
+    const usagePercent = planMaxProjects === Infinity ? 10 : Math.min(100, Math.round((realProjectCount / planMaxProjects) * 100));
 
     return (
         <aside className="bg-white text-[#1b1b24] w-64 border-r border-[#e4e1ee] hidden md:flex flex-col h-full py-6 px-4 z-20 shrink-0">
@@ -97,7 +100,7 @@ export default function Sidebar() {
                         <div className="flex justify-between text-[10px] text-[#464555]">
                             <span>Projects</span>
                             <span>
-                                {projectCount} / {planMaxProjects === Infinity ? '∞' : planMaxProjects} Used
+                                {realProjectCount} / {planMaxProjects === Infinity ? '∞' : planMaxProjects} Used
                             </span>
                         </div>
                         <div className="w-full bg-[#e4e1ee] rounded-full h-1">

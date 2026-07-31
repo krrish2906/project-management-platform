@@ -4,7 +4,9 @@ import { verifyWorkspaceAccess, checkProjectLimit } from './workspaceService';
 
 export interface CreateProjectDTO {
     name: string;
+    key?: string;
     description?: string;
+    status?: ProjectStatus;
     color?: string;
     icon?: string;
 }
@@ -62,8 +64,8 @@ export async function createProject(workspaceId: string, ownerId: string, data: 
     // 2. Check FREE plan project limit using PLAN_LIMITS
     await checkProjectLimit(workspaceId);
 
-    // 3. Generate collision-resistant project key
-    const key = await generateProjectKey(workspaceId, data.name);
+    // 3. Generate or validate collision-resistant project key
+    const key = data.key?.trim() ? data.key.trim().toUpperCase() : await generateProjectKey(workspaceId, data.name);
 
     // 4. Create project and owner ProjectMember in Prisma
     const project = await prisma.project.create({
@@ -73,6 +75,7 @@ export async function createProject(workspaceId: string, ownerId: string, data: 
             name: data.name.trim(),
             key,
             description: data.description?.trim() || null,
+            status: data.status || ProjectStatus.ACTIVE,
             color: data.color || '#3b82f6',
             icon: data.icon || null,
             members: {

@@ -14,12 +14,35 @@ interface ActiveSprintCardProps {
 
 export function ActiveSprintCard({
     projectId,
-    sprintName = 'Sprint 12 Final Push',
-    goal = 'Goal: Complete high-priority marketing assets and launch landing pages.',
-    daysRemaining = 4,
-    completedTasksCount = 7,
-    totalTasksCount = 10,
+    sprintName,
+    goal,
+    daysRemaining = 0,
+    completedTasksCount = 0,
+    totalTasksCount = 0,
 }: ActiveSprintCardProps) {
+    if (!sprintName) {
+        return (
+            <section className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-bold text-[#1b1b24] flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#777587] text-[20px]">sprint</span>
+                        Active Sprint
+                    </h3>
+                    <span className="bg-[#e4e1ee] text-[#464555] text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
+                        None
+                    </span>
+                </div>
+                <p className="text-xs text-[#777587] py-2">No active sprint running in this project.</p>
+                <Link
+                    href={`/projects/${projectId}/backlog`}
+                    className="text-xs text-[#4f46e5] font-semibold hover:underline flex items-center gap-1 mt-1"
+                >
+                    Plan new sprint in Backlog <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </Link>
+            </section>
+        );
+    }
+
     return (
         <section className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 flex flex-col gap-4">
             <div className="flex justify-between items-center">
@@ -34,7 +57,7 @@ export function ActiveSprintCard({
 
             <div>
                 <h4 className="text-[16px] font-semibold text-[#1b1b24] mb-1">{sprintName}</h4>
-                <p className="text-sm text-[#464555] line-clamp-2">{goal}</p>
+                {goal && <p className="text-sm text-[#464555] line-clamp-2">{goal}</p>}
             </div>
 
             <div className="flex items-center gap-3 bg-[#fcf8ff] p-3 rounded-xl border border-[#E2E8F0]/60 mt-auto">

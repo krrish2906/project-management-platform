@@ -20,19 +20,19 @@ interface ProjectOverviewHeaderCardProps {
 }
 
 export function ProjectOverviewHeaderCard({
-    projectKey = 'PRJ-01',
+    projectKey = 'PRJ',
     title,
     description,
     status = 'Active',
-    startDate = 'July 1',
-    dueDate = 'Oct 15',
-    membersCount = 12,
-    progress = 68,
-    totalTasks = 48,
-    doneTasks = 32,
-    inProgressTasks = 8,
-    reviewTasks = 2,
-    todoTasks = 6,
+    startDate,
+    dueDate,
+    membersCount = 1,
+    progress = 0,
+    totalTasks = 0,
+    doneTasks = 0,
+    inProgressTasks = 0,
+    reviewTasks = 0,
+    todoTasks = 0,
     onMoreOptions,
 }: ProjectOverviewHeaderCardProps) {
     return (

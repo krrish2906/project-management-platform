@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { name, description, color, icon } = body;
+        const { name, key, description, status, color, icon } = body;
 
         if (!name) {
             return NextResponse.json({
@@ -95,7 +95,9 @@ export async function POST(request: NextRequest) {
 
         const project = await createProject(workspaceId, authUser.userId, {
             name,
+            key,
             description,
+            status,
             color,
             icon,
         });

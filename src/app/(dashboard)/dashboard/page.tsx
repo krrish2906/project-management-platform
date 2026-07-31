@@ -119,7 +119,6 @@ export default function DashboardPage() {
                 onClose={() => setIsCreateProjectModalOpen(false)}
                 onProjectCreated={() => {
                     setIsCreateProjectModalOpen(false);
-                    router.push('/projects');
                 }}
             />
         </div>

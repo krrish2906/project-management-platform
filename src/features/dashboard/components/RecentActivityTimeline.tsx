@@ -1,73 +1,93 @@
 'use client'
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { formatDistanceToNow } from 'date-fns';
+
+interface ActivityItem {
+    id: string;
+    action: string;
+    entityType?: string;
+    entityName?: string;
+    actorName: string;
+    actorAvatar?: string;
+    createdAt: string;
+}
 
 export function RecentActivityTimeline() {
+    const [activities, setActivities] = useState<ActivityItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchActivity = async () => {
+            try {
+                const res = await axios.get('/api/activity');
+                if (res.data?.success && Array.isArray(res.data.data?.activities)) {
+                    const formatted = res.data.data.activities.map((a: any) => ({
+                        id: a._id || a.id,
+                        action: a.action || 'performed an action',
+                        entityType: a.entityType,
+                        entityName: a.entityName || a.details?.title,
+                        actorName: a.actor?.name || 'Team Member',
+                        actorAvatar: a.actor?.avatar,
+                        createdAt: a.createdAt,
+                    }));
+                    setActivities(formatted);
+                }
+            } catch (err) {
+                console.log('Failed to fetch activity log', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchActivity();
+    }, []);
+
     return (
         <div className="bg-white rounded-3xl p-6 shadow-level-1 border border-[#E2E8F0]">
             <h3 className="text-[20px] leading-7 font-bold text-[#1b1b24] mb-4">Recent Activity</h3>
-            <div className="relative pl-4 space-y-4 before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-[#e4e1ee]">
-                
-                {/* Activity Item 1 */}
-                <div className="relative flex gap-3">
-                    <div className="absolute -left-6 w-5 h-5 rounded-full bg-white border-2 border-[#4f46e5] z-10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[10px] text-[#4f46e5]">chat_bubble</span>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-[#f5f2ff] text-[#4f46e5] flex items-center justify-center font-bold text-xs border border-[#e4e1ee]">
-                        SJ
-                    </div>
-                    <div>
-                        <p className="text-[13px] leading-snug text-[#1b1b24]">
-                            <span className="font-semibold">Sarah J.</span> commented on{' '}
-                            <span className="font-semibold text-[#4f46e5] cursor-pointer hover:underline">
-                                Homepage Hero Wireframe
-                            </span>
-                        </p>
-                        <p className="text-[10px] text-[#777587] mt-0.5">10 mins ago</p>
-                    </div>
-                </div>
 
-                {/* Activity Item 2 */}
-                <div className="relative flex gap-3">
-                    <div className="absolute -left-6 w-5 h-5 rounded-full bg-white border-2 border-[#006c49] z-10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[10px] text-[#006c49]">check</span>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-[#6cf8bb]/20 text-[#006c49] flex items-center justify-center font-bold text-xs border border-[#e4e1ee]">
-                        MT
-                    </div>
-                    <div>
-                        <p className="text-[13px] leading-snug text-[#1b1b24]">
-                            <span className="font-semibold">Mike T.</span> completed task{' '}
-                            <span className="font-semibold text-[#4f46e5] cursor-pointer hover:underline">
-                                Setup CI/CD Pipeline
-                            </span>
-                        </p>
-                        <p className="text-[10px] text-[#777587] mt-0.5">2 hours ago</p>
-                    </div>
+            {isLoading ? (
+                <div className="py-6 flex items-center justify-center">
+                    <span className="material-symbols-outlined animate-spin text-[#4f46e5] text-2xl">
+                        progress_activity
+                    </span>
                 </div>
-
-                {/* Activity Item 3 */}
-                <div className="relative flex gap-3">
-                    <div className="absolute -left-6 w-5 h-5 rounded-full bg-white border-2 border-[#F59E0B] z-10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[10px] text-[#F59E0B]">attach_file</span>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-[#f5f2ff] flex items-center justify-center text-xs font-bold text-[#464555] border border-[#e4e1ee]">
-                        S
-                    </div>
-                    <div>
-                        <p className="text-[13px] leading-snug text-[#1b1b24]">
-                            <span className="font-semibold">System</span> uploaded{' '}
-                            <span className="font-semibold text-[#4f46e5] cursor-pointer hover:underline">
-                                Weekly_Report_v2.pdf
-                            </span>
-                        </p>
-                        <p className="text-[10px] text-[#777587] mt-0.5">Yesterday, 4:30 PM</p>
-                    </div>
+            ) : activities.length === 0 ? (
+                <div className="py-8 text-center border border-dashed border-[#e4e1ee] rounded-2xl bg-[#fcf8ff]">
+                    <span className="material-symbols-outlined text-3xl text-[#777587] mb-1 block">
+                        history
+                    </span>
+                    <p className="text-xs font-semibold text-[#1b1b24] mb-0.5">No recent activity</p>
+                    <p className="text-[11px] text-[#777587]">Activities will log as your team creates tasks and collaborates.</p>
                 </div>
-            </div>
-            <button className="w-full mt-4 text-center text-xs font-semibold text-[#4f46e5] hover:text-[#3525cd] transition-colors py-2 rounded-lg hover:bg-[#4f46e5]/5 cursor-pointer">
-                View all activity
-            </button>
+            ) : (
+                <div className="relative pl-4 space-y-4 before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-[#e4e1ee]">
+                    {activities.slice(0, 5).map((act) => (
+                        <div key={act.id} className="relative flex gap-3">
+                            <div className="absolute -left-6 w-5 h-5 rounded-full bg-white border-2 border-[#4f46e5] z-10 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-[10px] text-[#4f46e5]">
+                                    notifications
+                                </span>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-[#f5f2ff] text-[#4f46e5] flex items-center justify-center font-bold text-xs border border-[#e4e1ee] shrink-0">
+                                {act.actorName.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[13px] leading-snug text-[#1b1b24]">
+                                    <span className="font-semibold">{act.actorName}</span> {act.action}{' '}
+                                    {act.entityName && (
+                                        <span className="font-semibold text-[#4f46e5]">{act.entityName}</span>
+                                    )}
+                                </p>
+                                <p className="text-[10px] text-[#777587] mt-0.5">
+                                    {formatDistanceToNow(new Date(act.createdAt), { addSuffix: true })}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

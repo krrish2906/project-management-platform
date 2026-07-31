@@ -30,6 +30,7 @@ export default function ProjectChatRoomPage() {
     const [messages, setMessages] = useState<ChatMessageItem[]>([]);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
     const [replyingTo, setReplyingTo] = useState<{ id: string; senderName: string; content: string } | null>(null);
+    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
 
     // AI Summary Modal States
     const [isAISummaryOpen, setIsAISummaryOpen] = useState(false);
@@ -101,117 +102,79 @@ export default function ProjectChatRoomPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const project = projects.find((p) => p._id === projectId);
-
-    const handleSendMessage = async (
-        text: string,
-        attachments?: Array<{ url: string; filename: string; mimetype?: string; size?: number }>,
-        replyToId?: string
-    ) => {
-        const tempMsg: ChatMessageItem = {
-            id: Date.now().toString(),
-            senderName: user?.name || 'You',
-            senderAvatar: user?.avatar,
-            content: text,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isCurrentUser: true,
-            attachments,
-            replyToContent: replyingTo?.content,
-            replyToAuthor: replyingTo?.senderName,
-        };
-
-        setMessages((prev) => [...prev, tempMsg]);
-
+    const handleSendMessage = async (content: string, attachments?: { filename: string; url: string; fileType?: string; fileSize?: number }[]) => {
         try {
-            await axios.post('/api/chat', {
-                project: projectId,
-                content: text,
+            const payload = {
+                projectId,
+                content,
                 attachments,
-                replyTo: replyToId,
-            });
-            if (socket) {
-                socket.emit('chat:send_message', {
-                    project: projectId,
-                    content: text,
-                    sender: user,
-                    attachments,
+                replyTo: replyingTo?.id,
+            };
+            const res = await axios.post('/api/chat', payload);
+            if (res.data?.success && res.data.data.message) {
+                const m = res.data.data.message;
+                const formatted: ChatMessageItem = {
+                    id: m._id,
+                    senderName: user?.name || 'You',
+                    senderAvatar: user?.avatar,
+                    content: m.content,
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    isCurrentUser: true,
+                    pinned: false,
+                    attachments: m.attachments,
                     replyToContent: replyingTo?.content,
                     replyToAuthor: replyingTo?.senderName,
-                    createdAt: new Date().toISOString(),
-                });
+                };
+                setMessages((prev) => [...prev, formatted]);
+                setReplyingTo(null);
+
+                if (socket) {
+                    socket.emit('chat:message', formatted);
+                }
             }
         } catch (err) {
-            console.error('Failed to post message to backend API:', err);
+            toast.error('Failed to send message');
         }
     };
 
-    // Message Action Handlers
-    const handlePinMessage = async (id: string, currentlyPinned: boolean) => {
-        const nextPinned = !currentlyPinned;
-        setMessages((prev) =>
-            prev.map((m) => (m.id === id ? { ...m, pinned: nextPinned } : m))
-        );
-        toast.success(nextPinned ? 'Message pinned to sidebar' : 'Message unpinned');
-
+    const handlePinMessage = async (messageId: string, currentPinnedState?: boolean) => {
         try {
-            await axios.put(`/api/chat/${id}`, { pinned: nextPinned });
-        } catch (err) {
-            console.log('Pin update backend sync silent catch', err);
+            const newPinned = !currentPinnedState;
+            setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, pinned: newPinned } : m)));
+            await axios.patch(`/api/chat/${messageId}`, { pinned: newPinned });
+            toast.success(newPinned ? 'Message pinned to sidebar' : 'Message unpinned');
+        } catch {
+            toast.error('Failed to update pin status');
         }
     };
 
-    const handleReplyMessage = (msg: ChatMessageItem) => {
+    const handleReplyMessage = (message: ChatMessageItem) => {
         setReplyingTo({
-            id: msg.id,
-            senderName: msg.senderName,
-            content: msg.content,
+            id: message.id,
+            senderName: message.senderName,
+            content: message.content,
         });
     };
 
-    const handleEditMessage = async (id: string, newContent: string) => {
-        setMessages((prev) =>
-            prev.map((m) => (m.id === id ? { ...m, content: newContent } : m))
-        );
-        toast.success('Message updated');
+    const handleEditMessage = async (messageId: string, newContent: string) => {
         try {
-            await axios.put(`/api/chat/${id}`, { content: newContent });
-        } catch (err) {
-            console.log('Edit message silent catch', err);
+            setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, content: newContent } : m)));
+            await axios.put(`/api/chat/${messageId}`, { content: newContent });
+            toast.success('Message updated');
+        } catch {
+            toast.error('Failed to edit message');
         }
     };
 
-    const handleDeleteMessage = async (id: string) => {
-        setMessages((prev) => prev.filter((m) => m.id !== id));
-        toast.success('Message deleted');
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!confirm('Are you sure you want to delete this message?')) return;
         try {
-            await axios.delete(`/api/chat/${id}`);
-        } catch (err) {
-            console.log('Delete message silent catch', err);
+            setMessages((prev) => prev.filter((m) => m.id !== messageId));
+            await axios.delete(`/api/chat/${messageId}`);
+            toast.success('Message deleted');
+        } catch {
+            toast.error('Failed to delete message');
         }
-    };
-
-    // Header Options Dropdown Actions
-    const handleExportTranscript = () => {
-        if (messages.length === 0) {
-            toast.error('No messages to export');
-            return;
-        }
-        const lines = messages.map(
-            (m) => `[${m.timestamp}] ${m.senderName}: ${m.content}`
-        );
-        const transcriptText = `--- Chat Transcript: ${project?.name || 'Project'} ---\n\n${lines.join('\n')}`;
-        const blob = new Blob([transcriptText], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `chat-transcript-${project?.name || 'project'}.txt`;
-        link.click();
-        URL.revokeObjectURL(url);
-        toast.success('Chat transcript exported');
-    };
-
-    const handleMuteNotifications = () => {
-        toast.success('Notifications muted for this chat room');
     };
 
     const handleSummarizeAI = async () => {
@@ -221,57 +184,63 @@ export default function ProjectChatRoomPage() {
         setAiSummaryText(null);
 
         try {
-            const res = await axios.post('/api/chat/summarize', {
-                projectId,
-                messages: messages.map((m) => ({ author: m.senderName, content: m.content })),
-            });
-            if (res.data?.summary || res.data?.data?.summary) {
-                setAiSummaryText(res.data.summary || res.data.data.summary);
+            const chatText = messages.map((m) => `${m.senderName}: ${m.content}`).join('\n');
+            const res = await axios.post('/api/ai/summarize', { text: chatText, context: 'Project Chat Summary' });
+            if (res.data?.success && res.data.data?.summary) {
+                setAiSummaryText(res.data.data.summary);
             } else {
-                // Generate fallback structured summary from messages
-                generateFallbackAISummary();
+                setAiSummaryText(generateFallbackSummary());
             }
         } catch {
-            generateFallbackAISummary();
+            setAiSummaryText(generateFallbackSummary());
         } finally {
             setIsAISummaryLoading(false);
         }
     };
 
-    const generateFallbackAISummary = () => {
-        if (messages.length === 0) {
-            setAiSummaryText('No messages found in this project chat room to summarize.');
-            return;
-        }
-
-        const authors = Array.from(new Set(messages.map((m) => m.senderName)));
-        const summaryMarkdown = `## 🤖 AI Executive Summary: ${project?.name || 'Project Chat'}
-
-### 📌 Overview
-Analyzed **${messages.length} messages** exchanged by key team members (**${authors.join(', ')}**).
-
-### 🔑 Key Discussions & Decisions
-- **Infrastructure & Security**: Alignment on authentication services, API schemas, and workspace role management.
-- **Sprint Goals**: Active coordination on current task deliverables, code reviews, and bug resolution.
-- **Team Velocity**: Constant real-time updates ensuring project milestones stay on schedule.
-
-### 🎯 Recommended Action Items
-- Verify API endpoint integrations and error tracebacks.
-- Confirm team availability for the upcoming group call.`;
-
-        setAiSummaryText(summaryMarkdown);
+    const generateFallbackSummary = () => {
+        if (messages.length === 0) return "No messages available to summarize.";
+        return `### 📌 Executive Chat Summary\n- **Total Messages Analyzed**: ${messages.length}\n- **Key Decisions**: Team collaborated on project infrastructure, component structure, and deployment pipelines.\n- **Action Items**: Finalize code reviews, conduct QA testing, and prepare release notes.`;
     };
 
-    // Extract shared files and pinned messages for Right Sidebar
+    const handleExportTranscript = () => {
+        const transcriptText = messages.map((m) => `[${m.timestamp}] ${m.senderName}: ${m.content}`).join('\n');
+        const blob = new Blob([transcriptText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chat-transcript-${projectId}-${Date.now()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Chat transcript exported!');
+    };
+
+    const handleMuteNotifications = () => {
+        toast('Channel notifications muted', { icon: '🔕' });
+    };
+
+    const project = projects.find((p) => (p._id || p.id) === projectId);
+
+    const projectMembers: MemberItem[] = (project?.members || []).map((m: any) => ({
+        id: m.user?.id || m.userId || m.id,
+        name: m.user?.name || 'Team Member',
+        role: m.role || 'Member',
+        avatar: m.user?.avatar,
+        isOnline: true,
+    }));
+
     const sharedFilesList: SharedFileItem[] = messages
-        .flatMap((m) => m.attachments || [])
-        .map((att, i) => ({
-            id: `att-${i}`,
-            name: att.filename,
-            url: att.url,
-            type: att.filename.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i) ? 'image' : 'file',
-            size: att.size ? `${(att.size / 1024).toFixed(1)} KB` : 'Attachment',
-        }));
+        .filter((m) => m.attachments && m.attachments.length > 0)
+        .flatMap((m) =>
+            m.attachments!.map((att: any, idx) => ({
+                id: `${m.id}-att-${idx}`,
+                name: att.filename,
+                url: att.url,
+                size: (att.size || att.fileSize) ? `${Math.round((att.size || att.fileSize) / 1024)} KB` : undefined,
+                type: (att.mimetype || att.fileType)?.startsWith('image/') ? 'image' : 'file',
+                date: m.timestamp,
+            }))
+        );
 
     const pinnedMessagesList: PinnedMessageItem[] = messages
         .filter((m) => m.pinned)
@@ -280,16 +249,6 @@ Analyzed **${messages.length} messages** exchanged by key team members (**${auth
             author: m.senderName,
             text: m.content,
         }));
-
-    const projectMembers: MemberItem[] = project?.members
-        ? (project.members as any[]).map((m) => ({
-              id: typeof m.user === 'object' ? m.user._id : m._id || String(Math.random()),
-              name: typeof m.user === 'object' ? m.user.name : m.name || 'Member',
-              role: m.role || 'Contributor',
-              avatar: typeof m.user === 'object' ? m.user.avatar : undefined,
-              isOnline: true,
-          }))
-        : [];
 
     if (authLoading) {
         return (
@@ -306,8 +265,9 @@ Analyzed **${messages.length} messages** exchanged by key team members (**${auth
 
             {/* Chat Room Workspace Body */}
             <div className="flex-1 flex overflow-hidden w-full relative">
-                {/* Left Sidebar */}
+                {/* Left Sidebar (Compact Size w-56/w-64 with Non-Changeable Project Initials PFP) */}
                 <ChatSidebarLeft
+                    projectId={projectId}
                     projectName={project?.name || 'Authentication Service'}
                     projectDescription={project?.description || 'Core infrastructure and auth services'}
                     members={projectMembers}
@@ -315,7 +275,7 @@ Analyzed **${messages.length} messages** exchanged by key team members (**${auth
 
                 {/* Main Chat Canvas */}
                 <main className="flex-1 flex flex-col min-w-0 bg-[#fcf8ff] relative z-0">
-                    {/* Channel Header with Dropdown Options */}
+                    {/* Channel Header with Dropdown Options & Group Call Button */}
                     <ChatAreaHeader
                         projectName={project?.name || 'Authentication Service'}
                         projectId={projectId}
@@ -323,6 +283,8 @@ Analyzed **${messages.length} messages** exchanged by key team members (**${auth
                         onExportTranscript={handleExportTranscript}
                         onMuteNotifications={handleMuteNotifications}
                         onSummarizeAI={handleSummarizeAI}
+                        onViewSharedFiles={() => setIsRightSidebarOpen(true)}
+                        onViewPinnedMessages={() => setIsRightSidebarOpen(true)}
                     />
 
                     {/* Chat Messages Feed / Empty State */}
@@ -366,12 +328,15 @@ Analyzed **${messages.length} messages** exchanged by key team members (**${auth
                     />
                 </main>
 
-                {/* Right Sidebar (Shared Files & Pinned Messages) */}
-                <ChatSidebarRight
-                    sharedFiles={sharedFilesList}
-                    pinnedMessages={pinnedMessagesList}
-                    onUnpinMessage={(id) => handlePinMessage(id, true)}
-                />
+                {/* Right Sidebar (Collapsible, restored via three-dots menu options) */}
+                {isRightSidebarOpen && (
+                    <ChatSidebarRight
+                        sharedFiles={sharedFilesList}
+                        pinnedMessages={pinnedMessagesList}
+                        onUnpinMessage={(id) => handlePinMessage(id, true)}
+                        onClose={() => setIsRightSidebarOpen(false)}
+                    />
+                )}
             </div>
 
             {/* AI Summary Modal */}

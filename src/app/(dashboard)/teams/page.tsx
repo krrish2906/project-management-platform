@@ -40,10 +40,7 @@ export default function TeamPage() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-    const [invites, setInvites] = useState<PendingInvite[]>([
-        { id: '1', email: 'alex.chen@example.com', invitedBy: 'Sarah Jenkins', role: 'Developer', sentDate: 'Oct 24, 2023' },
-        { id: '2', email: 'm.rodriguez@example.com', invitedBy: 'Sarah Jenkins', role: 'Designer', sentDate: 'Oct 22, 2023' },
-    ]);
+    const [invites, setInvites] = useState<PendingInvite[]>([]);
 
     useSocket({
         projectId: null,

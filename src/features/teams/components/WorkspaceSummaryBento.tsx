@@ -10,10 +10,10 @@ interface WorkspaceSummaryBentoProps {
 }
 
 export function WorkspaceSummaryBento({
-    totalMembers = 42,
-    adminsCount = 5,
-    pendingInvitesCount = 3,
-    activeTodayCount = 18,
+    totalMembers = 0,
+    adminsCount = 0,
+    pendingInvitesCount = 0,
+    activeTodayCount = 0,
 }: WorkspaceSummaryBentoProps) {
     return (
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
