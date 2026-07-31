@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
-import { createTask, getProjectTasks } from '@/services/taskService';
+import { createTask, getProjectTasks, getUserTasks } from '@/services/taskService';
 
 // GET /api/tasks - Get tasks for a project
 export async function GET(request: NextRequest) {
@@ -16,14 +16,9 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const projectId = searchParams.get('project');
 
-        if (!projectId) {
-            return NextResponse.json({
-                success: false, data: null,
-                message: 'Project ID is required', error: 'Project ID is required',
-            }, { status: 400 });
-        }
-
-        const tasks = await getProjectTasks(projectId, authUser.userId);
+        const tasks = projectId
+            ? await getProjectTasks(projectId, authUser.userId)
+            : await getUserTasks(authUser.userId);
 
         return NextResponse.json({
             success: true,

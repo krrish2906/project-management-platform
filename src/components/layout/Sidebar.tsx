@@ -1,74 +1,205 @@
 "use client";
 
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, FolderOpen, CheckSquare, Users, BarChart3, Settings, HelpCircle } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useRouter } from "next/navigation";
+import { useWorkspaceStore } from "@/features/workspaces/store/useWorkspaceStore";
+import { CreateWorkspaceModal } from "@/features/workspaces/components/CreateWorkspaceModal";
 
 const navItems = [
-    { name: "Dashboard", icon: LayoutGrid, href: "/dashboard" },
-    { name: "Projects", icon: FolderOpen, href: "/projects" },
-    { name: "Tasks", icon: CheckSquare, href: "/tasks" },
-    { name: "Teams", icon: Users, href: "/teams" },
-    { name: "Reports", icon: BarChart3, href: "/reports" },
+    { name: "Dashboard", icon: "dashboard", href: "/dashboard" },
+    { name: "Projects", icon: "folder_open", href: "/projects" },
+    { name: "My Tasks", icon: "assignment", href: "/tasks" },
+    { name: "Workspace Team", icon: "group", href: "/teams" },
+    { name: "Billing", icon: "payments", href: "/billing" },
+    { name: "Settings", icon: "settings", href: "/settings" },
+    { name: "My Profile", icon: "account_circle", href: "/profile" },
+    { name: "Help", icon: "help", href: "/help" },
 ];
 
 export default function Sidebar() {
     const pathname = usePathname();
     const { user } = useAuth(true);
-    const router = useRouter();
+    const { workspaces, currentWorkspace, fetchWorkspaces, setCurrentWorkspace } = useWorkspaceStore();
+
+    const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const popoverRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        fetchWorkspaces();
+    }, [fetchWorkspaces]);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+                setIsSwitcherOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const activeWs = currentWorkspace || workspaces[0] || {
+        id: 'default',
+        name: user?.name ? `${user.name}'s Workspace` : "Personal Workspace",
+        slug: 'personal-workspace',
+        plan: 'FREE' as const,
+        role: 'OWNER' as const,
+        _count: { projects: 2, members: 1 },
+    };
+
+    const planMaxProjects = activeWs.plan === 'PRO' ? 10 : activeWs.plan === 'MAX' ? Infinity : 3;
+    const projectCount = activeWs._count?.projects || 0;
+    const usagePercent = planMaxProjects === Infinity ? 20 : Math.min(100, Math.round((projectCount / planMaxProjects) * 100));
 
     return (
-        <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-            <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                        <CheckSquare className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-2xl font-semibold text-gray-900">ProjectHub</span>
+        <aside className="bg-white text-[#1b1b24] w-64 border-r border-[#e4e1ee] hidden md:flex flex-col h-full py-6 px-4 z-20 shrink-0">
+            {/* Header / Brand */}
+            <div className="mb-6 flex items-center space-x-3 px-2">
+                <div className="w-8 h-8 rounded-lg bg-[#4f46e5] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                    P
+                </div>
+                <div>
+                    <h1 className="text-[18px] leading-6 font-bold text-[#1b1b24] tracking-tight">
+                        ProjectHub
+                    </h1>
+                    <p className="text-[12px] leading-4 text-[#464555]">Engineering Workspace</p>
                 </div>
             </div>
 
-            <nav className="flex-1 p-4">
+            {/* Workspace Switcher Card */}
+            <div className="mx-2 mb-6 relative" ref={popoverRef}>
+                <div
+                    onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
+                    className="p-3 bg-[#f5f2ff] rounded-xl border border-[#e4e1ee]/50 cursor-pointer hover:border-[#4f46e5]/40 transition-colors"
+                >
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex flex-col min-w-0 pr-1">
+                            <span className="text-[12px] leading-4 font-bold text-[#1b1b24] truncate">
+                                {activeWs.name}
+                            </span>
+                            <span className="text-[10px] text-[#464555] truncate font-mono">
+                                {activeWs.slug}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#4f46e5]/10 text-[#4f46e5] rounded">
+                                {activeWs.plan}
+                            </span>
+                            <span className="material-symbols-outlined text-[#464555] text-sm">
+                                expand_more
+                            </span>
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] text-[#464555]">
+                            <span>Projects</span>
+                            <span>
+                                {projectCount} / {planMaxProjects === Infinity ? '∞' : planMaxProjects} Used
+                            </span>
+                        </div>
+                        <div className="w-full bg-[#e4e1ee] rounded-full h-1">
+                            <div
+                                className="bg-[#4f46e5] h-1 rounded-full transition-all duration-300"
+                                style={{ width: `${usagePercent}%` }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Workspace Switcher Dropdown Popover */}
+                {isSwitcherOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-[#e4e1ee] z-50 py-2 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        <div className="px-3 py-1.5 text-[10px] font-bold text-[#777587] uppercase tracking-wider border-b border-[#e4e1ee]">
+                            Switch Workspace
+                        </div>
+
+                        <div className="max-h-48 overflow-y-auto py-1">
+                            {workspaces.map((ws) => {
+                                const isSelected = ws.id === activeWs.id;
+                                return (
+                                    <button
+                                        key={ws.id}
+                                        onClick={() => {
+                                            setCurrentWorkspace(ws);
+                                            setIsSwitcherOpen(false);
+                                        }}
+                                        className={`w-full px-3 py-2 text-left flex items-center justify-between transition-colors cursor-pointer text-xs ${
+                                            isSelected ? 'bg-[#f5f2ff] font-bold text-[#4f46e5]' : 'hover:bg-[#f5f2ff]/60 text-[#1b1b24]'
+                                        }`}
+                                    >
+                                        <div className="min-w-0 pr-2">
+                                            <p className="truncate">{ws.name}</p>
+                                            <span className="text-[10px] text-[#777587] font-mono">{ws.role}</span>
+                                        </div>
+                                        {isSelected && (
+                                            <span className="material-symbols-outlined text-[16px] text-[#4f46e5]">check</span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="border-t border-[#e4e1ee] pt-1">
+                            <button
+                                onClick={() => {
+                                    setIsSwitcherOpen(false);
+                                    setIsCreateModalOpen(true);
+                                }}
+                                className="w-full px-3 py-2 text-left text-xs font-bold text-[#4f46e5] hover:bg-[#4f46e5]/10 flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">add</span>
+                                Create New Workspace
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Navigation Links */}
+            <nav className="flex-1 space-y-1">
                 {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = pathname?.startsWith(item.href);
+                    const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href));
                     return (
                         <Link
                             key={item.name}
                             href={item.href}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg transition-colors ${
-                                isActive ? "bg-blue-50 text-blue-600" : "text-gray-900 hover:bg-gray-50"
+                            className={`flex items-center px-3 py-2 rounded-lg text-[14px] leading-5 font-medium transition-all duration-200 ${
+                                isActive
+                                    ? "text-[#3525cd] font-semibold border-l-2 border-[#3525cd] bg-[#3525cd]/5"
+                                    : "text-[#464555] hover:text-[#1b1b24] hover:bg-[#eae6f4]/50"
                             }`}
                         >
-                            <Icon className="w-5 h-5" />
-                            <span className="font-medium">{item.name}</span>
+                            <span
+                                className="material-symbols-outlined mr-3 text-[20px]"
+                                style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
+                            >
+                                {item.icon}
+                            </span>
+                            {item.name}
                         </Link>
                     );
                 })}
             </nav>
 
-            <div className="p-4 border-t border-gray-200">
-                <Link href="/settings" className="w-full flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg text-gray-900 hover:bg-gray-50">
-                    <Settings className="w-5 h-5" />
-                    <span className="font-medium">Settings</span>
-                </Link>
-                <Link href="/help" className="w-full flex items-center gap-3 px-3 py-2.5 mb-4 rounded-lg text-gray-900 hover:bg-gray-50">
-                    <HelpCircle className="w-5 h-5" />
-                    <span className="font-medium">Help</span>
-                </Link>
-
-                <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => router.push('/profile')}>
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-medium text-sm">
-                        {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</div>
-                        <div className="text-xs text-gray-500 truncate">{user?.email || ''}</div>
-                    </div>
-                </div>
+            {/* Bottom Action */}
+            <div className="mt-auto pt-4">
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="w-full py-2.5 px-4 bg-[#4f46e5] hover:bg-[#4338CA] text-white rounded-lg text-[14px] leading-5 font-semibold transition-all duration-200 shadow-xs flex items-center justify-center cursor-pointer"
+                >
+                    <span className="material-symbols-outlined mr-2 text-[18px]">add</span>
+                    New Workspace
+                </button>
             </div>
-        </div>
+
+            {/* Create Workspace Modal */}
+            <CreateWorkspaceModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+            />
+        </aside>
     );
 }

@@ -3,183 +3,227 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { ChevronDown, SlidersHorizontal } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useSocket } from '@/features/chat/hooks/useSocket';
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 
-type Status = 'online' | 'busy' | 'offline';
+// Modular Team Components
+import { TeamHeader } from '@/features/teams/components/TeamHeader';
+import { WorkspaceSummaryBento } from '@/features/teams/components/WorkspaceSummaryBento';
+import { PendingInvitationsCard, PendingInvite } from '@/features/teams/components/PendingInvitationsCard';
+import { TeamToolbar } from '@/features/teams/components/TeamToolbar';
+import { TeamMemberList, TeamMemberData } from '@/features/teams/components/TeamMemberList';
+import { InviteMemberModal } from '@/features/teams/components/InviteMemberModal';
 
 type User = {
-    _id: string;
+    _id?: string;
+    id?: string;
     name: string;
     email: string;
     avatar?: string | null;
     role?: string;
+    department?: string;
 };
-
-type TeamMember = {
-    id: string;
-    name: string;
-    email: string;
-    avatar?: string | null;
-    initials: string;
-    gradient: string;
-    status: Status;
-    role: string;
-};
-
-const gradientPalette = [
-    'bg-gradient-to-br from-blue-500 to-purple-500',
-    'bg-gradient-to-br from-amber-500 to-orange-500',
-    'bg-gradient-to-br from-emerald-500 to-teal-500',
-    'bg-gradient-to-br from-pink-500 to-rose-500',
-];
 
 export default function TeamPage() {
-    const { user } = useAuth(true);
-    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+    const { user, isLoading: authLoading } = useAuth(true);
+    const { currentWorkspace, workspaces, fetchWorkspaces } = useWorkspaceStore();
+
+    const [teamMembers, setTeamMembers] = useState<TeamMemberData[]>([]);
     const [globalActiveUsers, setGlobalActiveUsers] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string>('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [roleFilter, setRoleFilter] = useState('all');
+    const [deptFilter, setDeptFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [invites, setInvites] = useState<PendingInvite[]>([
+        { id: '1', email: 'alex.chen@example.com', invitedBy: 'Sarah Jenkins', role: 'Developer', sentDate: 'Oct 24, 2023' },
+        { id: '2', email: 'm.rodriguez@example.com', invitedBy: 'Sarah Jenkins', role: 'Designer', sentDate: 'Oct 22, 2023' },
+    ]);
 
     useSocket({
         projectId: null,
         onGlobalActiveUsers: (data) => {
             setGlobalActiveUsers(data.users);
-        }
+        },
     });
 
     useEffect(() => {
+        fetchWorkspaces();
+    }, [fetchWorkspaces]);
+
+    const activeWs = currentWorkspace || workspaces[0];
+
+    useEffect(() => {
         const fetchMembers = async () => {
+            if (!activeWs?.id) return;
             try {
                 setIsLoading(true);
-                setError('');
-                const res = await axios.get('/api/users');
+                const res = await axios.get(`/api/workspaces/${activeWs.id}/members`);
                 const data = res.data;
 
-                if (data?.success && Array.isArray(data.data)) {
-                    const formatted: TeamMember[] = data.data.map((User: User, index: number) => {
-                        const initials = User.name
-                            ? User.name
-                                .split(' ')
-                                .map((part) => part[0])
-                                .filter(Boolean)
-                                .slice(0, 2)
-                                .join('')
-                                .toUpperCase()
+                if (data?.success && Array.isArray(data.data?.members)) {
+                    const formatted: TeamMemberData[] = data.data.members.map((u: User, idx: number) => {
+                        const userId = u.id || u._id || '';
+                        const initials = u.name
+                            ? u.name
+                                  .split(' ')
+                                  .map((part) => part[0])
+                                  .filter(Boolean)
+                                  .slice(0, 2)
+                                  .join('')
+                                  .toUpperCase()
                             : 'U';
+
+                        const isUserOnline = globalActiveUsers.includes(userId);
+                        const rolesAllowed: TeamMemberData['role'][] = ['Owner', 'Admin', 'Manager', 'Developer', 'Designer'];
+                        const assignedRole: TeamMemberData['role'] = rolesAllowed.includes(u.role as any)
+                            ? (u.role as any)
+                            : (idx === 0 ? 'Owner' : 'Developer');
+
                         return {
-                            id: User._id,
-                            name: User.name,
-                            email: User.email,
-                            avatar: User.avatar,
+                            id: userId,
+                            name: u.name,
+                            email: u.email,
+                            avatar: u.avatar || null,
                             initials,
-                            gradient: gradientPalette[index % gradientPalette.length],
-                            status: 'offline',
-                            role: User.role || 'user'
+                            role: assignedRole,
+                            department: u.department || 'Engineering',
+                            projectsCount: 3,
+                            status: isUserOnline ? 'online' : 'offline',
+                            lastActive: isUserOnline ? 'Just now' : 'Active today',
                         };
                     });
                     setTeamMembers(formatted);
                 } else {
                     setTeamMembers([]);
-                    setError('No team members found.');
                 }
-            } catch (error) {
-                console.error('Failed to load team members:', error);
-                setError('Failed to load team members. Please try again later.');
-                setTeamMembers([]);
+            } catch (err) {
+                console.error('Failed to fetch workspace members:', err);
+                if (user) {
+                    setTeamMembers([
+                        {
+                            id: user._id,
+                            name: user.name,
+                            email: user.email,
+                            avatar: user.avatar || null,
+                            initials: user.name.slice(0, 2).toUpperCase(),
+                            role: 'Owner',
+                            department: 'Engineering',
+                            projectsCount: 2,
+                            status: 'online',
+                            lastActive: 'Just now',
+                        },
+                    ]);
+                }
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchMembers();
-    }, []);
+    }, [activeWs, user, globalActiveUsers]);
+
+    // Filtering logic
+    const filteredMembers = teamMembers.filter((m) => {
+        const matchesSearch =
+            m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            m.email.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesRole = roleFilter === 'all' || m.role.toLowerCase() === roleFilter.toLowerCase();
+        const matchesDept = deptFilter === 'all' || m.department.toLowerCase() === deptFilter.toLowerCase();
+        const matchesStatus = statusFilter === 'all' || m.status === statusFilter;
+        return matchesSearch && matchesRole && matchesDept && matchesStatus;
+    });
+
+    const handleCancelInvite = (inviteId: string) => {
+        setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+    };
+
+    const handleResendInvite = (inviteId: string) => {
+        const inv = invites.find((i) => i.id === inviteId);
+        if (inv) alert(`Invitation resent to ${inv.email}`);
+    };
+
+    const handleSendInvite = (email: string, role: string, department: string) => {
+        const newInv: PendingInvite = {
+            id: Date.now().toString(),
+            email,
+            invitedBy: user?.name || 'Workspace Admin',
+            role: role as any,
+            sentDate: 'Just now',
+        };
+        setInvites((prev) => [newInv, ...prev]);
+        setIsInviteModalOpen(false);
+    };
+
+    if (authLoading || isLoading) {
+        return (
+            <div className="flex h-screen bg-[#F8FAFC]">
+                <Sidebar />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="w-10 h-10 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-[#F8FAFC] overflow-hidden text-[#1b1b24]">
             <Sidebar />
-            <div className="flex-1 overflow-auto">
-                <Header
-                    user={user}
-                    title="Meet the Team"
-                    titleColor="text-black"
-                    subtitle="An overview of the talented individuals driving our projects forward."
-                    showSearch
-                />
 
-                <main className="max-w-7xl mx-auto px-6 py-8">
-                    <div className="bg-white rounded-lg p-4 mb-6 flex items-center justify-between">
-                        <div className="flex gap-3">
-                            <button suppressHydrationWarning={true} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg flex items-center gap-2 font-medium">
-                                All Roles
-                                <ChevronDown className="w-4 h-4" />
-                            </button>
-                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-lg">Design</button>
-                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-lg">Engineering</button>
-                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-lg">On Leave</button>
-                            <button suppressHydrationWarning={true} className="px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-lg">Available</button>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <button
-                                suppressHydrationWarning={true}
-                                className="px-4 py-2 border border-gray-200 rounded-lg flex items-center gap-2 text-gray-900 hover:bg-gray-50"
-                                onClick={() => setTeamMembers((prev) => [...prev].sort((a, b) => a.name.localeCompare(b.name)))}
-                            >
-                                <SlidersHorizontal className="w-4 h-4" />
-                                Sort by Name
-                            </button>
-                        </div>
+            <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+                <Header user={user} />
+
+                <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                    <div className="max-w-7xl mx-auto space-y-6 pb-24">
+                        {/* Header Banner */}
+                        <TeamHeader onInviteClick={() => setIsInviteModalOpen(true)} />
+
+                        {/* Bento Statistics Card */}
+                        <WorkspaceSummaryBento
+                            totalMembers={teamMembers.length}
+                            adminsCount={teamMembers.filter((m) => m.role === 'Admin' || m.role === 'Owner').length}
+                            pendingInvitesCount={invites.length}
+                            activeTodayCount={teamMembers.filter((m) => m.status === 'online').length}
+                        />
+
+                        {/* Pending Invitations */}
+                        <PendingInvitationsCard
+                            invites={invites}
+                            onCancel={handleCancelInvite}
+                            onResend={handleResendInvite}
+                        />
+
+                        {/* Filter Toolbar */}
+                        <TeamToolbar
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            roleFilter={roleFilter}
+                            onRoleFilterChange={setRoleFilter}
+                            deptFilter={deptFilter}
+                            onDeptFilterChange={setDeptFilter}
+                            statusFilter={statusFilter}
+                            onStatusFilterChange={setStatusFilter}
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
+                        />
+
+                        {/* Member List Grid */}
+                        <TeamMemberList members={filteredMembers} viewMode={viewMode} />
                     </div>
-
-                    {error && (
-                        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                            {error}
-                        </div>
-                    )}
-
-                    {isLoading ? (
-                        <div className="flex justify-center py-20">
-                            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-500"></div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {teamMembers.map((member) => {
-                                const currentStatus: Status = globalActiveUsers.includes(member.id) ? 'online' : 'offline';
-                                return (
-                                <div key={member.id} className="bg-white rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer border border-gray-200">
-                                    <div className="flex items-start gap-4">
-                                        <div className="relative">
-                                            {member.avatar ? (
-                                                <img
-                                                    src={member.avatar}
-                                                    alt={member.name}
-                                                    className="w-14 h-14 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className={`w-14 h-14 rounded-full ${member.gradient} text-white flex items-center justify-center text-lg font-semibold`}>
-                                                    {member.initials}
-                                                </div>
-                                            )}
-                                            <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${currentStatus === 'online' ? 'bg-green-500' : 'bg-gray-400'
-                                                }`}></div>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-gray-900 truncate">{member.name}</h3>
-                                            <p className="text-xs text-gray-500 truncate mb-2">{member.email}</p>
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 capitalize">
-                                                {member.role.replace('_', ' ')}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )})}
-                        </div>
-                    )}
-                </main>
+                </div>
             </div>
+
+            {/* Invite Modal */}
+            <InviteMemberModal
+                isOpen={isInviteModalOpen}
+                onClose={() => setIsInviteModalOpen(false)}
+                onInvite={handleSendInvite}
+            />
         </div>
     );
 }

@@ -94,6 +94,9 @@ export async function getProjectTasks(projectId: string, userId: string) {
             reporter: {
                 select: { id: true, name: true, email: true, avatar: true },
             },
+            project: {
+                select: { id: true, name: true, key: true },
+            },
             _count: {
                 select: { comments: true, attachments: true },
             },
@@ -105,6 +108,44 @@ export async function getProjectTasks(projectId: string, userId: string) {
         ...t,
         _id: t.id,
         key: `${project.key}-${t.number}`,
+        comments: t._count.comments,
+        attachments: [],
+        labels: [],
+        watchers: [],
+    }));
+}
+
+// Get all tasks assigned to user or in user's projects across workspace
+export async function getUserTasks(userId: string) {
+    const tasks = await prisma.task.findMany({
+        where: {
+            OR: [
+                { assigneeId: userId },
+                { reporterId: userId },
+                { project: { members: { some: { userId } } } },
+            ],
+        },
+        include: {
+            assignee: {
+                select: { id: true, name: true, email: true, avatar: true },
+            },
+            reporter: {
+                select: { id: true, name: true, email: true, avatar: true },
+            },
+            project: {
+                select: { id: true, name: true, key: true },
+            },
+            _count: {
+                select: { comments: true, attachments: true },
+            },
+        },
+        orderBy: { updatedAt: 'desc' },
+    });
+
+    return tasks.map(t => ({
+        ...t,
+        _id: t.id,
+        key: `${t.project.key}-${t.number}`,
         comments: t._count.comments,
         attachments: [],
         labels: [],

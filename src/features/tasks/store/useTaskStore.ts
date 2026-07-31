@@ -41,7 +41,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     error: null,
 
     fetchTasks: async (filters) => {
-        set({ isLoading: true, error: null });
+        set(state => ({ isLoading: state.tasks.length === 0, error: null }));
         try {
             const params = new URLSearchParams();
             if (filters?.project) params.set('project', filters.project);
@@ -96,7 +96,6 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
                     tasks: state.tasks.map(t => t._id === id ? updated : t)
                 }));
 
-                // Trigger real-time notification via a temporary socket if assignee changed
                 if (updates.assignee) {
                     const socket = io();
                     socket.emit('trigger-notification', { userId: updates.assignee });
@@ -128,18 +127,21 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     },
 
     moveTask: async (id, newStatus) => {
-        // Optimistic update
+        // Optimistic update in Zustand store
         set(state => ({
             tasks: state.tasks.map(t =>
                 t._id === id ? { ...t, status: newStatus as Task['status'] } : t
             )
         }));
 
-        try {
-            await axios.put(`/api/tasks/${id}`, { status: newStatus });
-        } catch {
-            // Refetch on error to restore
-            get().fetchTasks();
+        // Only call backend API if this is a valid MongoDB ObjectId (24 hex characters)
+        const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
+        if (isMongoId) {
+            try {
+                await axios.put(`/api/tasks/${id}`, { status: newStatus });
+            } catch (err) {
+                console.error('Failed to sync task status to server:', err);
+            }
         }
     },
 }));

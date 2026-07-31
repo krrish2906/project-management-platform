@@ -1,107 +1,66 @@
-"use client";
+'use client'
 
-import Sidebar from "@/components/layout/Sidebar";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import React from 'react';
+import Sidebar from '@/components/layout/Sidebar';
+import Header from '@/components/layout/Header';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
-function ProfilePage() {
-    const { user, isLoading, logout } = useAuth(true);
+// Modular Profile Components
+import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
+import { PersonalDetailsCard } from '@/features/profile/components/PersonalDetailsCard';
+import { SecurityCard } from '@/features/profile/components/SecurityCard';
+import { ActiveSessionsCard } from '@/features/profile/components/ActiveSessionsCard';
 
-    const joinedDate = user ? new Date(user.createdAt) : null;
+export default function ProfilePage() {
+    const { user, isLoading: authLoading } = useAuth(true);
+
+    if (authLoading) {
+        return (
+            <div className="flex h-screen bg-[#F8FAFC]">
+                <Sidebar />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="w-10 h-10 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-[#F8FAFC] overflow-hidden text-[#1b1b24]">
+            {/* Sidebar Navigation */}
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-gray-50 p-6 md:p-8">
-                <div className="mx-auto flex h-full max-w-3xl flex-col justify-center gap-6 py-4">
 
-                    {(!user || isLoading) && (
-                        <div className="flex flex-1 items-center justify-center text-sm text-gray-500">
-                            {isLoading ? "Loading profile..." : "Unable to load profile."}
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+                {/* Header */}
+                <Header user={user} />
+
+                {/* Scrollable Canvas */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#fcf8ff]">
+                    <div className="max-w-4xl mx-auto w-full space-y-8 pb-16">
+                        
+                        {/* Page Header */}
+                        <ProfileHeader />
+
+                        {/* Bento Grid Layout */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Personal Details Column */}
+                            <div className="lg:col-span-2">
+                                <PersonalDetailsCard user={user} />
+                            </div>
+
+                            {/* Security Column */}
+                            <div className="lg:col-span-1">
+                                <SecurityCard user={user} />
+                            </div>
                         </div>
-                    )}
 
-                    {user && !isLoading && (
-                        <>
-                            <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
-                                <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-600 text-3xl font-semibold text-white md:h-20 md:w-20">
-                                        {(user.name && user.name.charAt(0).toUpperCase()) ||
-                                            (user.email && user.email.charAt(0).toUpperCase()) ||
-                                            "U"}
-                                    </div>
-                                    <div className="space-y-1">
-                                        <h1 className="text-2xl font-semibold text-gray-900">
-                                            {user.name}
-                                        </h1>
-                                        <p className="text-sm text-gray-500">{user.email}</p>
-                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                                            {user.role && (
-                                                <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 font-medium text-indigo-700">
-                                                    {user.role}
-                                                </span>
-                                            )}
-                                            {joinedDate && (
-                                                <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1">
-                                                    Member since{" "}
-                                                    {joinedDate.toLocaleDateString(undefined, {
-                                                        year: "numeric",
-                                                        month: "short",
-                                                    })}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
+                        {/* Full-width Active Sessions Section */}
+                        <ActiveSessionsCard />
 
-                            <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
-                                <h2 className="text-sm font-semibold text-gray-900">
-                                    Account details
-                                </h2>
-                                <p className="mt-1 text-xs text-gray-500">
-                                    Basic information associated with your account.
-                                </p>
-
-                                <dl className="mt-4 space-y-3 text-sm">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <dt className="text-gray-500">Full name</dt>
-                                        <dd className="font-medium text-gray-900">{user.name}</dd>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-4">
-                                        <dt className="text-gray-500">Email</dt>
-                                        <dd className="font-medium text-gray-900">{user.email}</dd>
-                                    </div>
-                                    {joinedDate && (
-                                        <div className="flex items-center justify-between gap-4">
-                                            <dt className="text-gray-500">Joined</dt>
-                                            <dd className="font-medium text-gray-900">
-                                                {joinedDate.toLocaleDateString(undefined, {
-                                                    day: "2-digit",
-                                                    month: "long",
-                                                    year: "numeric",
-                                                })}
-                                            </dd>
-                                        </div>
-                                    )}
-                                </dl>
-
-                                <div className="mt-6 flex justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={logout}
-                                        className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 cursor-pointer"
-                                    >
-                                        Log out
-                                    </button>
-                                </div>
-                            </section>
-                        </>
-                    )}
-
+                    </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 }
-
-export default ProfilePage;
