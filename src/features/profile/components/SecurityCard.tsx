@@ -9,6 +9,7 @@ interface SecurityCardProps {
 }
 
 export function SecurityCard({ user }: SecurityCardProps) {
+    const [isUnlocked, setIsUnlocked] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -30,6 +31,8 @@ export function SecurityCard({ user }: SecurityCardProps) {
         setStatusMessage(null);
         if (!user) return;
 
+        const userId = user._id || user.id;
+
         if (!currentPassword || !newPassword) {
             setStatusMessage({ type: 'error', text: 'Please fill in all password fields.' });
             return;
@@ -42,7 +45,7 @@ export function SecurityCard({ user }: SecurityCardProps) {
 
         setIsSubmitting(true);
         try {
-            const res = await axios.put(`/api/users/${user._id}/password`, {
+            const res = await axios.put(`/api/users/${userId}/password`, {
                 currentPassword,
                 newPassword,
             });
@@ -51,110 +54,143 @@ export function SecurityCard({ user }: SecurityCardProps) {
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
+                setIsUnlocked(false);
             } else {
-                setStatusMessage({ type: 'error', text: res.data?.message || 'Failed to update password.' });
+                setStatusMessage({ type: 'error', text: res.data?.message || 'Unable to update password. Please check your credentials.' });
             }
         } catch (err: any) {
-            setStatusMessage({ type: 'error', text: err.response?.data?.message || 'Failed to update password.' });
+            const serverMsg = err.response?.data?.message;
+            const text = (serverMsg && typeof serverMsg === 'string' && !serverMsg.includes('Prisma') && !serverMsg.includes('TURBOPACK'))
+                ? serverMsg
+                : 'Unable to update password. Please check your current password and try again.';
+            setStatusMessage({ type: 'error', text });
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="bg-white rounded-xl p-6 border border-[#c7c4d8]/60 shadow-xs h-full">
-            <div className="flex items-center gap-2 mb-6">
-                <span className="material-symbols-outlined text-[#3525cd]">lock</span>
-                <h3 className="text-[24px] leading-8 font-semibold text-[#1b1b24]">
-                    Security
-                </h3>
-            </div>
-
-            {statusMessage && (
-                <div className={`mb-4 p-3 rounded-lg text-sm font-medium flex items-center gap-2 ${
-                    statusMessage.type === 'success'
-                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-                        : 'bg-red-50 border border-red-200 text-red-800'
-                }`}>
-                    <span className="material-symbols-outlined text-[18px]">
-                        {statusMessage.type === 'success' ? 'check_circle' : 'error'}
-                    </span>
-                    {statusMessage.text}
-                </div>
-            )}
-
-            <form onSubmit={handlePasswordUpdate} className="space-y-4">
-                <div>
-                    <label className="block text-[12px] font-semibold text-[#464555] mb-1">
-                        Current Password
-                    </label>
-                    <input
-                        type="password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        placeholder="Your current password"
-                        className="w-full bg-white border border-[#c7c4d8] rounded-lg py-2 px-3 text-[16px] text-[#1b1b24] focus:border-[#3525cd] focus:ring-2 focus:ring-[#3525cd]/20 outline-none transition-all"
-                    />
+        <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-xs h-full flex flex-col justify-between">
+            <div>
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="material-symbols-outlined text-[#4F46E5]">lock</span>
+                    <h3 className="text-[20px] font-bold text-[#1b1b24]">
+                        Security & Password
+                    </h3>
                 </div>
 
-                <div>
-                    <label className="block text-[12px] font-semibold text-[#464555] mb-1">
-                        New Password
-                    </label>
-                    <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Your new password"
-                        className="w-full bg-white border border-[#c7c4d8] rounded-lg py-2 px-3 text-[16px] text-[#1b1b24] focus:border-[#3525cd] focus:ring-2 focus:ring-[#3525cd]/20 outline-none transition-all mb-2"
-                    />
-                    
-                    {/* Strength Indicator */}
-                    {newPassword && (
-                        <div>
-                            <div className="flex gap-1 h-1.5 w-full">
-                                <div className={`h-full w-1/4 rounded-full ${strength.score >= 1 ? 'bg-[#006c49]' : 'bg-[#e4e1ee]'}`} />
-                                <div className={`h-full w-1/4 rounded-full ${strength.score >= 2 ? 'bg-[#006c49]' : 'bg-[#e4e1ee]'}`} />
-                                <div className={`h-full w-1/4 rounded-full ${strength.score >= 3 ? 'bg-[#006c49]' : 'bg-[#e4e1ee]'}`} />
-                                <div className={`h-full w-1/4 rounded-full ${strength.score >= 4 ? 'bg-[#006c49]' : 'bg-[#e4e1ee]'}`} />
-                            </div>
-                            <p className="text-[12px] text-[#464555] mt-1 text-right font-medium">
-                                {strength.label}
+                {statusMessage && (
+                    <div className={`mb-4 p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 ${
+                        statusMessage.type === 'success'
+                            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                            : 'bg-rose-50 border border-rose-200 text-rose-800'
+                    }`}>
+                        <span className="material-symbols-outlined text-[18px] shrink-0">
+                            {statusMessage.type === 'success' ? 'check_circle' : 'error'}
+                        </span>
+                        <span>{statusMessage.text}</span>
+                    </div>
+                )}
+
+                {!isUnlocked ? (
+                    <div className="space-y-4 py-2">
+                        <div className="p-4 bg-[#f8fafc] border border-[#E2E8F0] rounded-2xl">
+                            <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
+                                Password Status
+                            </p>
+                            <p className="text-sm font-mono text-[#1e293b]">••••••••••••••••</p>
+                            <p className="text-[11px] text-[#64748b] mt-2 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px] text-emerald-600">verified_user</span>
+                                Protected with encrypted salt hashing
                             </p>
                         </div>
-                    )}
-                </div>
 
-                <div>
-                    <label className="block text-[12px] font-semibold text-[#464555] mb-1">
-                        Confirm Password
-                    </label>
-                    <div className="relative">
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Confirm your new password"
-                            className="w-full bg-white border border-[#c7c4d8] rounded-lg py-2 px-3 text-[16px] text-[#1b1b24] focus:border-[#3525cd] focus:ring-2 focus:ring-[#3525cd]/20 outline-none transition-all pr-10"
-                        />
-                        {confirmPassword && confirmPassword === newPassword && (
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-[#006c49]">
-                                <span className="material-symbols-outlined text-lg">check_circle</span>
-                            </span>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() => setIsUnlocked(true)}
+                            className="w-full bg-[#f5f2ff] hover:bg-[#eae6f4] border border-[#4F46E5]/30 text-[#4F46E5] py-2.5 px-4 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">key</span>
+                            Unlock & Update Password
+                        </button>
                     </div>
-                </div>
+                ) : (
+                    <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1">
+                                Current Password (Verification)
+                            </label>
+                            <input
+                                type="password"
+                                required
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                placeholder="Enter current password to verify"
+                                className="w-full bg-[#f8fafc] border border-[#E2E8F0] rounded-xl py-2 px-3 text-xs text-[#1e293b] focus:border-[#4F46E5] outline-none"
+                            />
+                        </div>
 
-                <div className="pt-2">
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full bg-white border border-[#c7c4d8] text-[#3525cd] py-2 px-4 rounded-lg text-[14px] font-semibold hover:bg-[#f5f2ff] transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'Updating...' : 'Update Password'}
-                    </button>
-                </div>
-            </form>
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1">
+                                New Password
+                            </label>
+                            <input
+                                type="password"
+                                required
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="Enter new password"
+                                className="w-full bg-[#f8fafc] border border-[#E2E8F0] rounded-xl py-2 px-3 text-xs text-[#1e293b] focus:border-[#4F46E5] outline-none mb-1.5"
+                            />
+                            
+                            {newPassword && (
+                                <div className="space-y-1">
+                                    <div className="flex gap-1 h-1 w-full">
+                                        <div className={`h-full w-1/4 rounded-full ${strength.score >= 1 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                                        <div className={`h-full w-1/4 rounded-full ${strength.score >= 2 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                                        <div className={`h-full w-1/4 rounded-full ${strength.score >= 3 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                                        <div className={`h-full w-1/4 rounded-full ${strength.score >= 4 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                                    </div>
+                                    <p className="text-[10px] text-[#64748b] text-right font-medium">
+                                        {strength.label}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1">
+                                Confirm New Password
+                            </label>
+                            <input
+                                type="password"
+                                required
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Confirm new password"
+                                className="w-full bg-[#f8fafc] border border-[#E2E8F0] rounded-xl py-2 px-3 text-xs text-[#1e293b] focus:border-[#4F46E5] outline-none"
+                            />
+                        </div>
+
+                        <div className="pt-2 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsUnlocked(false)}
+                                className="flex-1 bg-white border border-[#E2E8F0] text-[#64748b] py-2 px-3 rounded-xl text-xs font-semibold hover:bg-[#f1f5f9] cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="flex-1 bg-[#4F46E5] text-white py-2 px-3 rounded-xl text-xs font-semibold hover:bg-[#3730a3] cursor-pointer disabled:opacity-50"
+                            >
+                                {isSubmitting ? 'Saving...' : 'Save New Password'}
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </div>
         </div>
     );
 }

@@ -8,6 +8,7 @@ import { registerPresenceHandlers, PresenceState } from './handlers/presenceHand
 import { registerChatHandlers } from './handlers/chatHandler';
 import { registerKanbanHandlers } from './handlers/kanbanHandler';
 import { registerNotificationHandlers } from './handlers/notificationHandler';
+import { registerDocHandlers } from './handlers/docHandler';
 
 export function startServer() {
     const dev = process.env.NODE_ENV !== 'production';
@@ -55,6 +56,7 @@ export function startServer() {
             registerChatHandlers(socket, io, presenceState);
             registerKanbanHandlers(socket, io);
             registerNotificationHandlers(socket, io, presenceState);
+            registerDocHandlers(socket, io);
         });
 
         httpServer

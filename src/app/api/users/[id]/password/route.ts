@@ -81,11 +81,12 @@ export async function PUT(
         }, { status: 200 });
 
     } catch (error: any) {
+        console.error('Password update API error:', error);
         return NextResponse.json({
             success: false,
             data: null,
-            message: error.message || 'Failed to update password',
-            error: error.message || 'Failed to update password',
+            message: 'Unable to update password. Please check database connection and try again.',
+            error: 'Failed to update password',
         }, { status: 500 });
     }
 }

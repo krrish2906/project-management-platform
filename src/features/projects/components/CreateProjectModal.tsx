@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -39,10 +40,15 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
     const [selectedIcon, setSelectedIcon] = useState(ICONS[0].name);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [mounted, setMounted] = useState(false);
 
     const { fetchProjects } = useProjectStore();
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!isOpen || !mounted) return null;
 
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newName = e.target.value;
@@ -76,14 +82,12 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
             const createdProject = json.data.project;
             toast.success(`Project "${createdProject.name}" created successfully!`);
 
-            // Fetch updated projects list in store
             fetchProjects();
 
             if (onProjectCreated) {
                 onProjectCreated(createdProject);
             }
 
-            // Reset form fields
             setName('');
             setKey('');
             setDescription('');
@@ -102,9 +106,9 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <div className="bg-white rounded-3xl shadow-2xl border border-[#E2E8F0] w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+    const modalContent = (
+        <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs w-screen h-screen">
+            <div className="bg-white rounded-3xl shadow-2xl border border-[#E2E8F0] w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in duration-150 relative z-100000">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between p-6 border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-3">
@@ -234,4 +238,6 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }

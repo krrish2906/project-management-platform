@@ -89,14 +89,14 @@ export default function KanbanPage() {
     ];
 
     // Filter store tasks for this project
-    const realProjectTasks = tasks.filter((t) => {
-        const tProjId = typeof t.project === 'object' ? (t.project as any)?._id : t.project;
+    const realProjectTasks = tasks.filter((t: any) => {
+        const tProjId = typeof t.project === 'object' ? (t.project as any)?.id || (t.project as any)?._id : t.project || t.projectId;
         return tProjId === projectId;
     });
 
-    const mappedTasks: KanbanTaskData[] = realProjectTasks.map((t) => ({
-        id: t._id,
-        keyNumber: `WR-${t._id.slice(-2)}`,
+    const mappedTasks: KanbanTaskData[] = realProjectTasks.map((t: any) => ({
+        id: t.id || t._id,
+        keyNumber: t.key || `WR-${(t.id || t._id)?.slice(-2)}`,
         title: t.title,
         priority: t.priority?.toUpperCase() as any || 'MEDIUM',
         category: 'Frontend',
@@ -105,7 +105,7 @@ export default function KanbanPage() {
         assigneeAvatar: typeof t.assignee === 'object' ? (t.assignee as any)?.avatar : undefined,
     }));
 
-    const displayTasks = mappedTasks.length > 0 ? mappedTasks : localDemoTasks;
+    const displayTasks = mappedTasks;
 
     const filteredTasks = displayTasks.filter((t) =>
         t.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -119,15 +119,7 @@ export default function KanbanPage() {
         const targetColumnId = destination.droppableId;
         const targetBackendStatus = columnToStatusMap[targetColumnId] || 'TODO';
 
-        if (mappedTasks.length > 0) {
-            // Optimistically update store task
-            moveTask(draggableId, targetBackendStatus);
-        } else {
-            // Update local demo task state instantly
-            setLocalDemoTasks((prev) =>
-                prev.map((t) => (t.id === draggableId ? { ...t, status: targetColumnId } : t))
-            );
-        }
+        moveTask(draggableId, targetBackendStatus);
 
         if (socket) {
             socket.emit('kanban:task_moved', {
@@ -135,7 +127,7 @@ export default function KanbanPage() {
                 taskId: draggableId,
                 newStatus: targetBackendStatus,
                 newOrder: destination.index,
-                userId: user?._id,
+                userId: user?.id || user?._id,
             });
         }
     };
@@ -156,8 +148,9 @@ export default function KanbanPage() {
             project: projectId,
         });
 
-        if (!created) {
-            // Append to local demo tasks if offline/demo
+        if (created) {
+            await fetchTasks({ project: projectId });
+        } else {
             const newDemo: KanbanTaskData = {
                 id: `demo-${Date.now()}`,
                 keyNumber: `WR-${Math.floor(Math.random() * 90 + 10)}`,

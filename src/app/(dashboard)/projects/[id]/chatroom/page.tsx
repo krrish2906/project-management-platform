@@ -50,19 +50,19 @@ export default function ProjectChatRoomPage() {
     const fetchMessages = async () => {
         setIsLoadingMessages(true);
         try {
-            const res = await axios.get(`/api/chat?project=${projectId}`);
+            const res = await axios.get(`/api/projects/${projectId}/messages`);
             if (res.data?.success && Array.isArray(res.data.data.messages)) {
                 const apiMsgs: ChatMessageItem[] = res.data.data.messages.map((m: any) => ({
-                    id: m._id,
+                    id: m.id || m._id,
                     senderName: m.sender?.name || 'Team Member',
                     senderAvatar: m.sender?.avatar,
                     content: m.content,
                     timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isCurrentUser: m.sender?._id === user?._id,
+                    isCurrentUser: (m.sender?.id || m.sender?._id || m.senderId) === (user?.id || user?._id),
                     pinned: !!m.pinned,
                     attachments: m.attachments,
-                    replyToContent: m.replyTo?.content,
-                    replyToAuthor: m.replyTo?.sender?.name,
+                    replyToContent: m.replyToContent || m.replyTo?.content,
+                    replyToAuthor: m.replyToAuthor || m.replyTo?.author,
                 }));
                 setMessages(apiMsgs);
             }
@@ -77,26 +77,32 @@ export default function ProjectChatRoomPage() {
     useEffect(() => {
         if (!socket) return;
         const handleNewMessage = (newMsg: any) => {
+            const currentUserId = user?.id || user?._id;
+            const senderId = newMsg.sender?.id || newMsg.sender?._id || newMsg.senderId;
+            // Prevent duplicate message if already added locally
+            if (senderId === currentUserId && messages.some((m) => m.id === (newMsg.id || newMsg._id))) {
+                return;
+            }
             const formatted: ChatMessageItem = {
-                id: newMsg._id || Date.now().toString(),
-                senderName: newMsg.sender?.name || 'Team Member',
-                senderAvatar: newMsg.sender?.avatar,
+                id: newMsg.id || newMsg._id || Date.now().toString(),
+                senderName: newMsg.sender?.name || newMsg.senderName || 'Team Member',
+                senderAvatar: newMsg.sender?.avatar || newMsg.senderAvatar,
                 content: newMsg.content,
                 timestamp: new Date(newMsg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isCurrentUser: newMsg.sender?._id === user?._id,
+                isCurrentUser: senderId === currentUserId,
                 pinned: !!newMsg.pinned,
                 attachments: newMsg.attachments,
                 replyToContent: newMsg.replyToContent,
                 replyToAuthor: newMsg.replyToAuthor,
             };
-            setMessages((prev) => [...prev, formatted]);
+            setMessages((prev) => [...prev.filter((m) => m.id !== formatted.id), formatted]);
         };
 
         socket.on('chat:message', handleNewMessage);
         return () => {
             socket.off('chat:message', handleNewMessage);
         };
-    }, [socket, user]);
+    }, [socket, user, messages]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -105,20 +111,21 @@ export default function ProjectChatRoomPage() {
     const handleSendMessage = async (content: string, attachments?: { filename: string; url: string; fileType?: string; fileSize?: number }[]) => {
         try {
             const payload = {
-                projectId,
                 content,
                 attachments,
                 replyTo: replyingTo?.id,
+                replyToContent: replyingTo?.content,
+                replyToAuthor: replyingTo?.senderName,
             };
-            const res = await axios.post('/api/chat', payload);
+            const res = await axios.post(`/api/projects/${projectId}/messages`, payload);
             if (res.data?.success && res.data.data.message) {
                 const m = res.data.data.message;
                 const formatted: ChatMessageItem = {
-                    id: m._id,
+                    id: m.id || m._id,
                     senderName: user?.name || 'You',
                     senderAvatar: user?.avatar,
                     content: m.content,
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestamp: new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     isCurrentUser: true,
                     pinned: false,
                     attachments: m.attachments,
@@ -129,11 +136,17 @@ export default function ProjectChatRoomPage() {
                 setReplyingTo(null);
 
                 if (socket) {
-                    socket.emit('chat:message', formatted);
+                    socket.emit('chat:message', {
+                        ...m,
+                        sender: { id: user?.id, name: user?.name, avatar: user?.avatar },
+                        replyToContent: replyingTo?.content,
+                        replyToAuthor: replyingTo?.senderName,
+                    });
                 }
             }
-        } catch (err) {
-            toast.error('Failed to send message');
+        } catch (err: any) {
+            console.error('Send message failure:', err);
+            toast.error(err.response?.data?.error || 'Failed to send message');
         }
     };
 
@@ -141,8 +154,7 @@ export default function ProjectChatRoomPage() {
         try {
             const newPinned = !currentPinnedState;
             setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, pinned: newPinned } : m)));
-            await axios.patch(`/api/chat/${messageId}`, { pinned: newPinned });
-            toast.success(newPinned ? 'Message pinned to sidebar' : 'Message unpinned');
+            await axios.patch(`/api/projects/${projectId}/messages/${messageId}`, { pinned: newPinned });
         } catch {
             toast.error('Failed to update pin status');
         }
@@ -159,7 +171,7 @@ export default function ProjectChatRoomPage() {
     const handleEditMessage = async (messageId: string, newContent: string) => {
         try {
             setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, content: newContent } : m)));
-            await axios.put(`/api/chat/${messageId}`, { content: newContent });
+            await axios.put(`/api/projects/${projectId}/messages/${messageId}`, { content: newContent });
             toast.success('Message updated');
         } catch {
             toast.error('Failed to edit message');
@@ -170,7 +182,7 @@ export default function ProjectChatRoomPage() {
         if (!confirm('Are you sure you want to delete this message?')) return;
         try {
             setMessages((prev) => prev.filter((m) => m.id !== messageId));
-            await axios.delete(`/api/chat/${messageId}`);
+            await axios.delete(`/api/projects/${projectId}/messages/${messageId}`);
             toast.success('Message deleted');
         } catch {
             toast.error('Failed to delete message');
@@ -322,6 +334,7 @@ export default function ProjectChatRoomPage() {
 
                     {/* Message Composer Input */}
                     <ChatComposer
+                        projectId={projectId}
                         onSendMessage={handleSendMessage}
                         replyingTo={replyingTo}
                         onCancelReply={() => setReplyingTo(null)}

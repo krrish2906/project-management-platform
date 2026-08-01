@@ -8,6 +8,7 @@ import Header from '@/components/layout/Header';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useSocket } from '@/features/chat/hooks/useSocket';
 import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
+import { toast } from 'react-hot-toast';
 
 // Modular Team Components
 import { TeamHeader } from '@/features/teams/components/TeamHeader';
@@ -56,15 +57,15 @@ export default function TeamPage() {
     const activeWs = currentWorkspace || workspaces[0];
 
     useEffect(() => {
-        const fetchMembers = async () => {
+        const fetchMembersAndInvites = async () => {
             if (!activeWs?.id) return;
             try {
                 setIsLoading(true);
-                const res = await axios.get(`/api/workspaces/${activeWs.id}/members`);
-                const data = res.data;
 
-                if (data?.success && Array.isArray(data.data?.members)) {
-                    const formatted: TeamMemberData[] = data.data.members.map((u: User, idx: number) => {
+                // Fetch real workspace members
+                const resMembers = await axios.get(`/api/workspaces/${activeWs.id}/members`);
+                if (resMembers.data?.success && Array.isArray(resMembers.data?.data?.members)) {
+                    const formatted: TeamMemberData[] = resMembers.data.data.members.map((u: User, idx: number) => {
                         const userId = u.id || u._id || '';
                         const initials = u.name
                             ? u.name
@@ -96,33 +97,21 @@ export default function TeamPage() {
                         };
                     });
                     setTeamMembers(formatted);
-                } else {
-                    setTeamMembers([]);
+                }
+
+                // Fetch real pending invitations from backend
+                const resInvites = await axios.get(`/api/workspaces/${activeWs.id}/invites`);
+                if (resInvites.data?.success && Array.isArray(resInvites.data?.data?.invites)) {
+                    setInvites(resInvites.data.data.invites);
                 }
             } catch (err) {
-                console.error('Failed to fetch workspace members:', err);
-                if (user) {
-                    setTeamMembers([
-                        {
-                            id: user._id,
-                            name: user.name,
-                            email: user.email,
-                            avatar: user.avatar || null,
-                            initials: user.name.slice(0, 2).toUpperCase(),
-                            role: 'Owner',
-                            department: 'Engineering',
-                            projectsCount: 2,
-                            status: 'online',
-                            lastActive: 'Just now',
-                        },
-                    ]);
-                }
+                console.error('Failed to fetch workspace data:', err);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchMembers();
+        fetchMembersAndInvites();
     }, [activeWs, user, globalActiveUsers]);
 
     // Filtering logic
@@ -136,25 +125,53 @@ export default function TeamPage() {
         return matchesSearch && matchesRole && matchesDept && matchesStatus;
     });
 
-    const handleCancelInvite = (inviteId: string) => {
-        setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+    const handleCancelInvite = async (inviteId: string) => {
+        if (!activeWs?.id) return;
+        try {
+            await axios.delete(`/api/workspaces/${activeWs.id}/invites/${inviteId}`);
+            setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+            toast.success('Invitation cancelled');
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Failed to cancel invitation');
+        }
     };
 
-    const handleResendInvite = (inviteId: string) => {
+    const handleResendInvite = async (inviteId: string) => {
         const inv = invites.find((i) => i.id === inviteId);
-        if (inv) alert(`Invitation resent to ${inv.email}`);
+        if (!inv || !activeWs?.id) return;
+        try {
+            await axios.post(`/api/workspaces/${activeWs.id}/invites`, {
+                email: inv.email,
+                role: inv.role,
+                department: inv.department || 'Engineering',
+            });
+            toast.success(`Invitation resent to ${inv.email}`);
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Failed to resend invitation');
+        }
     };
 
-    const handleSendInvite = (email: string, role: string, department: string) => {
-        const newInv: PendingInvite = {
-            id: Date.now().toString(),
-            email,
-            invitedBy: user?.name || 'Workspace Admin',
-            role: role as any,
-            sentDate: 'Just now',
-        };
-        setInvites((prev) => [newInv, ...prev]);
-        setIsInviteModalOpen(false);
+    const handleSendInvite = async (email: string, role: string, department: string) => {
+        if (!activeWs?.id) return;
+        try {
+            const res = await axios.post(`/api/workspaces/${activeWs.id}/invites`, {
+                email,
+                role,
+                department,
+            });
+            if (res.data?.success) {
+                toast.success(`Invitation email sent to ${email}`);
+                // Refresh invites
+                const resInvites = await axios.get(`/api/workspaces/${activeWs.id}/invites`);
+                if (resInvites.data?.success) {
+                    setInvites(resInvites.data.data.invites);
+                }
+            } else {
+                toast.error(res.data?.message || 'Failed to send invitation');
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Failed to send invitation email');
+        }
     };
 
     if (authLoading || isLoading) {
@@ -178,24 +195,28 @@ export default function TeamPage() {
                 <div className="flex-1 overflow-y-auto p-4 md:p-8">
                     <div className="max-w-7xl mx-auto space-y-6 pb-24">
                         {/* Header Banner */}
-                        <TeamHeader onInviteClick={() => setIsInviteModalOpen(true)} />
+                        <TeamHeader
+                            workspaceName={activeWs?.name || 'Workspace'}
+                            memberCount={teamMembers.length}
+                            activeUsersCount={globalActiveUsers.length}
+                            onOpenInviteModal={() => setIsInviteModalOpen(true)}
+                        />
 
-                        {/* Bento Statistics Card */}
+                        {/* Summary Bento Grid */}
                         <WorkspaceSummaryBento
                             totalMembers={teamMembers.length}
-                            adminsCount={teamMembers.filter((m) => m.role === 'Admin' || m.role === 'Owner').length}
+                            onlineCount={globalActiveUsers.length}
                             pendingInvitesCount={invites.length}
-                            activeTodayCount={teamMembers.filter((m) => m.status === 'online').length}
                         />
 
-                        {/* Pending Invitations */}
+                        {/* Pending Invitations Section */}
                         <PendingInvitationsCard
                             invites={invites}
-                            onCancel={handleCancelInvite}
                             onResend={handleResendInvite}
+                            onCancel={handleCancelInvite}
                         />
 
-                        {/* Filter Toolbar */}
+                        {/* Filtering Toolbar */}
                         <TeamToolbar
                             searchQuery={searchQuery}
                             onSearchChange={setSearchQuery}
@@ -209,13 +230,13 @@ export default function TeamPage() {
                             onViewModeChange={setViewMode}
                         />
 
-                        {/* Member List Grid */}
+                        {/* Team Member List / Grid */}
                         <TeamMemberList members={filteredMembers} viewMode={viewMode} />
                     </div>
                 </div>
             </div>
 
-            {/* Invite Modal */}
+            {/* Invite Member Modal */}
             <InviteMemberModal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}

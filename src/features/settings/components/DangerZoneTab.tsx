@@ -1,7 +1,10 @@
-'use client'
+'use client';
 
 import React, { useState } from 'react';
+import axios from 'axios';
 import type { User } from '@/types';
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
+import { toast } from 'react-hot-toast';
 
 interface DangerZoneTabProps {
     user: User | null;
@@ -9,22 +12,39 @@ interface DangerZoneTabProps {
 }
 
 export function DangerZoneTab({ user, onDeleteWorkspace }: DangerZoneTabProps) {
-    const targetSlug = user?.name
+    const { currentWorkspace, fetchWorkspaces } = useWorkspaceStore();
+    const targetSlug = currentWorkspace?.slug || (user?.name
         ? user.name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-')
-        : 'acme-corp';
+        : 'workspace-slug');
 
     const [confirmInput, setConfirmInput] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
     const isMatched = confirmInput.trim().toLowerCase() === targetSlug.toLowerCase();
 
-    const handleDelete = () => {
-        if (!isMatched) return;
-        const accept = confirm(`Are you absolutely sure you want to delete workspace "${targetSlug}"? This action cannot be undone!`);
+    const handleDelete = async () => {
+        if (!isMatched || !currentWorkspace?.id || isDeleting) return;
+        const accept = confirm(`Are you absolutely sure you want to delete workspace "${currentWorkspace.name}"? This action cannot be undone!`);
         if (!accept) return;
-        onDeleteWorkspace?.();
+
+        setIsDeleting(true);
+        try {
+            const res = await axios.delete(`/api/workspaces/${currentWorkspace.id}`);
+            if (res.data?.success) {
+                toast.success('Workspace deleted successfully');
+                await fetchWorkspaces();
+                onDeleteWorkspace?.();
+            } else {
+                toast.error(res.data?.message || 'Failed to delete workspace');
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Failed to delete workspace');
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     return (
-        <div className="bg-white rounded-xl border border-[#ba1a1a]/30 shadow-xs p-6 max-w-3xl relative overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#ba1a1a]/30 shadow-xs p-6 max-w-3xl relative overflow-hidden text-[#1b1b24]">
             {/* Subtle red background glow */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#ba1a1a]/5 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -39,7 +59,7 @@ export function DangerZoneTab({ user, onDeleteWorkspace }: DangerZoneTabProps) {
                         Delete Workspace
                     </h3>
                     <p className="text-[16px] leading-6 text-[#1b1b24] mb-4">
-                        Deleting this workspace is a permanent action and cannot be undone. This will immediately and irretrievably remove all associated data, including:
+                        Deleting workspace <strong className="font-bold text-[#ba1a1a]">{currentWorkspace?.name || targetSlug}</strong> is a permanent action and cannot be undone. This will immediately remove:
                     </p>
                     <ul className="list-disc list-inside text-[14px] leading-5 text-[#464555] space-y-1 mb-6 ml-2">
                         <li>All active and archived <strong>Projects</strong></li>
@@ -57,15 +77,16 @@ export function DangerZoneTab({ user, onDeleteWorkspace }: DangerZoneTabProps) {
                             value={confirmInput}
                             onChange={(e) => setConfirmInput(e.target.value)}
                             placeholder={targetSlug}
-                            className="w-full max-w-sm px-3 py-2 bg-white border border-[#c7c4d8] rounded-lg text-sm text-[#1b1b24] focus:outline-none focus:border-[#ba1a1a] focus:ring-1 focus:ring-[#ba1a1a] transition-all"
+                            disabled={isDeleting}
+                            className="w-full max-w-sm px-3 py-2 bg-white border border-[#c7c4d8] rounded-lg text-sm text-[#1b1b24] focus:outline-none focus:border-[#ba1a1a] focus:ring-1 focus:ring-[#ba1a1a] transition-all disabled:opacity-50"
                         />
                     </div>
 
                     <button
-                        disabled={!isMatched}
+                        disabled={!isMatched || isDeleting}
                         onClick={handleDelete}
-                        className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-xs flex items-center space-x-2 transition-all cursor-pointer ${
-                            isMatched
+                        className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-xs flex items-center space-x-2 transition-all ${
+                            isMatched && !isDeleting
                                 ? 'bg-[#ba1a1a] hover:bg-[#ba1a1a]/90 text-white cursor-pointer'
                                 : 'bg-[#ba1a1a]/40 text-white/70 cursor-not-allowed'
                         }`}
@@ -73,7 +94,7 @@ export function DangerZoneTab({ user, onDeleteWorkspace }: DangerZoneTabProps) {
                         <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
                             delete_forever
                         </span>
-                        <span>Delete Workspace</span>
+                        <span>{isDeleting ? 'Deleting Workspace...' : 'Delete Workspace'}</span>
                     </button>
                 </div>
             </div>

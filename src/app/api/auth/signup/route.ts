@@ -4,20 +4,21 @@ import { prisma } from '@/services/db/prisma';
 import { generateToken, setAuthCookie } from '@/lib/auth';
 import { createDefaultWorkspace, getUserWorkspaces } from '@/services/workspaceService';
 import { sendEmail } from '@/services/mail/mailer';
+import { verifySignupOtp } from '@/lib/signupOtpStore';
 
-// POST /api/auth/signup - Register new user & auto-create workspace
+// POST /api/auth/signup - Register new user after email OTP verification
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { name, email, password } = body;
+        const { name, email, password, otp } = body;
 
         // Validation
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !otp) {
             return NextResponse.json({
                 success: false,
                 data: null,
-                message: 'Please provide name, email, and password',
-                error: 'Please provide name, email, and password',
+                message: 'Please provide name, email, password, and OTP code',
+                error: 'Please provide name, email, password, and OTP code',
             }, { status: 400 });
         }
 
@@ -39,6 +40,17 @@ export async function POST(request: NextRequest) {
                 data: null,
                 message: 'Password must be at least 8 characters long',
                 error: 'Password must be at least 8 characters long',
+            }, { status: 400 });
+        }
+
+        // Server-side OTP Verification
+        const otpCheck = verifySignupOtp(email, otp);
+        if (!otpCheck.success) {
+            return NextResponse.json({
+                success: false,
+                data: null,
+                message: otpCheck.message,
+                error: otpCheck.message,
             }, { status: 400 });
         }
 
@@ -122,7 +134,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: false,
             data: null,
-            message: 'Signup failed',
+            message: 'Signup failed. Please try again.',
             error: error.message || 'Signup failed',
         }, { status: 500 });
     }

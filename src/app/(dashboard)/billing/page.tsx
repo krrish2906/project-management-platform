@@ -1,9 +1,11 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
+import { useProjectStore } from '@/features/projects/store/useProjectStore';
 
 // Modular Billing Components
 import { BillingHeader } from '@/features/billing/components/BillingHeader';
@@ -11,9 +13,27 @@ import { CurrentPlanBanner } from '@/features/billing/components/CurrentPlanBann
 import { PricingTierCard, PricingPlan } from '@/features/billing/components/PricingTierCard';
 import { FeatureComparisonTable } from '@/features/billing/components/FeatureComparisonTable';
 
+const PLAN_LIMITS_MAP = {
+    FREE: { maxProjects: 3, maxStorageBytes: 500 * 1024 * 1024 },
+    PRO: { maxProjects: 10, maxStorageBytes: 15 * 1024 * 1024 * 1024 },
+    MAX: { maxProjects: Infinity, maxStorageBytes: Infinity },
+};
+
 export default function BillingPage() {
     const { user, isLoading: authLoading } = useAuth(true);
-    const [currentPlan, setCurrentPlan] = useState<'free' | 'pro' | 'max'>('free');
+    const { currentWorkspace, workspaces, fetchWorkspaces } = useWorkspaceStore();
+    const { projects, fetchProjects } = useProjectStore();
+
+    useEffect(() => {
+        fetchWorkspaces();
+        fetchProjects();
+    }, [fetchWorkspaces, fetchProjects]);
+
+    const activePlan = (currentWorkspace?.plan || 'FREE').toUpperCase() as 'FREE' | 'PRO' | 'MAX';
+    const activeLimits = PLAN_LIMITS_MAP[activePlan] || PLAN_LIMITS_MAP.FREE;
+
+    const usedProjectsCount = projects.length;
+    const usedStorageBytes = currentWorkspace?.storageUsed || 0;
 
     const plans: PricingPlan[] = [
         {
@@ -21,14 +41,14 @@ export default function BillingPage() {
             name: 'FREE',
             price: '£0',
             period: '/month',
-            isCurrent: currentPlan === 'free',
+            isCurrent: activePlan === 'FREE',
             features: [
-                '3 Projects',
-                '5 Members',
-                'Kanban & Chat',
-                'Docs (100MB)',
+                'Up to 3 Projects',
+                '5 Members per project',
+                'Kanban & Real-time Chat',
+                '500MB Cloud Storage',
             ],
-            buttonText: currentPlan === 'free' ? 'Current Plan' : 'Select Free',
+            buttonText: activePlan === 'FREE' ? 'Current Plan' : 'Select Free',
         },
         {
             id: 'pro',
@@ -36,40 +56,38 @@ export default function BillingPage() {
             price: '£19',
             period: '/month',
             isRecommended: true,
-            isCurrent: currentPlan === 'pro',
+            isCurrent: activePlan === 'PRO',
             features: [
-                'Unlimited Projects',
-                '20 Members',
-                'AI Writing/Summary',
-                'Video/Voice Calls',
-                '10GB Storage',
+                'Up to 10 Projects',
+                '25 Members per project',
+                'AI Writing & Summaries',
+                'Video & Audio Calls',
+                '15GB Cloud Storage',
                 'Priority Support',
             ],
-            buttonText: currentPlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro',
+            buttonText: activePlan === 'PRO' ? 'Current Plan' : 'Upgrade to Pro',
         },
         {
             id: 'max',
             name: 'MAX',
             price: '£49',
             period: '/month',
-            isCurrent: currentPlan === 'max',
+            isCurrent: activePlan === 'MAX',
             features: [
-                'Unlimited Everything',
-                'Premium AI',
-                'Custom Domains',
-                'Unlimited Storage',
-                'Account Manager',
+                'Unlimited Projects',
+                'Unlimited Members',
+                'Generous AI Tier',
+                'Unlimited Cloud Storage',
+                'Dedicated Support',
             ],
-            buttonText: currentPlan === 'max' ? 'Current Plan' : 'Upgrade to Max',
+            buttonText: activePlan === 'MAX' ? 'Current Plan' : 'Upgrade to Max',
         },
     ];
 
-    const handleSelectPlan = (planId: 'free' | 'pro' | 'max') => {
-        if (planId === currentPlan) return;
-        const confirmChange = confirm(`Upgrade your subscription to the ${planId.toUpperCase()} plan?`);
-        if (confirmChange) {
-            setCurrentPlan(planId);
-        }
+    const handleSelectPlan = (planId: string) => {
+        const targetPlan = planId.toUpperCase();
+        if (targetPlan === activePlan) return;
+        alert(`Redirecting to payment gateway to subscribe to ${targetPlan} Plan.`);
     };
 
     if (authLoading) {
@@ -77,7 +95,7 @@ export default function BillingPage() {
             <div className="flex h-screen bg-[#F8FAFC]">
                 <Sidebar />
                 <div className="flex-1 flex items-center justify-center">
-                    <div className="w-10 h-10 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-10 h-10 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -100,11 +118,13 @@ export default function BillingPage() {
                         {/* Page Header */}
                         <BillingHeader />
 
-                        {/* Current Plan Usage Banner */}
+                        {/* Current Plan Usage Banner with Live Storage Meter */}
                         <CurrentPlanBanner
-                            planName={`${currentPlan.toUpperCase()} Plan`}
-                            usedProjects={currentPlan === 'free' ? 2 : 14}
-                            maxProjects={currentPlan === 'free' ? 3 : 999}
+                            planName={`${activePlan} Plan`}
+                            usedProjects={usedProjectsCount}
+                            maxProjects={activeLimits.maxProjects}
+                            usedStorageBytes={usedStorageBytes}
+                            maxStorageBytes={activeLimits.maxStorageBytes}
                         />
 
                         {/* Pricing Cards Grid */}
@@ -113,7 +133,7 @@ export default function BillingPage() {
                                 <PricingTierCard
                                     key={plan.id}
                                     plan={plan}
-                                    onSelectPlan={handleSelectPlan}
+                                    onSelectPlan={() => handleSelectPlan(plan.id)}
                                 />
                             ))}
                         </div>

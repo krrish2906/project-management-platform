@@ -10,6 +10,7 @@
         "seed": "node scripts/seedData.js"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.1100.0",
         "@hello-pangea/dnd": "^18.0.1",
         "@livekit/components-react": "^2.9.20",
         "@livekit/components-styles": "^1.2.0",
@@ -36,6 +37,7 @@
         "@tiptap/react": "^3.20.5",
         "@tiptap/starter-kit": "^3.20.5",
         "axios": "^1.13.2",
+        "cloudinary": "^2.10.0",
         "cookie": "^1.0.2",
         "cross-env": "^10.1.0",
         "date-fns": "^4.1.0",

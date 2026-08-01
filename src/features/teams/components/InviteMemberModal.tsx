@@ -1,26 +1,33 @@
-'use client'
+'use client';
 
 import React, { useState } from 'react';
 
 interface InviteMemberModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onInvite: (email: string, role: string, department: string) => void;
+    onInvite: (email: string, role: string, department: string) => Promise<void> | void;
 }
 
 export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberModalProps) {
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState('Developer');
+    const [role, setRole] = useState('MEMBER');
     const [department, setDepartment] = useState('Engineering');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!email.trim()) return;
-        onInvite(email.trim(), role, department);
-        setEmail('');
-        onClose();
+        if (!email.trim() || isSubmitting) return;
+
+        setIsSubmitting(true);
+        try {
+            await onInvite(email.trim(), role, department);
+            setEmail('');
+            onClose();
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -28,7 +35,7 @@ export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberMod
             <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-[#E2E8F0] animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#3525cd]">person_add</span>
+                        <span className="material-symbols-outlined text-[#4f46e5]">person_add</span>
                         <h3 className="text-[20px] font-bold text-[#1b1b24]">Invite Team Member</h3>
                     </div>
                     <button onClick={onClose} className="text-[#777587] hover:text-[#1b1b24] cursor-pointer">
@@ -45,21 +52,22 @@ export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberMod
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="colleague@company.com"
-                            className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#c7c4d8] rounded-xl text-sm text-[#1b1b24] focus:border-[#3525cd] focus:ring-1 focus:ring-[#3525cd] outline-none"
+                            className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#c7c4d8] rounded-xl text-sm text-[#1b1b24] focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] outline-none"
+                            disabled={isSubmitting}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-[#1b1b24] mb-1.5">Role</label>
+                        <label className="block text-sm font-semibold text-[#1b1b24] mb-1.5">Workspace Role</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-white border border-[#c7c4d8] rounded-xl text-sm text-[#1b1b24] focus:border-[#3525cd] outline-none cursor-pointer"
+                            className="w-full px-3.5 py-2.5 bg-white border border-[#c7c4d8] rounded-xl text-sm text-[#1b1b24] focus:border-[#4f46e5] outline-none cursor-pointer"
+                            disabled={isSubmitting}
                         >
-                            <option value="Developer">Developer</option>
-                            <option value="Designer">Designer</option>
-                            <option value="Manager">Manager</option>
-                            <option value="Admin">Admin</option>
+                            <option value="MEMBER">Member</option>
+                            <option value="ADMIN">Admin</option>
+                            <option value="GUEST">Guest</option>
                         </select>
                     </div>
 
@@ -68,7 +76,8 @@ export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberMod
                         <select
                             value={department}
                             onChange={(e) => setDepartment(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-white border border-[#c7c4d8] rounded-xl text-sm text-[#1b1b24] focus:border-[#3525cd] outline-none cursor-pointer"
+                            className="w-full px-3.5 py-2.5 bg-white border border-[#c7c4d8] rounded-xl text-sm text-[#1b1b24] focus:border-[#4f46e5] outline-none cursor-pointer"
+                            disabled={isSubmitting}
                         >
                             <option value="Engineering">Engineering</option>
                             <option value="Design">Design</option>
@@ -82,14 +91,16 @@ export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberMod
                             type="button"
                             onClick={onClose}
                             className="px-4 py-2 bg-white border border-[#c7c4d8] text-[#464555] rounded-xl text-sm font-semibold hover:bg-[#f5f2ff] cursor-pointer"
+                            disabled={isSubmitting}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="px-5 py-2 bg-[#4f46e5] text-white rounded-xl text-sm font-semibold hover:bg-[#3525cd] shadow-xs cursor-pointer"
+                            disabled={isSubmitting}
+                            className="px-5 py-2 bg-[#4f46e5] text-white rounded-xl text-sm font-semibold hover:bg-[#3730a3] shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-2"
                         >
-                            Send Invitation
+                            {isSubmitting ? 'Sending Invite Email...' : 'Send Invitation'}
                         </button>
                     </div>
                 </form>

@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { toast } from 'react-hot-toast';
 
@@ -12,18 +13,22 @@ interface CreateWorkspaceModalProps {
 
 export function CreateWorkspaceModal({ isOpen, onClose, onCreated }: CreateWorkspaceModalProps) {
     const [name, setName] = useState('');
-    const [plan, setPlan] = useState<'FREE' | 'PRO' | 'MAX'>('FREE');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const { createWorkspace } = useWorkspaceStore();
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!isOpen || !mounted) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim()) return;
 
         setIsSubmitting(true);
-        const created = await createWorkspace(name.trim(), plan);
+        const created = await createWorkspace(name.trim(), 'FREE');
         setIsSubmitting(false);
 
         if (created) {
@@ -38,9 +43,9 @@ export function CreateWorkspaceModal({ isOpen, onClose, onCreated }: CreateWorks
 
     const slugPreview = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') || 'my-workspace';
 
-    return (
-        <div className="fixed inset-0 z-9999 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-[#E2E8F0] animate-in fade-in zoom-in duration-200">
+    const modalContent = (
+        <div className="fixed inset-0 z-99999 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 w-screen h-screen">
+            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-[#E2E8F0] animate-in fade-in zoom-in duration-150 relative z-100000">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-[#4F46E5]">add_business</span>
@@ -51,7 +56,7 @@ export function CreateWorkspaceModal({ isOpen, onClose, onCreated }: CreateWorks
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                         <label className="block text-sm font-semibold text-[#1b1b24] mb-1.5">
                             Workspace Name
@@ -64,34 +69,23 @@ export function CreateWorkspaceModal({ isOpen, onClose, onCreated }: CreateWorks
                             placeholder="e.g. Acme Corp Design Team"
                             className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#E2E8F0] rounded-xl text-sm text-[#1b1b24] focus:border-[#4F46E5] outline-none"
                         />
-                        <p className="text-[11px] text-[#777587] mt-1">
+                        <p className="text-[11px] text-[#777587] mt-1.5">
                             URL slug: <span className="font-mono text-[#4F46E5]">{slugPreview}</span>
                         </p>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-[#1b1b24] mb-1.5">
-                            Initial Plan Tier
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {(['FREE', 'PRO', 'MAX'] as const).map((tier) => (
-                                <button
-                                    key={tier}
-                                    type="button"
-                                    onClick={() => setPlan(tier)}
-                                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                                        plan === tier
-                                            ? 'border-[#4F46E5] bg-[#4F46E5]/10 text-[#4F46E5]'
-                                            : 'border-[#E2E8F0] bg-white text-[#464555] hover:bg-[#f5f2ff]'
-                                    }`}
-                                >
-                                    {tier}
-                                </button>
-                            ))}
+                    {/* Business SaaS Plan Notice */}
+                    <div className="p-3 bg-[#f5f2ff] border border-[#4F46E5]/20 rounded-2xl flex items-start gap-2.5 text-xs text-[#464555]">
+                        <span className="material-symbols-outlined text-[#4F46E5] text-[18px] shrink-0 mt-0.5">info</span>
+                        <div>
+                            <p className="font-bold text-[#1b1b24] mb-0.5">Default Plan: Free Tier</p>
+                            <p className="text-[11px] leading-relaxed">
+                                New workspaces start on the <strong className="text-[#4F46E5]">Free Plan</strong> (3 projects, 500 MB storage). Upgrade anytime from the <strong className="text-[#1b1b24]">Billing</strong> page.
+                            </p>
                         </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end gap-3">
+                    <div className="pt-2 flex justify-end gap-3">
                         <button
                             type="button"
                             onClick={onClose}
@@ -111,4 +105,6 @@ export function CreateWorkspaceModal({ isOpen, onClose, onCreated }: CreateWorks
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }

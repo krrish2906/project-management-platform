@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import { useProjectStore } from '@/features/projects/store/useProjectStore';
 
 export interface WorkspaceItem {
     id: string;
@@ -8,6 +9,7 @@ export interface WorkspaceItem {
     slug: string;
     plan: 'FREE' | 'PRO' | 'MAX';
     role: 'OWNER' | 'ADMIN' | 'MEMBER';
+    storageUsed?: number;
     _count?: {
         projects: number;
         members: number;
@@ -23,6 +25,7 @@ interface WorkspaceState {
     fetchWorkspaces: () => Promise<WorkspaceItem[]>;
     setCurrentWorkspace: (workspace: WorkspaceItem) => void;
     createWorkspace: (name: string, plan?: 'FREE' | 'PRO' | 'MAX') => Promise<WorkspaceItem | null>;
+    updateWorkspace: (id: string, data: { name?: string; slug?: string; plan?: 'FREE' | 'PRO' | 'MAX' }) => Promise<WorkspaceItem | null>;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
@@ -43,6 +46,7 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
                     slug: w.slug,
                     plan: w.plan || 'FREE',
                     role: w.role || 'OWNER',
+                    storageUsed: Number(w.storageUsed || 0),
                     _count: w._count || { projects: w.projectsCount || 0, members: w.membersCount || 1 },
                 }));
 
@@ -69,6 +73,13 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
         if (typeof window !== 'undefined') {
             localStorage.setItem('active_workspace_id', workspace.id);
         }
+
+        // 🔄 Sync projects when active workspace changes
+        try {
+            useProjectStore.getState().fetchProjects();
+        } catch {
+            // Ignore if project store is not initialized yet
+        }
     },
 
     createWorkspace: async (name: string, plan = 'FREE') => {
@@ -83,6 +94,7 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
                     slug: w.slug,
                     plan: w.plan || plan,
                     role: 'OWNER',
+                    storageUsed: 0,
                     _count: { projects: 0, members: 1 },
                 };
 
@@ -95,12 +107,47 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
                     localStorage.setItem('active_workspace_id', newWs.id);
                 }
 
+                try {
+                    useProjectStore.getState().fetchProjects();
+                } catch {}
+
                 return newWs;
             }
             return null;
         } catch (err: any) {
             set({ error: err.response?.data?.message || err.message });
             return null;
+        }
+    },
+
+    updateWorkspace: async (id: string, data) => {
+        try {
+            const res = await axios.put(`/api/workspaces/${id}`, data);
+            if (res.data?.success && res.data.data?.workspace) {
+                const w = res.data.data.workspace;
+                const updatedWs: WorkspaceItem = {
+                    id: w.id || w._id,
+                    _id: w.id || w._id,
+                    name: w.name,
+                    slug: w.slug,
+                    plan: w.plan || 'FREE',
+                    role: w.role || 'OWNER',
+                    storageUsed: Number(w.storageUsed || 0),
+                    _count: w._count || { projects: 0, members: 1 },
+                };
+
+                set((state) => ({
+                    workspaces: state.workspaces.map((item) => (item.id === id ? updatedWs : item)),
+                    currentWorkspace: state.currentWorkspace?.id === id ? updatedWs : state.currentWorkspace,
+                }));
+
+                return updatedWs;
+            }
+            return null;
+        } catch (err: any) {
+            const msg = err.response?.data?.message || err.message;
+            set({ error: msg });
+            throw new Error(msg);
         }
     },
 }));

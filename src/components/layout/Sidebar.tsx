@@ -72,11 +72,38 @@ export default function Sidebar() {
                 </div>
             </div>
 
-            {/* Workspace Switcher Card */}
-            <div className="mx-2 mb-6 relative" ref={popoverRef}>
+            {/* Navigation Links */}
+            <nav className="flex-1 space-y-1">
+                {navItems.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href));
+                    return (
+                        <Link
+                            key={item.name}
+                            href={item.href}
+                            className={`flex items-center px-3 py-2.5 rounded-xl text-[14px] leading-5 font-medium transition-all duration-200 ${
+                                isActive
+                                    ? "text-[#3525cd] font-semibold border-l-3 border-[#3525cd] bg-[#3525cd]/5"
+                                    : "text-[#464555] hover:text-[#1b1b24] hover:bg-[#eae6f4]/50"
+                            }`}
+                        >
+                            <span
+                                className="material-symbols-outlined mr-3 text-[20px]"
+                                style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
+                            >
+                                {item.icon}
+                            </span>
+                            {item.name}
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            {/* Bottom Section: Workspace Switcher Card & Create Button */}
+            <div className="mt-auto pt-4 border-t border-[#e4e1ee]/60 space-y-3 relative" ref={popoverRef}>
+                {/* Switcher Card */}
                 <div
                     onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
-                    className="p-3 bg-[#f5f2ff] rounded-xl border border-[#e4e1ee]/50 cursor-pointer hover:border-[#4f46e5]/40 transition-colors"
+                    className="p-3 bg-[#f5f2ff] rounded-xl border border-[#e4e1ee]/60 cursor-pointer hover:border-[#4f46e5]/40 transition-colors shadow-2xs"
                 >
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex flex-col min-w-0 pr-1">
@@ -92,7 +119,7 @@ export default function Sidebar() {
                                 {activeWs.plan}
                             </span>
                             <span className="material-symbols-outlined text-[#464555] text-sm">
-                                expand_more
+                                expand_less
                             </span>
                         </div>
                     </div>
@@ -114,9 +141,9 @@ export default function Sidebar() {
 
                 {/* Workspace Switcher Dropdown Popover */}
                 {isSwitcherOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-[#e4e1ee] z-50 py-2 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-2xl shadow-2xl border border-[#e4e1ee] z-50 py-2 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="px-3 py-1.5 text-[10px] font-bold text-[#777587] uppercase tracking-wider border-b border-[#e4e1ee]">
-                            Switch Workspace
+                            Switch Active Workspace
                         </div>
 
                         <div className="max-h-48 overflow-y-auto py-1">
@@ -135,7 +162,7 @@ export default function Sidebar() {
                                     >
                                         <div className="min-w-0 pr-2">
                                             <p className="truncate">{ws.name}</p>
-                                            <span className="text-[10px] text-[#777587] font-mono">{ws.role}</span>
+                                            <span className="text-[10px] text-[#777587] font-mono">{ws.role} • {ws.plan}</span>
                                         </div>
                                         {isSelected && (
                                             <span className="material-symbols-outlined text-[16px] text-[#4f46e5]">check</span>
@@ -144,54 +171,13 @@ export default function Sidebar() {
                                 );
                             })}
                         </div>
-
-                        <div className="border-t border-[#e4e1ee] pt-1">
-                            <button
-                                onClick={() => {
-                                    setIsSwitcherOpen(false);
-                                    setIsCreateModalOpen(true);
-                                }}
-                                className="w-full px-3 py-2 text-left text-xs font-bold text-[#4f46e5] hover:bg-[#4f46e5]/10 flex items-center gap-1.5 cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-[16px]">add</span>
-                                Create New Workspace
-                            </button>
-                        </div>
                     </div>
                 )}
-            </div>
 
-            {/* Navigation Links */}
-            <nav className="flex-1 space-y-1">
-                {navItems.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href));
-                    return (
-                        <Link
-                            key={item.name}
-                            href={item.href}
-                            className={`flex items-center px-3 py-2 rounded-lg text-[14px] leading-5 font-medium transition-all duration-200 ${
-                                isActive
-                                    ? "text-[#3525cd] font-semibold border-l-2 border-[#3525cd] bg-[#3525cd]/5"
-                                    : "text-[#464555] hover:text-[#1b1b24] hover:bg-[#eae6f4]/50"
-                            }`}
-                        >
-                            <span
-                                className="material-symbols-outlined mr-3 text-[20px]"
-                                style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
-                            >
-                                {item.icon}
-                            </span>
-                            {item.name}
-                        </Link>
-                    );
-                })}
-            </nav>
-
-            {/* Bottom Action */}
-            <div className="mt-auto pt-4">
+                {/* Single Primary Create Workspace Button */}
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="w-full py-2.5 px-4 bg-[#4f46e5] hover:bg-[#4338CA] text-white rounded-lg text-[14px] leading-5 font-semibold transition-all duration-200 shadow-xs flex items-center justify-center cursor-pointer"
+                    className="w-full py-2.5 px-4 bg-[#4f46e5] hover:bg-[#4338CA] text-white rounded-xl text-[13px] leading-5 font-semibold transition-all duration-200 shadow-xs flex items-center justify-center cursor-pointer"
                 >
                     <span className="material-symbols-outlined mr-2 text-[18px]">add</span>
                     New Workspace

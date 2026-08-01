@@ -6,7 +6,7 @@ import { EmailTemplate } from './templates/EmailTemplate';
 export interface EmailOptions {
     to: string | string[];
     subject: string;
-    template: 'welcome' | 'reset-password' | 'notification' | 'custom';
+    template: 'welcome' | 'reset-password' | 'notification' | 'custom' | 'otp' | 'invite';
     data: {
         name?: string;
         title?: string;

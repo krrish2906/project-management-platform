@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import CreateProjectModal from '@/features/projects/components/CreateProjectModal';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 
 // Modular Projects Components
 import { ProjectsHeader } from '@/features/projects/components/ProjectsHeader';
@@ -17,6 +18,7 @@ import { ProjectListViewItem } from '@/features/projects/components/ProjectListV
 
 export default function ProjectsPage() {
     const { user, isLoading: authLoading } = useAuth(true);
+    const { currentWorkspace, fetchWorkspaces } = useWorkspaceStore();
     const { projects, isLoading, fetchProjects, deleteProject, toggleStar } = useProjectStore();
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -25,8 +27,15 @@ export default function ProjectsPage() {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     useEffect(() => {
+        fetchWorkspaces();
         fetchProjects();
-    }, [fetchProjects]);
+    }, [fetchWorkspaces, fetchProjects]);
+
+    useEffect(() => {
+        if (currentWorkspace?.id) {
+            fetchProjects();
+        }
+    }, [currentWorkspace?.id, fetchProjects]);
 
     const handleProjectCreated = () => {
         setIsModalOpen(false);
@@ -67,12 +76,15 @@ export default function ProjectsPage() {
     const completedCount = projects.filter((p) => p.status === 'completed').length;
     const archivedCount = projects.filter((p) => p.status === 'archived').length;
 
+    const currentPlan = currentWorkspace?.plan || 'FREE';
+    const totalQuota = currentPlan === 'FREE' ? 3 : currentPlan === 'PRO' ? 10 : 999;
+
     if (authLoading) {
         return (
             <div className="flex h-screen bg-[#F8FAFC]">
                 <Sidebar />
                 <div className="flex-1 flex items-center justify-center">
-                    <div className="w-10 h-10 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-10 h-10 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -101,8 +113,8 @@ export default function ProjectsPage() {
                             onOpenCreateModal={() => setIsModalOpen(true)}
                         />
 
-                        {/* Quota Usage Banner */}
-                        <ProjectsQuotaBanner usedCount={activeCount} totalQuota={3} />
+                        {/* Quota Usage Banner - Synchronized with Workspace Plan */}
+                        <ProjectsQuotaBanner usedCount={projects.length} totalQuota={totalQuota} />
 
                         {/* Stats Summary Strip */}
                         <ProjectsStatsStrip
@@ -123,32 +135,32 @@ export default function ProjectsPage() {
                         {/* Projects Content Section */}
                         {isLoading ? (
                             <div className="flex items-center justify-center py-20">
-                                <div className="w-10 h-10 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin"></div>
+                                <div className="w-10 h-10 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
                             </div>
                         ) : filteredProjects.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-[#e4e1ee] rounded-2xl bg-[#f8fafc]/50 p-8">
-                                <div className="w-16 h-16 bg-[#4f46e5]/10 rounded-2xl flex items-center justify-center mb-4 text-[#4f46e5]">
+                                <div className="w-16 h-16 bg-[#4F46E5]/10 rounded-2xl flex items-center justify-center mb-4 text-[#4F46E5]">
                                     <span className="material-symbols-outlined text-[32px]">folder_open</span>
                                 </div>
                                 <h3 className="text-[20px] font-bold text-[#1b1b24] mb-1">No projects found</h3>
                                 <p className="text-[14px] text-[#464555] mb-6 max-w-md">
                                     {searchQuery || filterStatus !== 'All'
                                         ? 'No projects matched your current search or filter criteria. Try adjusting your search query.'
-                                        : 'Create your first project to start tracking tasks, managing sprints, and collaborating with your team.'}
+                                        : `No projects created in ${currentWorkspace?.name || 'this workspace'} yet. Create your first project to start tracking tasks and collaborating with your team.`}
                                 </p>
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="px-5 py-2.5 bg-[#4f46e5] hover:bg-[#4338CA] text-white rounded-lg font-semibold text-sm transition-all shadow-xs flex items-center gap-2 cursor-pointer"
+                                    className="px-5 py-2.5 bg-[#4F46E5] hover:bg-[#3525cd] text-white rounded-lg font-semibold text-sm transition-all shadow-xs flex items-center gap-2 cursor-pointer"
                                 >
                                     <span className="material-symbols-outlined text-[18px]">add</span>
                                     Create First Project
                                 </button>
                             </div>
                         ) : viewMode === 'grid' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredProjects.map((project) => (
                                     <ProjectGridCard
-                                        key={project._id}
+                                        key={project._id || project.id}
                                         project={project}
                                         onToggleStar={handleToggleStar}
                                         onDeleteProject={handleDeleteProject}
@@ -159,7 +171,7 @@ export default function ProjectsPage() {
                             <div className="space-y-3">
                                 {filteredProjects.map((project) => (
                                     <ProjectListViewItem
-                                        key={project._id}
+                                        key={project._id || project.id}
                                         project={project}
                                         onToggleStar={handleToggleStar}
                                         onDeleteProject={handleDeleteProject}

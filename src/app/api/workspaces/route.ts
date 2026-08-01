@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
             workspaces = [
                 {
                     ...defaultWs,
+                    storageUsed: Number((defaultWs as any).storageUsed || 0),
                     role: 'OWNER',
                     joinedAt: defaultWs.createdAt,
                 } as any,
@@ -94,7 +95,12 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            data: { workspace },
+            data: {
+                workspace: {
+                    ...workspace,
+                    storageUsed: Number((workspace as any).storageUsed || 0),
+                },
+            },
         });
     } catch (error: any) {
         return NextResponse.json(

@@ -11,9 +11,11 @@ export function SignupForm() {
     const router = useRouter();
     const setUser = useAuthStore((state) => state.setUser);
 
+    const [step, setStep] = useState<'details' | 'otp'>('details');
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [otpCode, setOtpCode] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -24,47 +26,48 @@ export function SignupForm() {
     const hasUpper = /[A-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
     const hasSpecial = /[^A-Za-z0-9]/.test(password);
-
     const strengthScore = [hasLength, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
 
     const getBarColor = (index: number) => {
         if (index >= strengthScore) return 'bg-[#e2e8f0]';
-        if (strengthScore <= 1) return 'bg-[#ef4444]'; // Vibrant Emerald Red
-        if (strengthScore === 2) return 'bg-[#f97316]'; // Vibrant Orange
-        if (strengthScore === 3) return 'bg-[#f59e0b]'; // Vibrant Amber
-        return 'bg-[#10b981]'; // Vibrant Emerald Green
+        if (strengthScore <= 1) return 'bg-[#ef4444]';
+        if (strengthScore === 2) return 'bg-[#f97316]';
+        if (strengthScore === 3) return 'bg-[#f59e0b]';
+        return 'bg-[#10b981]';
     };
 
-    const workspaceSlug = fullName.trim()
-        ? fullName
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/[\s_-]+/g, '-')
-            .replace(/^-+|-+$/g, '')
-        : 'workspace';
-
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (!fullName.trim()) {
-            setError('Please enter your full name');
-            return;
+        if (!fullName.trim()) return setError('Please enter your full name');
+        if (!email.trim()) return setError('Please enter your work email');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError('Please enter a valid email address');
+        if (password.length < 8) return setError('Password must be at least 8 characters long');
+        if (!termsAccepted) return setError('You must agree to the Terms of Service');
+
+        setLoading(true);
+        try {
+            const res = await axios.post('/api/auth/signup/send-otp', { email });
+            if (res.data?.success) {
+                toast.success('Verification OTP code sent to your email!');
+                setStep('otp');
+            } else {
+                setError(res.data?.message || res.data?.error || 'Failed to send verification OTP');
+            }
+        } catch (err: any) {
+            setError(err.response?.data?.message || err.response?.data?.error || 'Failed to send OTP code');
+        } finally {
+            setLoading(false);
         }
-        if (!email.trim()) {
-            setError('Please enter your work email');
-            return;
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            setError('Please enter a valid email address');
-            return;
-        }
-        if (password.length < 8) {
-            setError('Password must be at least 8 characters long');
-            return;
-        }
-        if (!termsAccepted) {
-            setError('You must agree to the Terms of Service and Privacy Policy');
+    };
+
+    const handleVerifyAndSignup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        if (!otpCode || otpCode.length < 6) {
+            setError('Please enter the 6-digit verification code sent to your email');
             return;
         }
 
@@ -74,22 +77,21 @@ export function SignupForm() {
                 name: fullName,
                 email,
                 password,
+                otp: otpCode.trim(),
             });
             const data = response.data;
 
             if (data.success) {
-                toast.success('Account created successfully!');
+                toast.success('Email verified & Account created!');
                 setUser(data.data.user);
                 router.push('/');
                 router.refresh();
             } else {
-                setError(data.error || 'Signup failed');
-                toast.error(data.error || 'Signup failed');
+                setError(data.message || data.error || 'Signup failed');
             }
         } catch (err: any) {
-            const errorMsg = err.response?.data?.error || err.message || 'Something went wrong';
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to verify OTP or create account';
             setError(errorMsg);
-            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -97,197 +99,178 @@ export function SignupForm() {
 
     return (
         <div className="w-full lg:w-[55%] p-6 sm:p-8 md:p-12 flex flex-col justify-center bg-white">
-            {/* Mobile Only Header (Visible only on small screens) */}
             <div className="lg:hidden flex items-center gap-2 mb-6">
-                <span className="material-symbols-outlined text-[#4f46e5] text-[28px]">
+                <span className="material-symbols-outlined text-[#4F46E5] text-[28px]">
                     view_kanban
                 </span>
-                <span className="text-[24px] leading-8 tracking-[-0.01em] font-bold text-[#1b1b24]">
+                <span className="text-[24px] tracking-[-0.01em] font-bold text-[#1b1b24]">
                     ProjectHub
                 </span>
             </div>
 
             <div className="max-w-md w-full mx-auto">
-                {/* Form Header */}
                 <div className="mb-6">
-                    <h2 className="text-[26px] leading-8 tracking-[-0.01em] font-bold text-[#1b1b24] mb-1">
-                        Create your workspace
+                    <h2 className="text-[26px] tracking-[-0.01em] font-bold text-[#1b1b24] mb-1">
+                        {step === 'details' ? 'Create your workspace' : 'Verify Email Address'}
                     </h2>
-                    <p className="text-[15px] leading-6 font-normal text-[#464555]">
-                        Your workspace will be ready immediately after registration.
+                    <p className="text-[14px] text-[#64748b]">
+                        {step === 'details'
+                            ? 'Enter your details to receive an email verification code'
+                            : `We sent a 6-digit verification code to ${email}`}
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Full Name Input */}
-                    <div className="space-y-1.5">
-                        <label className="text-[14px] leading-5 font-medium text-[#1b1b24] block" htmlFor="fullName">
-                            Full Name
-                        </label>
-                        <div className="relative input-ring rounded-lg border border-[#e4e1ee] bg-white transition-all duration-200">
-                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#777587]">
-                                <span className="material-symbols-outlined text-[20px]">person</span>
-                            </div>
+                {step === 'details' ? (
+                    <form onSubmit={handleSendOtp} className="space-y-4">
+                        {/* Full Name */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold uppercase tracking-wider text-[#475569] block">
+                                Full Name
+                            </label>
                             <input
-                                id="fullName"
-                                name="fullName"
                                 type="text"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 placeholder="Your full name"
                                 required
                                 disabled={loading}
-                                className="block w-full h-12.5 pl-11 pr-4 py-2 bg-transparent border-none rounded-lg focus:ring-0 text-[15px] leading-6 text-[#1b1b24] placeholder:text-[#c7c4d8] outline-none disabled:opacity-70"
+                                className="w-full px-3.5 py-2.5 bg-[#f8fafc] border border-[#E2E8F0] rounded-xl text-sm text-[#1e293b] focus:border-[#4F46E5] outline-none"
                             />
                         </div>
-                    </div>
 
-                    {/* Email Input */}
-                    <div className="space-y-1.5">
-                        <label className="text-[14px] leading-5 font-medium text-[#1b1b24] block" htmlFor="email">
-                            Email
-                        </label>
-                        <div className="relative input-ring rounded-lg border border-[#e4e1ee] bg-white transition-all duration-200">
-                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#777587]">
-                                <span className="material-symbols-outlined text-[20px]">mail</span>
-                            </div>
+                        {/* Email */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold uppercase tracking-wider text-[#475569] block">
+                                Work Email
+                            </label>
                             <input
-                                id="email"
-                                name="email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Your email"
+                                placeholder="name@company.com"
                                 required
                                 disabled={loading}
-                                className="block w-full h-12.5 pl-11 pr-4 py-2 bg-transparent border-none rounded-lg focus:ring-0 text-[15px] leading-6 text-[#1b1b24] placeholder:text-[#c7c4d8] outline-none disabled:opacity-70"
+                                className="w-full px-3.5 py-2.5 bg-[#f8fafc] border border-[#E2E8F0] rounded-xl text-sm text-[#1e293b] focus:border-[#4F46E5] outline-none"
                             />
                         </div>
-                    </div>
 
-                    {/* Password Input Group */}
-                    <div className="space-y-2.5">
-                        <div className="space-y-1.5">
-                            <label className="text-[14px] leading-5 font-medium text-[#1b1b24] block" htmlFor="password">
+                        {/* Password */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold uppercase tracking-wider text-[#475569] block">
                                 Password
                             </label>
-                            <div className="relative input-ring rounded-lg border border-[#e4e1ee] bg-white transition-all duration-200">
-                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#777587]">
-                                    <span className="material-symbols-outlined text-[20px]">lock</span>
-                                </div>
+                            <div className="relative">
                                 <input
-                                    id="password"
-                                    name="password"
                                     type={showPassword ? 'text' : 'password'}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Your password"
+                                    placeholder="Minimum 8 characters"
                                     required
                                     disabled={loading}
-                                    className="block w-full h-12.5 pl-11 pr-11 py-2 bg-transparent border-none rounded-lg focus:ring-0 text-[15px] leading-6 text-[#1b1b24] placeholder:text-[#c7c4d8] outline-none disabled:opacity-70"
+                                    className="w-full px-3.5 py-2.5 bg-[#f8fafc] border border-[#E2E8F0] rounded-xl text-sm text-[#1e293b] focus:border-[#4F46E5] outline-none pr-10"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#777587] hover:text-[#1b1b24] transition-colors cursor-pointer"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b]"
                                 >
-                                    <span className="material-symbols-outlined text-[20px]">
+                                    <span className="material-symbols-outlined text-[18px]">
                                         {showPassword ? 'visibility' : 'visibility_off'}
                                     </span>
                                 </button>
                             </div>
                         </div>
 
-                        {/* Password Strength Indicator with Vibrant Colors */}
-                        <div className="bg-[#f8fafc] p-3 rounded-lg border border-[#e2e8f0]">
-                            <div className="flex gap-1 h-1.5 mb-2.5 rounded-full overflow-hidden w-full bg-[#e2e8f0]">
-                                <div className={`h-full w-1/4 transition-all duration-300 ${getBarColor(0)}`}></div>
-                                <div className={`h-full w-1/4 transition-all duration-300 ${getBarColor(1)}`}></div>
-                                <div className={`h-full w-1/4 transition-all duration-300 ${getBarColor(2)}`}></div>
-                                <div className={`h-full w-1/4 transition-all duration-300 ${getBarColor(3)}`}></div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
-                                <div className={`flex items-center gap-1.5 text-[11px] ${hasLength ? 'text-[#047857] font-semibold' : 'text-[#64748b]'}`}>
-                                    <span className={`material-symbols-outlined text-[14px] ${hasLength ? 'text-[#10b981]' : 'text-[#94a3b8]'}`}>{hasLength ? 'check_circle' : 'circle'}</span> 8+ characters
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-[11px] ${hasUpper ? 'text-[#047857] font-semibold' : 'text-[#64748b]'}`}>
-                                    <span className={`material-symbols-outlined text-[14px] ${hasUpper ? 'text-[#10b981]' : 'text-[#94a3b8]'}`}>{hasUpper ? 'check_circle' : 'circle'}</span> Uppercase letter
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-[11px] ${hasNumber ? 'text-[#047857] font-semibold' : 'text-[#64748b]'}`}>
-                                    <span className={`material-symbols-outlined text-[14px] ${hasNumber ? 'text-[#10b981]' : 'text-[#94a3b8]'}`}>{hasNumber ? 'check_circle' : 'circle'}</span> Number
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-[11px] ${hasSpecial ? 'text-[#047857] font-semibold' : 'text-[#64748b]'}`}>
-                                    <span className={`material-symbols-outlined text-[14px] ${hasSpecial ? 'text-[#10b981]' : 'text-[#94a3b8]'}`}>{hasSpecial ? 'check_circle' : 'circle'}</span> Special character
-                                </div>
+                        {/* Password Indicator */}
+                        <div className="bg-[#f8fafc] p-2.5 rounded-xl border border-[#E2E8F0]">
+                            <div className="flex gap-1 h-1.5 mb-2 rounded-full overflow-hidden w-full bg-[#E2E8F0]">
+                                <div className={`h-full w-1/4 transition-all ${getBarColor(0)}`} />
+                                <div className={`h-full w-1/4 transition-all ${getBarColor(1)}`} />
+                                <div className={`h-full w-1/4 transition-all ${getBarColor(2)}`} />
+                                <div className={`h-full w-1/4 transition-all ${getBarColor(3)}`} />
                             </div>
                         </div>
-                    </div>
 
-                    {/* Workspace Interactive Preview Card */}
-                    <div className="bg-[#f5f2ff] rounded-lg p-3 border border-[#e4e1ee]/60 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 bg-[#4f46e5] text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg tracking-wider">
-                            PREVIEW
+                        {/* Terms Checkbox */}
+                        <div className="flex items-start gap-2 pt-1">
+                            <input
+                                id="terms"
+                                type="checkbox"
+                                checked={termsAccepted}
+                                onChange={(e) => setTermsAccepted(e.target.checked)}
+                                required
+                                className="w-4 h-4 mt-0.5 text-[#4F46E5] cursor-pointer"
+                            />
+                            <label htmlFor="terms" className="text-xs text-[#64748b] cursor-pointer">
+                                I agree to the <a href="#" className="text-[#4F46E5] font-semibold">Terms of Service</a> and <a href="#" className="text-[#4F46E5] font-semibold">Privacy Policy</a>.
+                            </label>
                         </div>
-                        <div className="text-[13px] font-semibold text-[#1b1b24] mb-1.5">Your Workspace</div>
-                        <div className="space-y-1 text-[12px] text-[#464555]">
-                            <p className="text-[11px] text-[#777587]">
-                                projecthub.app/<span className="font-semibold text-[#4f46e5]">{workspaceSlug}</span>
-                            </p>
-                            <div className="flex justify-between items-center pt-1">
-                                <span>Default Plan:</span>
-                                <span className="bg-[#6cf8bb]/30 text-[#006c49] px-1.5 py-0.5 rounded font-bold text-[10px]">FREE</span>
+
+                        {error && (
+                            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
+                                {error}
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span>Workspace Owner:</span>
-                                <span className="font-medium text-[#1b1b24]">{fullName.trim() || 'You'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Terms Checkbox */}
-                    <div className="flex items-start gap-2 pt-1">
-                        <input
-                            id="terms"
-                            type="checkbox"
-                            checked={termsAccepted}
-                            onChange={(e) => setTermsAccepted(e.target.checked)}
-                            required
-                            className="w-4 h-4 mt-0.5 rounded border-[#e4e1ee] text-[#4f46e5] focus:ring-[#4f46e5] cursor-pointer"
-                        />
-                        <label htmlFor="terms" className="text-[12px] leading-4 text-[#464555] cursor-pointer">
-                            I agree to the <a href="#" className="text-[#3525cd] hover:underline font-medium">Terms of Service</a> and <a href="#" className="text-[#3525cd] hover:underline font-medium">Privacy Policy</a>.
-                        </label>
-                    </div>
-
-                    {/* Error Banner */}
-                    {error && (
-                        <div className="p-2.5 bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#93000a] rounded-lg text-sm font-medium">
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Primary Button */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-12.5 bg-[#4f46e5] hover:bg-[#4338CA] text-white rounded-lg text-[14px] leading-5 font-semibold transition-all duration-200 shadow-sm flex justify-center items-center gap-2 mt-4 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {loading ? 'Creating Account...' : (
-                            <>
-                                Create Account
-                                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                            </>
                         )}
-                    </button>
-                </form>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-3 bg-[#4F46E5] hover:bg-[#3730a3] text-white rounded-xl text-sm font-semibold transition-all shadow-xs flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                            {loading ? 'Sending Verification OTP...' : 'Verify Email & Send OTP'}
+                        </button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleVerifyAndSignup} className="space-y-4">
+                        <div className="p-5 bg-[#f5f2ff] border border-[#4F46E5]/20 rounded-2xl text-center">
+                            <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-3">
+                                Enter 6-Digit Email Verification Code
+                            </p>
+                            <input
+                                type="text"
+                                maxLength={6}
+                                value={otpCode}
+                                onChange={(e) => setOtpCode(e.target.value)}
+                                placeholder="123456"
+                                required
+                                className="w-48 text-center text-2xl font-mono tracking-widest px-3 py-2 bg-white border-2 border-[#4F46E5] rounded-xl text-[#1e293b] outline-none shadow-xs"
+                            />
+                            <p className="text-[11px] text-[#64748b] mt-3">
+                                Check your email inbox or spam folder for the code.
+                            </p>
+                        </div>
+
+                        {error && (
+                            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-3 bg-[#4F46E5] hover:bg-[#3730a3] text-white rounded-xl text-sm font-semibold transition-all shadow-xs flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                            {loading ? 'Verifying OTP...' : 'Verify Code & Complete Registration'}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setStep('details')}
+                            className="w-full py-2 text-xs font-semibold text-[#64748b] hover:text-[#1e293b] transition-colors"
+                        >
+                            ← Back to edit email details
+                        </button>
+                    </form>
+                )}
 
                 {/* Divider */}
-                <div className="relative my-4">
-                    <div aria-hidden="true" className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-[#e4e1ee]"></div>
+                <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-[#E2E8F0]"></div>
                     </div>
                     <div className="relative flex justify-center">
-                        <span className="px-3 bg-white text-[12px] leading-4 tracking-wider font-semibold text-[#777587] uppercase">
+                        <span className="px-3 bg-white text-[11px] font-bold text-[#94a3b8] uppercase tracking-wider">
                             or continue with
                         </span>
                     </div>
@@ -296,7 +279,7 @@ export function SignupForm() {
                 {/* Google SSO Button */}
                 <a
                     href="/api/auth/google"
-                    className="w-full h-12.5 bg-white border border-[#e4e1ee] text-[#1b1b24] rounded-lg text-[14px] leading-5 font-medium transition-colors duration-200 hover:bg-[#f5f2ff] flex justify-center items-center gap-2 cursor-pointer"
+                    className="w-full py-2.5 bg-white border border-[#E2E8F0] text-[#1e293b] rounded-xl text-sm font-medium hover:bg-[#f8fafc] flex justify-center items-center gap-2 cursor-pointer transition-colors"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
@@ -307,14 +290,10 @@ export function SignupForm() {
                     Google
                 </a>
 
-                {/* Footer Link to /login */}
                 <div className="mt-6 text-center">
-                    <p className="text-[14px] leading-5 font-normal text-[#464555]">
+                    <p className="text-xs text-[#64748b]">
                         Already have an account?{' '}
-                        <Link
-                            href="/login"
-                            className="text-[#3525cd] hover:text-[#4f46e5] font-medium transition-colors"
-                        >
+                        <Link href="/login" className="text-[#4F46E5] font-semibold hover:underline">
                             Sign In
                         </Link>
                     </p>

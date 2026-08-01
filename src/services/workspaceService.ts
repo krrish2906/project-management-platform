@@ -70,6 +70,7 @@ export async function getUserWorkspaces(userId: string) {
 
     return memberships.map((m) => ({
         ...m.workspace,
+        storageUsed: Number(m.workspace.storageUsed || 0),
         role: m.role,
         joinedAt: m.joinedAt,
     }));
@@ -96,11 +97,44 @@ export async function verifyWorkspaceAccess(userId: string, workspaceId: string)
     return member;
 }
 
-export const PLAN_LIMITS: Record<Plan, { maxProjects: number; maxMembersPerProject: number }> = {
-    FREE: { maxProjects: 3, maxMembersPerProject: 5 },
-    PRO: { maxProjects: 10, maxMembersPerProject: 25 },
-    MAX: { maxProjects: Infinity, maxMembersPerProject: Infinity },
+export const PLAN_LIMITS: Record<Plan, { maxProjects: number; maxMembersPerProject: number; maxStorageBytes: number }> = {
+    FREE: { maxProjects: 3, maxMembersPerProject: 5, maxStorageBytes: 500 * 1024 * 1024 }, // 500 MB
+    PRO: { maxProjects: 10, maxMembersPerProject: 25, maxStorageBytes: 15 * 1024 * 1024 * 1024 }, // 15 GB
+    MAX: { maxProjects: Infinity, maxMembersPerProject: Infinity, maxStorageBytes: Infinity },
 };
+
+// Check if a workspace has enough storage for an incoming upload
+export async function checkWorkspaceStorageLimit(workspaceId: string, incomingSizeBytes: number): Promise<boolean> {
+    const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { plan: true, storageUsed: true },
+    });
+
+    if (!workspace) {
+        throw new Error('Workspace not found.');
+    }
+
+    const maxStorage = PLAN_LIMITS[workspace.plan]?.maxStorageBytes ?? (500 * 1024 * 1024);
+    const currentUsed = Number(workspace.storageUsed || 0);
+
+    if (currentUsed + incomingSizeBytes > maxStorage) {
+        throw new Error(`Storage limit reached for ${workspace.plan} plan. Please upgrade your plan to upload more files.`);
+    }
+
+    return true;
+}
+
+// Record additional storage used in a workspace
+export async function recordWorkspaceStorageUsage(workspaceId: string, bytesAdded: number): Promise<void> {
+    await prisma.workspace.update({
+        where: { id: workspaceId },
+        data: {
+            storageUsed: {
+                increment: bytesAdded,
+            },
+        },
+    });
+}
 
 // Check if a workspace can create new projects based on its Plan limits
 export async function checkProjectLimit(workspaceId: string): Promise<boolean> {

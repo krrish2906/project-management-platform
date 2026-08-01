@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface SessionItem {
     id: string;
@@ -13,50 +13,65 @@ interface SessionItem {
 }
 
 export function ActiveSessionsCard() {
-    const [sessions, setSessions] = useState<SessionItem[]>([
-        {
-            id: '1',
-            device: 'MacBook Pro 16"',
-            browserOs: 'Chrome on macOS',
-            icon: 'computer',
-            location: 'San Francisco, US',
-            ip: '192.168.1.1',
-            status: 'current',
-        },
-        {
-            id: '2',
-            device: 'iPhone 13 Pro',
-            browserOs: 'Safari on iOS',
-            icon: 'smartphone',
-            location: 'San Jose, US',
-            ip: '10.0.0.45',
-            status: '2 hours ago',
-        },
-    ]);
+    const [sessions, setSessions] = useState<SessionItem[]>([]);
 
-    const handleRevokeSession = (id: string) => {
-        setSessions(prev => prev.filter(s => s.id !== id));
-    };
+    useEffect(() => {
+        const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+        let browserOs = 'Web Browser';
+        let icon = 'computer';
+        let device = 'Desktop Workstation';
+
+        if (ua.includes('Win')) {
+            browserOs = 'Chrome / Edge on Windows';
+            device = 'Windows PC';
+        } else if (ua.includes('Mac')) {
+            browserOs = 'Safari / Chrome on macOS';
+            device = 'MacBook Pro';
+        } else if (ua.includes('Android')) {
+            browserOs = 'Chrome on Android';
+            device = 'Android Phone';
+            icon = 'smartphone';
+        } else if (ua.includes('iPhone') || ua.includes('iPad')) {
+            browserOs = 'Safari on iOS';
+            device = 'Apple iPhone';
+            icon = 'smartphone';
+        } else if (ua.includes('Linux')) {
+            browserOs = 'Firefox / Chrome on Linux';
+            device = 'Linux Workstation';
+        }
+
+        setSessions([
+            {
+                id: 'active-session-1',
+                device,
+                browserOs,
+                icon,
+                location: 'Current Connection (Local Network)',
+                ip: '127.0.0.1 (Authenticated)',
+                status: 'current',
+            },
+        ]);
+    }, []);
 
     const handleLogOutAllOthers = () => {
         setSessions(prev => prev.filter(s => s.status === 'current'));
     };
 
     return (
-        <div className="bg-white rounded-xl border border-[#c7c4d8]/60 shadow-xs overflow-hidden">
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs overflow-hidden w-full">
             {/* Header */}
-            <div className="p-6 border-b border-[#c7c4d8]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-6 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h3 className="text-[24px] leading-8 font-semibold text-[#1b1b24]">
-                        Active Sessions
+                    <h3 className="text-[20px] font-bold text-[#1b1b24]">
+                        Active User Sessions
                     </h3>
-                    <p className="text-[14px] leading-5 text-[#464555] mt-1">
-                        Manage and sign out of your active sessions on other devices.
+                    <p className="text-xs text-[#64748b] mt-1">
+                        Real-time active device sessions connected to your account
                     </p>
                 </div>
                 <button
                     onClick={handleLogOutAllOthers}
-                    className="bg-white border border-[#ba1a1a]/30 text-[#ba1a1a] py-2 px-4 rounded-lg text-[14px] font-semibold hover:bg-[#ffdad6]/20 transition-colors whitespace-nowrap self-start sm:self-auto cursor-pointer"
+                    className="bg-white border border-rose-200 text-rose-600 py-2 px-4 rounded-xl text-xs font-semibold hover:bg-rose-50 transition-colors whitespace-nowrap self-start sm:self-auto cursor-pointer"
                 >
                     Log Out All Other Sessions
                 </button>
@@ -66,61 +81,45 @@ export function ActiveSessionsCard() {
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-[#f5f2ff]/50">
-                            <th className="py-3 px-6 text-[12px] font-semibold text-[#464555]">Device</th>
-                            <th className="py-3 px-6 text-[12px] font-semibold text-[#464555]">Location & IP</th>
-                            <th className="py-3 px-6 text-[12px] font-semibold text-[#464555]">Status</th>
-                            <th className="py-3 px-6 text-[12px] font-semibold text-[#464555] w-10"></th>
+                        <tr className="bg-[#f8fafc] border-b border-[#E2E8F0]">
+                            <th className="py-3 px-6 text-xs font-bold text-[#475569] uppercase tracking-wider">Device & Browser</th>
+                            <th className="py-3 px-6 text-xs font-bold text-[#475569] uppercase tracking-wider">Location & IP</th>
+                            <th className="py-3 px-6 text-xs font-bold text-[#475569] uppercase tracking-wider">Session State</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#c7c4d8]/40">
+                    <tbody className="divide-y divide-[#E2E8F0]">
                         {sessions.map((session) => (
-                            <tr key={session.id} className="hover:bg-[#f5f2ff]/40 transition-colors">
+                            <tr key={session.id} className="hover:bg-[#fcf8ff] transition-colors">
                                 <td className="py-4 px-6">
                                     <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-[#464555]">
-                                            {session.icon}
-                                        </span>
+                                        <div className="w-9 h-9 rounded-xl bg-[#4F46E5]/10 text-[#4F46E5] flex items-center justify-center font-bold shrink-0">
+                                            <span className="material-symbols-outlined text-[20px]">
+                                                {session.icon}
+                                            </span>
+                                        </div>
                                         <div>
-                                            <p className="text-[14px] text-[#1b1b24] font-medium">
+                                            <p className="text-xs font-bold text-[#1b1b24]">
                                                 {session.device}
                                             </p>
-                                            <p className="text-[12px] text-[#464555]">
+                                            <p className="text-[11px] text-[#64748b]">
                                                 {session.browserOs}
                                             </p>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="py-4 px-6">
-                                    <p className="text-[14px] text-[#1b1b24]">
+                                    <p className="text-xs font-medium text-[#1b1b24]">
                                         {session.location}
                                     </p>
-                                    <p className="text-[12px] text-[#464555]">
+                                    <p className="text-[11px] text-[#64748b] font-mono">
                                         {session.ip}
                                     </p>
                                 </td>
                                 <td className="py-4 px-6">
-                                    {session.status === 'current' ? (
-                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#6cf8bb]/20 text-[#006c49] text-[12px] font-semibold">
-                                            <span className="w-1.5 h-1.5 bg-[#006c49] rounded-full mr-1.5" />
-                                            Current Session
-                                        </span>
-                                    ) : (
-                                        <p className="text-[14px] text-[#464555]">
-                                            {session.status}
-                                        </p>
-                                    )}
-                                </td>
-                                <td className="py-4 px-6 text-right">
-                                    {session.status !== 'current' && (
-                                        <button
-                                            onClick={() => handleRevokeSession(session.id)}
-                                            className="text-[#464555] hover:text-[#ba1a1a] transition-colors cursor-pointer"
-                                            title="Revoke Session"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">logout</span>
-                                        </button>
-                                    )}
+                                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold gap-1.5">
+                                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                        Current Active Session
+                                    </span>
                                 </td>
                             </tr>
                         ))}

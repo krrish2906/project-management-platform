@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import type { Project } from '@/types';
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 
 interface ProjectState {
     projects: Project[];
@@ -29,9 +30,14 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     fetchProjects: async (filters) => {
         set({ isLoading: true, error: null });
         try {
+            const activeWorkspaceId = typeof window !== 'undefined'
+                ? localStorage.getItem('active_workspace_id') || useWorkspaceStore.getState().currentWorkspace?.id
+                : useWorkspaceStore.getState().currentWorkspace?.id;
+
             const params = new URLSearchParams();
             if (filters?.status) params.set('status', filters.status);
             if (filters?.starred) params.set('starred', filters.starred);
+            if (activeWorkspaceId) params.set('workspaceId', activeWorkspaceId);
 
             const res = await axios.get(`/api/projects?${params.toString()}`);
             const data = res.data;
@@ -48,7 +54,16 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
 
     createProject: async (data) => {
         try {
-            const res = await axios.post('/api/projects', data);
+            const activeWorkspaceId = typeof window !== 'undefined'
+                ? localStorage.getItem('active_workspace_id') || useWorkspaceStore.getState().currentWorkspace?.id
+                : useWorkspaceStore.getState().currentWorkspace?.id;
+
+            const payload = {
+                ...data,
+                workspaceId: activeWorkspaceId,
+            };
+
+            const res = await axios.post('/api/projects', payload);
             const resData = res.data;
 
             if (resData.success) {

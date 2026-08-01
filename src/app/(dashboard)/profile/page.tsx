@@ -19,7 +19,7 @@ export default function ProfilePage() {
             <div className="flex h-screen bg-[#F8FAFC]">
                 <Sidebar />
                 <div className="flex-1 flex items-center justify-center">
-                    <div className="w-10 h-10 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-10 h-10 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin"></div>
                 </div>
             </div>
         );
@@ -35,9 +35,9 @@ export default function ProfilePage() {
                 {/* Header */}
                 <Header user={user} />
 
-                {/* Scrollable Canvas */}
+                {/* Scrollable Canvas - Full Width matching Billing Page */}
                 <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#fcf8ff]">
-                    <div className="max-w-4xl mx-auto w-full space-y-8 pb-16">
+                    <div className="max-w-7xl mx-auto w-full space-y-8 pb-16">
                         
                         {/* Page Header */}
                         <ProfileHeader />

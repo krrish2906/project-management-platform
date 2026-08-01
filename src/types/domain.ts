@@ -54,143 +54,147 @@ export interface User {
     id?: string;
     name: string;
     email: string;
-    avatar?: string;
-    role?: 'owner' | 'admin' | 'project_manager' | 'developer' | 'viewer' | string;
-    jobTitle?: string;
-    department?: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface ProjectMember {
-    user: User | string;
-    role: 'owner' | 'admin' | 'project_manager' | 'developer' | 'viewer' | string;
-    starred?: boolean;
-}
-
-export interface Project {
-    _id: string;
-    id?: string;
-    name: string;
-    key: string;
-    description?: string;
-    owner: User | string;
-    kanban?: string;
-    members: ProjectMember[];
-    status: 'ACTIVE' | 'COMPLETED' | 'ON_HOLD' | 'active' | 'archived' | 'completed' | string;
-    visibility?: 'public' | 'private' | string;
-    startDate?: string;
-    endDate?: string;
-    color?: string;
-    icon?: string;
-    isStarred: boolean;
-    taskCounter: number;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export type IssueType = 'epic' | 'story' | 'task' | 'bug' | 'improvement' | 'TASK' | 'BUG' | 'FEATURE';
-
-export type IssuePriority = 'lowest' | 'low' | 'medium' | 'high' | 'highest' | 'critical' | 'LOW' | 'MEDIUM' | 'HIGH';
-
-export type IssueStatus = 'backlog' | 'todo' | 'inprogress' | 'review' | 'qa' | 'blocked' | 'done' | 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE';
-
-export interface Task {
-    _id: string;
-    id?: string;
-    key: string;
-    number?: number;
-    title: string;
-    description?: string;
-    project: Project | string;
-    type: IssueType | TaskType;
-    status: IssueStatus | TaskStatus;
-    priority: IssuePriority | TaskPriority;
-    labels: string[];
-    assignee?: User | null;
-    reporter: User | string;
-    dueDate?: string;
-    storyPoints?: number;
-    sprint?: Sprint | string;
-    parentTask?: string;
-    watchers: (User | string)[];
-    order: number;
-    comments: number;
-    attachments: string[];
-    createdAt: string;
-    updatedAt: string;
+    password?: string;
+    avatar?: string | null;
+    bio?: string | null;
+    department?: string | null;
+    jobTitle?: string | null;
+    location?: string | null;
+    phoneNumber?: string | null;
+    googleId?: string | null;
+    authProvider?: AuthProvider | null;
+    isSuperAdmin?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
 }
 
 export interface TaskAttachment {
-    _id?: string;
     id: string;
-    taskId: string;
     fileName: string;
     fileUrl: string;
     fileSize: number;
     mimeType: string;
-    uploadedById: string;
-    uploadedAt: string;
+    uploadedBy: User;
+    uploadedAt: Date | string;
 }
 
 export interface Comment {
-    _id: string;
-    id?: string;
-    task: string | Task;
-    author: User | string;
+    id: string;
+    taskId: string;
+    author: User;
     content: string;
-    parentComment?: string | Comment;
-    parentCommentId?: string;
-    mentions?: (User | string)[];
+    parentCommentId?: string | null;
     edited: boolean;
-    editedAt?: string;
-    createdAt: string;
-    updatedAt: string;
+    editedAt?: Date | string | null;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+    replies?: Comment[];
+}
+
+export interface Task {
+    id: string;
+    projectId: string;
+    sprintId?: string | null;
+    number: number;
+    title: string;
+    description?: string | null;
+    type: TaskType;
+    status: TaskStatus;
+    priority: TaskPriority;
+    order: number;
+    dueDate?: Date | string | null;
+    assignee?: User | null;
+    reporter: User;
+    attachments?: TaskAttachment[];
+    comments?: Comment[];
+    createdAt: Date | string;
+    updatedAt: Date | string;
 }
 
 export interface Sprint {
-    _id: string;
-    id?: string;
+    id: string;
+    projectId: string;
     name: string;
-    project: string | Project;
-    goal?: string;
-    startDate?: string;
-    endDate?: string;
-    status: 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'planning' | 'active' | 'completed' | string;
-    createdBy: string;
-    createdAt: string;
-    updatedAt: string;
+    goal?: string | null;
+    status: SprintStatus;
+    startDate?: Date | string | null;
+    endDate?: Date | string | null;
+    tasks?: Task[];
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+export interface Project {
+    id: string;
+    workspaceId: string;
+    ownerId: string;
+    name: string;
+    key: string;
+    description?: string | null;
+    status: ProjectStatus;
+    color: string;
+    icon?: string | null;
+    taskCounter: number;
+    members?: ProjectMember[];
+    sprints?: Sprint[];
+    tasks?: Task[];
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+export interface ProjectMember {
+    id: string;
+    projectId: string;
+    userId: string;
+    role: ProjectRole;
+    starred: boolean;
+    joinedAt: Date | string;
+    user?: User;
+}
+
+export interface WorkspaceMember {
+    id: string;
+    workspaceId: string;
+    userId: string;
+    role: WorkspaceRole;
+    joinedAt: Date | string;
+    user?: User;
 }
 
 export interface Activity {
-    _id: string;
-    id?: string;
+    id: string;
+    workspaceId?: string | null;
+    projectId?: string | null;
+    taskId?: string | null;
+    actor: User;
     type: string;
-    actor: User | string;
-    project?: string;
-    task?: Task | string;
-    metadata: Record<string, any>;
-    createdAt: string;
+    metadata?: Record<string, any> | null;
+    createdAt: Date | string;
 }
 
-export interface AppNotification {
-    _id: string;
-    id?: string;
-    recipient: string;
+export interface Notification {
+    id: string;
+    recipientId: string;
+    actor?: User | null;
     type: string;
     title: string;
     message: string;
-    project?: string;
-    task?: string;
-    actor?: User | string;
     read: boolean;
-    readAt?: string;
-    createdAt: string;
+    readAt?: Date | string | null;
+    createdAt: Date | string;
 }
 
-export type Column = {
+export interface ChatMessage {
     id: string;
-    title: string;
-    color: string;
-    tasks: Task[];
-};
+    projectId: string;
+    senderId: string;
+    content: string;
+    type: string;
+    pinned?: boolean;
+    attachments?: any;
+    replyToId?: string | null;
+    replyToContent?: string | null;
+    replyToAuthor?: string | null;
+    createdAt: Date | string;
+    sender?: User;
+}

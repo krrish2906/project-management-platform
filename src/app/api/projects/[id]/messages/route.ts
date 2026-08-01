@@ -25,11 +25,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         await getProjectById(projectId, authUser.userId);
 
         const { searchParams } = new URL(request.url);
-        const limit = parseInt(searchParams.get('limit') || '50', 10);
+        const limit = parseInt(searchParams.get('limit') || '100', 10);
         const skip = parseInt(searchParams.get('skip') || '0', 10);
         const pinned = searchParams.get('pinned') === 'true';
 
-        const messages = await prisma.message.findMany({
+        const rawMessages = await (prisma.message as any).findMany({
             where: {
                 projectId,
                 pinned: pinned ? true : undefined,
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                     select: { id: true, name: true, email: true, avatar: true },
                 },
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: 'asc' },
             take: limit,
             skip,
         });
@@ -51,10 +51,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             },
         });
 
+        const messages = rawMessages.map((m: any) => ({
+            ...m,
+            _id: m.id,
+            attachments: m.attachments || undefined,
+            replyTo: m.replyToId ? {
+                id: m.replyToId,
+                content: m.replyToContent,
+                author: m.replyToAuthor,
+            } : undefined,
+        }));
+
         return NextResponse.json({
             success: true,
             data: {
-                messages: messages.map(m => ({ ...m, _id: m.id })).reverse(),
+                messages,
                 total,
                 limit,
                 skip,
@@ -91,23 +102,32 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         await getProjectById(projectId, authUser.userId);
 
         const body = await request.json();
-        const { content } = body;
+        const { content, attachments, replyTo, replyToContent, replyToAuthor } = body;
 
-        if (!content || content.trim().length === 0) {
+        const hasText = Boolean(content && content.trim().length > 0);
+        const hasAttachments = Boolean(Array.isArray(attachments) && attachments.length > 0);
+
+        if (!hasText && !hasAttachments) {
             return NextResponse.json({
                 success: false,
                 data: null,
-                message: 'Message content is required',
-                error: 'Message content is required',
+                message: 'Message content or attachment is required',
+                error: 'Message content or attachment is required',
             }, { status: 400 });
         }
 
-        const message = await prisma.message.create({
-            data: {
-                projectId,
-                senderId: authUser.userId,
-                content: content.trim(),
-            },
+        const messageData: any = {
+            projectId,
+            senderId: authUser.userId,
+            content: (content || '').trim(),
+            attachments: hasAttachments ? attachments : undefined,
+            replyToId: replyTo || undefined,
+            replyToContent: replyToContent || undefined,
+            replyToAuthor: replyToAuthor || undefined,
+        };
+
+        const rawMessage = await (prisma.message as any).create({
+            data: messageData,
             include: {
                 sender: {
                     select: { id: true, name: true, email: true, avatar: true },
@@ -115,16 +135,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             },
         });
 
+        const formattedMessage = {
+            ...rawMessage,
+            _id: rawMessage.id,
+            attachments: rawMessage.attachments || undefined,
+            replyToContent: rawMessage.replyToContent,
+            replyToAuthor: rawMessage.replyToAuthor,
+        };
+
         return NextResponse.json({
             success: true,
             data: {
-                message: { ...message, _id: message.id },
+                message: formattedMessage,
             },
             message: 'Message sent successfully',
             error: null,
         }, { status: 201 });
 
     } catch (error: any) {
+        console.error('Send message error:', error);
         return NextResponse.json({
             success: false,
             data: null,

@@ -2,9 +2,13 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
+import Link from 'next/link';
+import axios from 'axios';
 import { useNotificationStore } from '@/features/notifications/store/useNotificationStore';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { formatDistanceToNow } from 'date-fns';
 import type { User } from '@/types';
+import { toast } from 'react-hot-toast';
 
 interface HeaderProps {
     user: User | null;
@@ -23,13 +27,11 @@ export default function Header({ user }: HeaderProps) {
     const {
         notifications,
         unreadCount,
-        isLoading,
         fetchNotifications,
         markAsRead,
-        markAllAsRead,
-        deleteNotification,
-        clearAll,
     } = useNotificationStore();
+
+    const { logout } = useAuthStore();
 
     useEffect(() => {
         fetchNotifications();
@@ -37,15 +39,20 @@ export default function Header({ user }: HeaderProps) {
 
     const userInitials = user?.name
         ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
-        : 'K';
+        : 'U';
 
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-    const popoverRef = useRef<HTMLDivElement>(null);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const notifRef = useRef<HTMLDivElement>(null);
+    const userMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+            if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
                 setIsNotificationOpen(false);
+            }
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
@@ -61,25 +68,33 @@ export default function Header({ user }: HeaderProps) {
     };
 
     const handleBackClick = () => {
-        // If inside a project route (/projects/[id]/kanban, /projects/[id]/calendar, etc.)
         if (projectId) {
             const projectOverviewPath = `/projects/${projectId}`;
-            // If on a sub-page of the project, redirect directly to Project Overview
             if (pathname !== projectOverviewPath) {
                 router.push(projectOverviewPath);
                 return;
             } else {
-                // If ALREADY on Project Overview, go back to Projects list
                 router.push('/projects');
                 return;
             }
         }
 
-        // Default fallback if outside project pages
         if (pathname === '/projects') {
             router.push('/dashboard');
         } else {
             router.push('/projects');
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await axios.post('/api/auth/logout');
+            logout();
+            toast.success('Logged out successfully');
+            router.push('/login');
+            router.refresh();
+        } catch {
+            toast.error('Logout failed');
         }
     };
 
@@ -90,7 +105,7 @@ export default function Header({ user }: HeaderProps) {
                 <button
                     onClick={handleBackClick}
                     className="p-2 rounded-xl text-[#464555] hover:text-[#4f46e5] hover:bg-[#e4e1ee]/50 transition-colors mr-3 flex items-center justify-center cursor-pointer shrink-0"
-                    title="Go Back to Project Overview"
+                    title="Go Back"
                 >
                     <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                 </button>
@@ -121,7 +136,7 @@ export default function Header({ user }: HeaderProps) {
             {/* Right Actions */}
             <div className="flex items-center space-x-3 ml-auto">
                 {/* Notification Bell */}
-                <div className="relative" ref={popoverRef}>
+                <div className="relative" ref={notifRef}>
                     <button
                         className="text-[#464555] hover:text-[#4f46e5] transition-colors p-2 rounded-full hover:bg-[#eae6f4] relative cursor-pointer flex items-center justify-center"
                         onClick={() => setIsNotificationOpen(!isNotificationOpen)}
@@ -134,17 +149,9 @@ export default function Header({ user }: HeaderProps) {
 
                     {/* Notifications Popover */}
                     {isNotificationOpen && (
-                        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-level-2 border border-[#e4e1ee] z-50 overflow-hidden flex flex-col">
+                        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-level-2 border border-[#e4e1ee] z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
                             <div className="px-4 py-3 border-b border-[#e4e1ee] flex items-center justify-between bg-[#f8fafc]">
                                 <h3 className="font-semibold text-sm text-[#1b1b24]">Notifications</h3>
-                                {unreadCount > 0 && (
-                                    <button
-                                        onClick={markAllAsRead}
-                                        className="text-xs text-[#4f46e5] font-semibold hover:underline"
-                                    >
-                                        Mark all read
-                                    </button>
-                                )}
                             </div>
 
                             <div className="max-h-80 overflow-y-auto divide-y divide-[#e4e1ee]/60">
@@ -185,9 +192,59 @@ export default function Header({ user }: HeaderProps) {
                     )}
                 </div>
 
-                {/* User Avatar */}
-                <div className="w-8 h-8 rounded-full bg-[#4f46e5] text-white flex items-center justify-center font-bold text-xs shadow-xs border border-white">
-                    {userInitials}
+                {/* User Avatar with Logout Dropdown Popover */}
+                <div className="relative" ref={userMenuRef}>
+                    <button
+                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                        className="w-9 h-9 rounded-full bg-[#4f46e5] hover:bg-[#3730a3] text-white flex items-center justify-center font-bold text-xs shadow-xs border-2 border-white cursor-pointer transition-transform hover:scale-105"
+                        title="Account Menu"
+                    >
+                        {user?.avatar ? (
+                            <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                            userInitials
+                        )}
+                    </button>
+
+                    {/* User Menu Popover */}
+                    {isUserMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-[#e4e1ee] z-50 overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150">
+                            <div className="px-4 py-3 border-b border-[#e4e1ee]">
+                                <p className="text-xs font-bold text-[#1b1b24] truncate">{user?.name || 'User'}</p>
+                                <p className="text-[11px] text-[#64748b] truncate">{user?.email}</p>
+                            </div>
+
+                            <div className="py-1">
+                                <Link
+                                    href="/profile"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                    className="flex items-center px-4 py-2 text-xs font-semibold text-[#1b1b24] hover:bg-[#f5f2ff] transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-[18px] mr-2.5 text-[#4f46e5]">account_circle</span>
+                                    My Profile
+                                </Link>
+
+                                <Link
+                                    href="/settings"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                    className="flex items-center px-4 py-2 text-xs font-semibold text-[#1b1b24] hover:bg-[#f5f2ff] transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-[18px] mr-2.5 text-[#4f46e5]">settings</span>
+                                    Settings
+                                </Link>
+                            </div>
+
+                            <div className="border-t border-[#e4e1ee] pt-1">
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                >
+                                    <span className="material-symbols-outlined text-[18px] mr-2.5 text-rose-600">logout</span>
+                                    Sign Out / Log Out
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>

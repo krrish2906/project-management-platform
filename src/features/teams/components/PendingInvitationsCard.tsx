@@ -6,7 +6,8 @@ export interface PendingInvite {
     id: string;
     email: string;
     invitedBy: string;
-    role: 'Developer' | 'Designer' | 'Manager' | 'Admin';
+    role: string;
+    department?: string;
     sentDate: string;
 }
 

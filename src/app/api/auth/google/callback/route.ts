@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/services/db/prisma';
 import { generateToken, setAuthCookie } from '@/lib/auth';
 import { createDefaultWorkspace, getUserWorkspaces } from '@/services/workspaceService';
-import { AuthProvider } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
     try {
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
                     email: googleUser.email.toLowerCase().trim(),
                     avatar: googleUser.picture || null,
                     googleId: googleUser.sub || null,
-                    authProvider: AuthProvider.GOOGLE,
+                    authProvider: 'GOOGLE' as any,
                 },
             });
             await createDefaultWorkspace(user.id, user.name);
@@ -70,12 +69,9 @@ export async function GET(request: NextRequest) {
                     data: { avatar: googleUser.picture },
                 });
             }
-
-            const userWorkspaces = await getUserWorkspaces(user.id);
-            if (userWorkspaces.length === 0) {
-                await createDefaultWorkspace(user.id, user.name);
-            }
         }
+
+        const userWorkspaces = await getUserWorkspaces(user.id);
 
         const token = generateToken({
             userId: user.id,
@@ -85,10 +81,12 @@ export async function GET(request: NextRequest) {
 
         await setAuthCookie(token);
 
-        return NextResponse.redirect(new URL('/', request.url));
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        return NextResponse.redirect(`${appUrl}/dashboard`);
 
     } catch (error: any) {
-        console.error('Google Callback Error:', error);
-        return NextResponse.redirect(new URL('/login?error=google_failed', request.url));
+        console.error('Google OAuth callback error:', error);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        return NextResponse.redirect(`${appUrl}/login?error=GoogleAuthFailed`);
     }
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 export interface CursorPosition {
@@ -25,9 +26,8 @@ function getUserColor(userId: string) {
 export function useCollaboration(projectId: string | string[], fallbackContent: string = '') {
     const { user } = useAuth(false);
     const pid = Array.isArray(projectId) ? projectId[0] : projectId;
-    
     const storageKey = `document_draft_${pid}`;
-    
+
     const [content, setContent] = useState<string>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem(storageKey);
@@ -35,7 +35,7 @@ export function useCollaboration(projectId: string | string[], fallbackContent: 
         }
         return fallbackContent;
     });
-    
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem(storageKey);
@@ -45,119 +45,164 @@ export function useCollaboration(projectId: string | string[], fallbackContent: 
 
     const [cursors, setCursors] = useState<Record<string, UserCursor>>({});
     const channelRef = useRef<BroadcastChannel | null>(null);
+    const socketRef = useRef<Socket | null>(null);
     const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const [versions, setVersions] = useState<any[]>(() => {
-         if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined') {
             const saved = localStorage.getItem(`document_versions_${pid}`);
             if (saved) return JSON.parse(saved);
         }
         return [];
     });
 
+    // BroadcastChannel (Same Device Cross-Tab Sync) + Socket.IO (Network Cross-Device Sync)
     useEffect(() => {
         if (!pid) return;
+
+        // 1. BroadcastChannel setup
         const channel = new BroadcastChannel(`project_${pid}_collab`);
         channelRef.current = channel;
 
-        const handleMessage = (event: MessageEvent) => {
+        const handleLocalBroadcast = (event: MessageEvent) => {
             const { type, payload } = event.data;
-            if (payload.userId === user?._id) return;
+            if (payload?.userId === user?._id || payload?.userId === user?.id) return;
 
             if (type === 'document-update') {
-               setContent(payload.content);
+                setContent(payload.content);
             } else if (type === 'cursor-update') {
-               setCursors(prev => ({ ...prev, [payload.userId]: payload.cursor }));
+                setCursors(prev => ({ ...prev, [payload.userId]: payload.cursor }));
             }
         };
 
-        channel.addEventListener('message', handleMessage);
+        channel.addEventListener('message', handleLocalBroadcast);
+
+        // 2. Socket.IO setup for network real-time collaboration
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000';
+        const socket = io(socketUrl, {
+            path: '/api/socket.io',
+            transports: ['websocket', 'polling'],
+            withCredentials: true,
+        });
+        socketRef.current = socket;
+
+        socket.on('connect', () => {
+            socket.emit('join-doc', pid);
+        });
+
+        socket.on('doc-update', (data: { documentId: string; content: string; senderId: string }) => {
+            const userId = user?._id || user?.id;
+            if (data.senderId !== userId) {
+                setContent(data.content);
+            }
+        });
+
+        socket.on('doc-cursor', (data: { documentId: string; cursor: UserCursor; senderId: string }) => {
+            const userId = user?._id || user?.id;
+            if (data.senderId !== userId && data.cursor) {
+                setCursors(prev => ({ ...prev, [data.senderId]: data.cursor }));
+            }
+        });
 
         return () => {
-             channel.removeEventListener('message', handleMessage);
-             channel.close();
+            channel.removeEventListener('message', handleLocalBroadcast);
+            channel.close();
+            if (socket) {
+                socket.emit('leave-doc', pid);
+                socket.disconnect();
+            }
         };
-    }, [pid, user?._id]);
+    }, [pid, user?._id, user?.id]);
 
+    // Autosave to localStorage
     useEffect(() => {
         if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-        
         autosaveTimerRef.current = setTimeout(() => {
-             if (content && typeof window !== 'undefined') {
-                 localStorage.setItem(storageKey, content);
-             }
+            if (content && typeof window !== 'undefined') {
+                localStorage.setItem(storageKey, content);
+            }
         }, 1500);
 
         return () => {
-             if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+            if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
         };
     }, [content, storageKey]);
 
     const updateContent = useCallback((newContent: string) => {
         setContent(newContent);
+        const userId = user?._id || user?.id;
+
+        // Broadcast to other tabs on same machine
         if (channelRef.current) {
             channelRef.current.postMessage({
                 type: 'document-update',
-                payload: { userId: user?._id, content: newContent }
+                payload: { userId, content: newContent }
             });
         }
-    }, [user?._id]);
+
+        // Broadcast over Socket.IO to other devices / users across network
+        if (socketRef.current) {
+            socketRef.current.emit('doc-update', {
+                documentId: pid,
+                content: newContent,
+            });
+        }
+    }, [user?._id, user?.id, pid]);
 
     const updateCursor = useCallback((position: CursorPosition | null) => {
-        if (!user?._id) return;
+        const userId = user?._id || user?.id;
+        if (!userId) return;
+
         const cursor: UserCursor = {
-            userId: String(user._id),
+            userId: String(userId),
             name: user.name,
-            color: getUserColor(String(user._id)),
+            color: getUserColor(String(userId)),
             position
         };
-        
+
         if (channelRef.current) {
             channelRef.current.postMessage({
                 type: 'cursor-update',
-                payload: { userId: user._id, cursor }
+                payload: { userId, cursor }
             });
         }
-    }, [user]);
+
+        if (socketRef.current) {
+            socketRef.current.emit('doc-cursor', {
+                documentId: pid,
+                cursor,
+            });
+        }
+    }, [user, pid]);
 
     const saveVersion = useCallback((snapshotContent: string) => {
         if (!user) return;
+        const userId = user._id || user.id;
         const versionNode = {
-             id: Math.random().toString(36).substr(2, 9),
-             content: snapshotContent,
-             author: {
-                 name: user.name,
-                 id: user._id, 
-                 initials: user.name?.split(' ').map((n: string) => n[0]).join('').substring(0,2) || 'U'
-             },
-             timestamp: new Date().toISOString()
+            id: Math.random().toString(36).substr(2, 9),
+            content: snapshotContent,
+            author: {
+                name: user.name,
+                id: userId,
+                initials: user.name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2) || 'U'
+            },
+            timestamp: new Date().toISOString()
         };
-        
+
         const newVersions = [versionNode, ...versions];
         setVersions(newVersions);
         if (typeof window !== 'undefined') {
-             localStorage.setItem(`document_versions_${pid}`, JSON.stringify(newVersions));
+            localStorage.setItem(`document_versions_${pid}`, JSON.stringify(newVersions));
         }
 
-        const event = new CustomEvent('global-activity', {
-            detail: {
-                type: 'document_version',
-                user: user.name,
-                target: `Document v${newVersions.length}`,
-                projectId: pid,
-                timestamp: new Date().toISOString()
-            }
-        });
-        window.dispatchEvent(event);
-        
         return versionNode;
     }, [user, versions, pid]);
 
     const restoreVersion = useCallback((versionId: string) => {
-         const ver = versions.find(v => v.id === versionId);
-         if (ver) {
-             updateContent(ver.content);
-         }
+        const ver = versions.find(v => v.id === versionId);
+        if (ver) {
+            updateContent(ver.content);
+        }
     }, [versions, updateContent]);
 
     return {
