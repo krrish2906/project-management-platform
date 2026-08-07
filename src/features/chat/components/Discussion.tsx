@@ -23,8 +23,8 @@ export default function Discussion({ targetId }: DiscussionProps) {
         }
     }, [targetId, fetchComments]);
 
-    const topLevelComments = comments.filter(c => !c.parentComment);
-    const getReplies = (parentId: string) => comments.filter(c => c.parentComment === parentId);
+    const topLevelComments = comments.filter(c => !c.parentCommentId);
+    const getReplies = (parentId: string) => comments.filter(c => c.parentCommentId === parentId);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -50,7 +50,7 @@ export default function Discussion({ targetId }: DiscussionProps) {
         }
     };
 
-    const timeAgo = (dateStr: string) => {
+    const timeAgo = (dateStr: Date | string) => {
         const diff = Date.now() - new Date(dateStr).getTime();
         const minutes = Math.floor(diff / 60000);
         if (minutes < 1) return 'Just now';
@@ -68,27 +68,27 @@ export default function Discussion({ targetId }: DiscussionProps) {
 
     const renderComment = (c: Comment, isReply = false) => {
         const author = typeof c.author === 'object' ? c.author : null;
-        const isAuthor = author && user && (author as any)._id === user._id;
-        const replies = getReplies(c._id);
+        const isAuthor = author && user && author.id === user.id;
+        const replies = getReplies(c.id);
 
         return (
-            <div key={c._id} className={`flex gap-4 group ${isReply ? 'ml-12 mt-4' : ''}`}>
-                {author && (author as any).avatar ? (
+            <div key={c.id} className={`flex gap-4 group ${isReply ? 'ml-12 mt-4' : ''}`}>
+                {author && author.avatar ? (
                     <img
-                        src={(author as any).avatar}
-                        alt={(author as any).name}
+                        src={author.avatar}
+                        alt={author.name}
                         className="w-10 h-10 rounded-xl"
                     />
                 ) : (
                     <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                        {getUserInitials((author as any)?.name)}
+                        {getUserInitials(author?.name)}
                     </div>
                 )}
                 <div className="flex-1">
                     <div className={`${isAuthor ? 'bg-blue-50' : 'bg-gray-50'} rounded-xl p-4 transition-colors`}>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="font-semibold text-sm text-gray-900">
-                                {(author as any)?.name || 'Unknown'}
+                                {author?.name || 'Unknown'}
                             </span>
                             {c.edited && (
                                 <span className="text-xs text-gray-500">(edited)</span>
@@ -104,15 +104,15 @@ export default function Discussion({ targetId }: DiscussionProps) {
                     {!isReply && (
                         <div className="flex gap-4 mt-2 ml-4">
                             <button 
-                                onClick={() => setReplyingTo(replyingTo === c._id ? null : c._id)}
-                                className="text-xs text-gray-500 hover:text-blue-600 font-medium"
+                                onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
+                                className="text-xs text-gray-500 hover:text-blue-600 font-medium cursor-pointer"
                             >
                                 Reply
                             </button>
                             {isAuthor && (
                                 <button 
-                                    onClick={() => deleteComment(c._id)}
-                                    className="text-xs text-gray-500 hover:text-red-600 font-medium"
+                                    onClick={() => deleteComment(c.id)}
+                                    className="text-xs text-gray-500 hover:text-red-600 font-medium cursor-pointer"
                                 >
                                     Delete
                                 </button>
@@ -120,8 +120,8 @@ export default function Discussion({ targetId }: DiscussionProps) {
                         </div>
                     )}
                     
-                    {replyingTo === c._id && !isReply && (
-                        <form onSubmit={(e) => handleReplySubmit(e, c._id)} className="mt-3 ml-4 flex gap-3">
+                    {replyingTo === c.id && !isReply && (
+                        <form onSubmit={(e) => handleReplySubmit(e, c.id)} className="mt-3 ml-4 flex gap-3">
                             <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
                                 {getUserInitials(user?.name)}
                             </div>

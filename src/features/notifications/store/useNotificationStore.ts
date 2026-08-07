@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import type { AppNotification } from '@/types';
 
 interface NotificationState {
@@ -15,7 +16,7 @@ interface NotificationState {
     clearAll: () => Promise<void>;
 }
 
-export const useNotificationStore = create<NotificationState>()((set) => ({
+export const useNotificationStore = create<NotificationState>()((set, get) => ({
     notifications: [],
     unreadCount: 0,
     isLoading: false,
@@ -54,15 +55,18 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
         // Optimistic update
         set(state => ({
             notifications: state.notifications.map(n =>
-                n._id === id ? { ...n, read: true } : n
+                n.id === id ? { ...n, read: true } : n
             ),
             unreadCount: Math.max(0, state.unreadCount - 1),
         }));
 
         try {
             await axios.put('/api/notifications', { notificationId: id });
-        } catch {
-            // Silent fail
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.message || 'Failed to mark notification as read';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
+            get().fetchNotifications();
         }
     },
 
@@ -74,17 +78,20 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
 
         try {
             await axios.put('/api/notifications', { markAll: true });
-        } catch {
-            // Silent fail
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.message || 'Failed to mark all notifications as read';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
+            get().fetchNotifications();
         }
     },
 
     deleteNotification: async (id) => {
         // Optimistic update
         set(state => {
-            const target = state.notifications.find(n => n._id === id);
+            const target = state.notifications.find(n => n.id === id);
             return {
-                notifications: state.notifications.filter(n => n._id !== id),
+                notifications: state.notifications.filter(n => n.id !== id),
                 unreadCount: target && !target.read
                     ? Math.max(0, state.unreadCount - 1)
                     : state.unreadCount,
@@ -93,8 +100,11 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
 
         try {
             await axios.delete('/api/notifications', { data: { notificationId: id } });
-        } catch {
-            // Silent fail
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.message || 'Failed to delete notification';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
+            get().fetchNotifications();
         }
     },
 
@@ -103,8 +113,11 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
 
         try {
             await axios.delete('/api/notifications', { data: { clearAll: true } });
-        } catch {
-            // Silent fail
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.message || 'Failed to clear notifications';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
+            get().fetchNotifications();
         }
     },
 }));

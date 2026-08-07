@@ -30,21 +30,21 @@ export function ProjectGridCard({
     }, []);
 
     const statusBadgeStyle =
-        project.status === 'active'
+        project.status === 'ACTIVE'
             ? 'bg-[#4f46e5]/10 text-[#4f46e5]'
-            : project.status === 'archived'
+            : project.status === 'ARCHIVED'
             ? 'bg-[#e4e1ee] text-[#464555]'
             : 'bg-emerald-100 text-emerald-700';
 
     return (
         <div
-            onClick={() => router.push(`/projects/${project._id}`)}
+            onClick={() => router.push(`/projects/${project.id}`)}
             className="bg-white rounded-[20px] border border-[#e4e1ee] p-6 shadow-level-1 relative group hover:shadow-level-2 transition-all cursor-pointer"
         >
             {/* Top Right Controls */}
             <div className="absolute top-6 right-6 flex items-center gap-1 z-10">
                 <button
-                    onClick={(e) => onToggleStar(project._id, e)}
+                    onClick={(e) => onToggleStar(project.id, e)}
                     className="p-1 text-gray-400 hover:text-amber-400 transition-colors cursor-pointer"
                 >
                     <span
@@ -73,7 +73,7 @@ export function ProjectGridCard({
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setIsMenuOpen(false);
-                                    onDeleteProject(project._id);
+                                    onDeleteProject(project.id);
                                 }}
                                 className="w-full text-left px-4 py-2 text-xs font-semibold text-[#ba1a1a] hover:bg-[#ffdad6]/30 flex items-center gap-2 cursor-pointer"
                             >

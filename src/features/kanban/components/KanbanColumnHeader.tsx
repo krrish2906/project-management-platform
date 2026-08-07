@@ -25,12 +25,20 @@ export function KanbanColumnHeader({
         red: 'bg-rose-500',
     };
 
+    const topBorderMap = {
+        blue: 'border-t-blue-500',
+        orange: 'border-t-orange-500',
+        purple: 'border-t-purple-500',
+        green: 'border-t-emerald-500',
+        red: 'border-t-rose-500',
+    };
+
     return (
-        <div className="px-4 py-3 border-b border-[#E2E8F0]/80 flex items-center justify-between bg-[#fcf8ff]/90 backdrop-blur-sm z-10 shrink-0">
+        <div className={`px-4 py-3 border-b border-slate-300 border-t-4 ${topBorderMap[color] || 'border-t-blue-500'} flex items-center justify-between bg-white/80 backdrop-blur-xs z-10 shrink-0`}>
             <div className="flex items-center gap-2">
                 <div className={`w-2.5 h-2.5 rounded-full ${dotColorMap[color] || 'bg-blue-500'}`} />
-                <h2 className="text-sm font-semibold text-[#1b1b24]">{title}</h2>
-                <span className="px-2 py-0.5 rounded-full bg-[#e4e1ee] text-[11px] font-bold text-[#464555]">
+                <h2 className="text-sm font-bold text-[#1b1b24]">{title}</h2>
+                <span className="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-[11px] font-extrabold text-[#464555] shadow-xs">
                     {count}
                 </span>
             </div>
@@ -38,14 +46,14 @@ export function KanbanColumnHeader({
             <div className="flex items-center gap-1">
                 <button
                     onClick={onAddClick}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#e4e1ee] text-[#777587] transition-colors cursor-pointer"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-black/5 text-[#777587] hover:text-[#1b1b24] transition-colors cursor-pointer"
                     title="Add task to column"
                 >
                     <span className="material-symbols-outlined text-[16px]">add</span>
                 </button>
                 <button
                     onClick={onMoreOptions}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#e4e1ee] text-[#777587] transition-colors cursor-pointer"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-black/5 text-[#777587] hover:text-[#1b1b24] transition-colors cursor-pointer"
                     title="Column options"
                 >
                     <span className="material-symbols-outlined text-[16px]">more_horiz</span>

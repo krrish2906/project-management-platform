@@ -33,7 +33,7 @@ export default function ProjectCallPage() {
         fetchProjects();
     }, [fetchProjects]);
 
-    const project = projects.find((p) => (p._id || p.id) === projectId);
+    const project = projects.find((p) => p.id === projectId);
     const projectName = project?.name || 'Project Call';
 
     const joinLink = useMemo(() => {
@@ -86,7 +86,7 @@ export default function ProjectCallPage() {
         try {
             const response = await axios.post('/api/livekit/token', {
                 room,
-                identity: user?._id || user?.email || `user-${Date.now()}`,
+                identity: user?.id || user?.email || `user-${Date.now()}`,
                 name: user?.name || 'Team Member',
             });
 

@@ -33,7 +33,7 @@ export function MyTasksCard() {
                 <div className="space-y-2">
                     {assignedTasks.map((t) => (
                         <div
-                            key={t.id || t._id}
+                            key={t.id}
                             className="flex items-start p-2.5 rounded-xl border border-[#e4e1ee]/60 hover:bg-[#f5f2ff]/40 transition-colors cursor-pointer group"
                         >
                             <div className="pt-0.5 mr-3">
@@ -41,7 +41,7 @@ export function MyTasksCard() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-[13px] font-semibold text-[#1b1b24] truncate">
-                                    <span className="text-[#777587] mr-2 font-mono">{t.key || 'TASK'}</span>
+                                    <span className="text-[#777587] mr-2 font-mono">#{t.number || 'TASK'}</span>
                                     {t.title}
                                 </p>
                                 <div className="flex items-center gap-2 mt-1">

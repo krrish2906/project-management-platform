@@ -25,6 +25,8 @@ interface DashboardData {
     completionRate: number;
     overdueTasks: number;
     myAssignedTasks: number;
+    teamCount?: number;
+    teamMembers?: { id: string; name?: string; avatar?: string; email: string }[];
 }
 
 export default function DashboardPage() {
@@ -88,6 +90,9 @@ export default function DashboardPage() {
                             totalProjects={data?.totalProjects}
                             myAssignedTasks={data?.myAssignedTasks}
                             completedTasks={data?.completedTasks}
+                            completionRate={data?.completionRate}
+                            teamCount={data?.teamCount}
+                            teamMembers={data?.teamMembers}
                         />
 
                         {/* Bento Grid Layout (2:1 Ratio) */}

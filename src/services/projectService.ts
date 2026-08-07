@@ -58,10 +58,13 @@ export async function generateProjectKey(workspaceId: string, name: string): Pro
 
 // Create a new project inside a workspace
 export async function createProject(workspaceId: string, ownerId: string, data: CreateProjectDTO) {
-    // 1. Non-negotiable workspace authorization check
-    await verifyWorkspaceAccess(ownerId, workspaceId);
+    // 1. Workspace authorization check
+    const wsMembership = await verifyWorkspaceAccess(ownerId, workspaceId);
+    if (wsMembership.role !== 'OWNER' && wsMembership.role !== 'ADMIN') {
+        throw new Error('Only Workspace Owners and Admins can create new projects');
+    }
 
-    // 2. Check FREE plan project limit using PLAN_LIMITS
+    // 2. Check plan project limit
     await checkProjectLimit(workspaceId);
 
     // 3. Generate or validate collision-resistant project key
@@ -110,11 +113,6 @@ export async function getWorkspaceProjects(workspaceId: string, userId: string) 
     const projects = await prisma.project.findMany({
         where: {
             workspaceId,
-            members: {
-                some: {
-                    userId,
-                },
-            },
         },
         include: {
             owner: {
@@ -144,7 +142,7 @@ export async function getWorkspaceProjects(workspaceId: string, userId: string) 
     });
 }
 
-// Get single project by ID for an authorized member
+// Get single project by ID for an authorized workspace member
 export async function getProjectById(projectId: string, userId: string) {
     const project = await prisma.project.findUnique({
         where: { id: projectId },
@@ -169,23 +167,25 @@ export async function getProjectById(projectId: string, userId: string) {
         throw new Error('Project not found');
     }
 
-    // Verify workspace access & project membership
-    await verifyWorkspaceAccess(userId, project.workspaceId);
+    // Verify workspace access (Any workspace member can access workspace projects)
+    const wsMembership = await verifyWorkspaceAccess(userId, project.workspaceId);
     const userMember = project.members.find(m => m.userId === userId);
-
-    if (!userMember) {
-        throw new Error('Access denied: You are not a member of this project');
-    }
 
     return {
         ...project,
         _id: project.id,
-        isStarred: userMember.starred,
+        isStarred: userMember ? userMember.starred : false,
+        userRole: userMember ? userMember.role : wsMembership.role,
     };
 }
 
 // Toggle per-user starring state for a project
 export async function toggleProjectStar(projectId: string, userId: string) {
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new Error('Project not found');
+
+    await verifyWorkspaceAccess(userId, project.workspaceId);
+
     const member = await prisma.projectMember.findUnique({
         where: {
             projectId_userId: {
@@ -196,7 +196,15 @@ export async function toggleProjectStar(projectId: string, userId: string) {
     });
 
     if (!member) {
-        throw new Error('Access denied: You are not a member of this project');
+        const created = await prisma.projectMember.create({
+            data: {
+                projectId,
+                userId,
+                starred: true,
+                role: ProjectRole.DEVELOPER,
+            },
+        });
+        return created.starred;
     }
 
     const updated = await prisma.projectMember.update({
@@ -217,10 +225,16 @@ export async function toggleProjectStar(projectId: string, userId: string) {
 // Update project details
 export async function updateProject(projectId: string, userId: string, data: UpdateProjectDTO) {
     const project = await getProjectById(projectId, userId);
+    const wsMembership = await verifyWorkspaceAccess(userId, project.workspaceId);
     const userMember = project.members.find(m => m.userId === userId);
 
-    if (!userMember || (userMember.role !== ProjectRole.OWNER && userMember.role !== ProjectRole.ADMIN)) {
-        throw new Error('Only project Owners and Admins can edit project settings');
+    const isAuthorized = project.ownerId === userId || 
+        wsMembership.role === 'OWNER' || 
+        wsMembership.role === 'ADMIN' || 
+        (userMember && userMember.role === ProjectRole.OWNER);
+
+    if (!isAuthorized) {
+        throw new Error('Only Workspace Owners, Admins, and Project Owners can edit project settings');
     }
 
     const updated = await prisma.project.update({
@@ -255,9 +269,14 @@ export async function updateProject(projectId: string, userId: string, data: Upd
 // Delete a project
 export async function deleteProject(projectId: string, userId: string) {
     const project = await getProjectById(projectId, userId);
+    const wsMembership = await verifyWorkspaceAccess(userId, project.workspaceId);
 
-    if (project.ownerId !== userId) {
-        throw new Error('Only the project Owner can delete this project');
+    const isAuthorized = project.ownerId === userId || 
+        wsMembership.role === 'OWNER' || 
+        wsMembership.role === 'ADMIN';
+
+    if (!isAuthorized) {
+        throw new Error('Only Workspace Owners and Admins can delete projects');
     }
 
     return prisma.project.delete({

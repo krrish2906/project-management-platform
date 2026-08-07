@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import getAIClient, { getAIModel } from '@/services/ai/ai';
+import { checkAndIncrementAIQuota } from '@/lib/aiQuota';
 
 type PromptType = 'improve' | 'fix_grammar' | 'professional' | 'expand' | 'simplify' | 'shorten';
 
@@ -19,6 +20,12 @@ export async function POST(request: NextRequest) {
         const user = getAuthUser(request);
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // AI Quota & Business Plan Check
+        const quota = await checkAndIncrementAIQuota(user.userId);
+        if (!quota.allowed) {
+            return NextResponse.json({ error: quota.error }, { status: 403 });
         }
 
         const body = await request.json();
@@ -55,7 +62,7 @@ export async function POST(request: NextRequest) {
 
         const result = completion.choices[0]?.message?.content || text;
 
-        return NextResponse.json({ result });
+        return NextResponse.json({ result, remainingQuota: quota.remaining });
 
     } catch (error: any) {
         console.error('AI Writing Improve Error:', error);

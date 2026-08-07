@@ -41,14 +41,14 @@ export function UpcomingDeadlinesCard() {
 
                         return (
                             <div
-                                key={t.id || t._id}
+                                key={t.id}
                                 className={`flex justify-between items-center p-3 rounded-xl border ${
                                     isOverdue ? 'border-[#ba1a1a]/20 bg-[#ffdad6]/20' : 'border-[#e4e1ee]'
                                 }`}
                             >
                                 <div className="min-w-0 pr-2">
                                     <p className="text-[13px] font-semibold text-[#1b1b24] truncate">{t.title}</p>
-                                    <p className="text-[11px] text-[#464555] font-mono">{t.key || 'TASK'}</p>
+                                    <p className="text-[11px] text-[#464555] font-mono">#{t.number || 'TASK'}</p>
                                 </div>
                                 <div className="text-right shrink-0">
                                     <span

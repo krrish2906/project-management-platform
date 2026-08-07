@@ -53,12 +53,12 @@ export default function ProjectChatRoomPage() {
             const res = await axios.get(`/api/projects/${projectId}/messages`);
             if (res.data?.success && Array.isArray(res.data.data.messages)) {
                 const apiMsgs: ChatMessageItem[] = res.data.data.messages.map((m: any) => ({
-                    id: m.id || m._id,
+                    id: m.id,
                     senderName: m.sender?.name || 'Team Member',
                     senderAvatar: m.sender?.avatar,
                     content: m.content,
                     timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isCurrentUser: (m.sender?.id || m.sender?._id || m.senderId) === (user?.id || user?._id),
+                    isCurrentUser: (m.sender?.id || m.senderId) === user?.id,
                     pinned: !!m.pinned,
                     attachments: m.attachments,
                     replyToContent: m.replyToContent || m.replyTo?.content,
@@ -77,14 +77,12 @@ export default function ProjectChatRoomPage() {
     useEffect(() => {
         if (!socket) return;
         const handleNewMessage = (newMsg: any) => {
-            const currentUserId = user?.id || user?._id;
-            const senderId = newMsg.sender?.id || newMsg.sender?._id || newMsg.senderId;
-            // Prevent duplicate message if already added locally
-            if (senderId === currentUserId && messages.some((m) => m.id === (newMsg.id || newMsg._id))) {
-                return;
-            }
+            const currentUserId = user?.id;
+            const senderId = newMsg.sender?.id || newMsg.senderId;
+            const newMsgId = newMsg.id || Date.now().toString();
+
             const formatted: ChatMessageItem = {
-                id: newMsg.id || newMsg._id || Date.now().toString(),
+                id: newMsgId,
                 senderName: newMsg.sender?.name || newMsg.senderName || 'Team Member',
                 senderAvatar: newMsg.sender?.avatar || newMsg.senderAvatar,
                 content: newMsg.content,
@@ -95,14 +93,20 @@ export default function ProjectChatRoomPage() {
                 replyToContent: newMsg.replyToContent,
                 replyToAuthor: newMsg.replyToAuthor,
             };
-            setMessages((prev) => [...prev.filter((m) => m.id !== formatted.id), formatted]);
+
+            setMessages((prev) => {
+                if (senderId === currentUserId && prev.some((m) => m.id === newMsgId)) {
+                    return prev;
+                }
+                return [...prev.filter((m) => m.id !== formatted.id), formatted];
+            });
         };
 
         socket.on('chat:message', handleNewMessage);
         return () => {
             socket.off('chat:message', handleNewMessage);
         };
-    }, [socket, user, messages]);
+    }, [socket, user]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -121,9 +125,9 @@ export default function ProjectChatRoomPage() {
             if (res.data?.success && res.data.data.message) {
                 const m = res.data.data.message;
                 const formatted: ChatMessageItem = {
-                    id: m.id || m._id,
+                    id: m.id,
                     senderName: user?.name || 'You',
-                    senderAvatar: user?.avatar,
+                    senderAvatar: user?.avatar || undefined,
                     content: m.content,
                     timestamp: new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     isCurrentUser: true,
@@ -231,7 +235,7 @@ export default function ProjectChatRoomPage() {
         toast('Channel notifications muted', { icon: '🔕' });
     };
 
-    const project = projects.find((p) => (p._id || p.id) === projectId);
+    const project = projects.find((p) => p.id === projectId);
 
     const projectMembers: MemberItem[] = (project?.members || []).map((m: any) => ({
         id: m.user?.id || m.userId || m.id,

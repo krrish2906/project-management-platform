@@ -10,16 +10,19 @@ interface TaskLinearRowItemProps {
 }
 
 export function TaskLinearRowItem({ task, onClick }: TaskLinearRowItemProps) {
-    const isCompleted = task.status === 'done';
+    const isCompleted = task.status === 'DONE' || (task.status as string) === 'done';
 
     // Status icon mapping
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'done':
+            case 'DONE':
                 return <span className="material-symbols-outlined text-[16px] text-[#006c49]">check_circle</span>;
             case 'inprogress':
+            case 'IN_PROGRESS':
                 return <span className="material-symbols-outlined text-[16px] text-[#4f46e5]">adjust</span>;
             case 'review':
+            case 'IN_REVIEW':
                 return <span className="material-symbols-outlined text-[16px] text-[#a44100]">visibility</span>;
             default:
                 return <span className="material-symbols-outlined text-[16px] text-[#777587]">radio_button_unchecked</span>;
@@ -55,7 +58,7 @@ export function TaskLinearRowItem({ task, onClick }: TaskLinearRowItemProps) {
         }
     };
 
-    const project = typeof task.project === 'object' ? task.project : null;
+    const project = typeof (task as any).project === 'object' ? (task as any).project : null;
     const assignee = typeof task.assignee === 'object' ? task.assignee : null;
 
     return (
@@ -77,7 +80,7 @@ export function TaskLinearRowItem({ task, onClick }: TaskLinearRowItemProps) {
             {/* ID & Title */}
             <div className="flex items-center gap-3 min-w-0 flex-1">
                 <span className="font-mono text-[11px] text-[#777587] shrink-0 w-16 font-semibold">
-                    {task.key || 'TASK'}
+                    {(task as any).key || `TASK-${task.number || '01'}`}
                 </span>
                 <div className="flex items-center gap-2 min-w-0">
                     {getStatusIcon(task.status)}

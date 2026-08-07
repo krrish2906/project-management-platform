@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+import axios from 'axios';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 export interface CursorPosition {
-    line: number;
-    ch: number;
+    from: number;
+    to: number;
 }
 
 export interface UserCursor {
@@ -19,29 +20,24 @@ const COLORS = ['#ef4444', '#f97316', '#8b5cf6', '#06b6d4', '#10b981', '#f43f5e'
 function getUserColor(userId: string) {
     if (!userId) return COLORS[0];
     let hash = 0;
-    for (let i = 0; i < userId.length; i++) hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < userId.length; i++)
+        hash = userId.charCodeAt(i) + ((hash << 5) - hash);
     return COLORS[Math.abs(hash) % COLORS.length];
 }
 
-export function useCollaboration(projectId: string | string[], fallbackContent: string = '') {
+export function useCollaboration(projectId: string, docId: string, initialContent: string = '') {
     const { user } = useAuth(false);
-    const pid = Array.isArray(projectId) ? projectId[0] : projectId;
-    const storageKey = `document_draft_${pid}`;
+    const roomKey = `${projectId}_${docId}`;
+    const storageKey = `document_draft_${roomKey}`;
 
-    const [content, setContent] = useState<string>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem(storageKey);
-            if (saved) return saved;
-        }
-        return fallbackContent;
-    });
+    const [content, setContent] = useState<string>(initialContent);
+    const hasUserEditedRef = useRef<boolean>(false);
 
+    // Sync content when initialContent or docId changes
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem(storageKey);
-            setContent(saved || fallbackContent);
-        }
-    }, [pid, storageKey, fallbackContent]);
+        setContent(initialContent || '');
+        hasUserEditedRef.current = false;
+    }, [docId, initialContent]);
 
     const [cursors, setCursors] = useState<Record<string, UserCursor>>({});
     const channelRef = useRef<BroadcastChannel | null>(null);
@@ -50,7 +46,7 @@ export function useCollaboration(projectId: string | string[], fallbackContent: 
 
     const [versions, setVersions] = useState<any[]>(() => {
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem(`document_versions_${pid}`);
+            const saved = localStorage.getItem(`document_versions_${roomKey}`);
             if (saved) return JSON.parse(saved);
         }
         return [];
@@ -58,15 +54,15 @@ export function useCollaboration(projectId: string | string[], fallbackContent: 
 
     // BroadcastChannel (Same Device Cross-Tab Sync) + Socket.IO (Network Cross-Device Sync)
     useEffect(() => {
-        if (!pid) return;
+        if (!projectId || !docId) return;
 
         // 1. BroadcastChannel setup
-        const channel = new BroadcastChannel(`project_${pid}_collab`);
+        const channel = new BroadcastChannel(`project_${roomKey}_collab`);
         channelRef.current = channel;
 
         const handleLocalBroadcast = (event: MessageEvent) => {
             const { type, payload } = event.data;
-            if (payload?.userId === user?._id || payload?.userId === user?.id) return;
+            if (payload?.userId === user?.id) return;
 
             if (type === 'document-update') {
                 setContent(payload.content);
@@ -87,19 +83,17 @@ export function useCollaboration(projectId: string | string[], fallbackContent: 
         socketRef.current = socket;
 
         socket.on('connect', () => {
-            socket.emit('join-doc', pid);
+            socket.emit('join-doc', roomKey);
         });
 
         socket.on('doc-update', (data: { documentId: string; content: string; senderId: string }) => {
-            const userId = user?._id || user?.id;
-            if (data.senderId !== userId) {
+            if (data.senderId !== user?.id) {
                 setContent(data.content);
             }
         });
 
         socket.on('doc-cursor', (data: { documentId: string; cursor: UserCursor; senderId: string }) => {
-            const userId = user?._id || user?.id;
-            if (data.senderId !== userId && data.cursor) {
+            if (data.senderId !== user?.id && data.cursor) {
                 setCursors(prev => ({ ...prev, [data.senderId]: data.cursor }));
             }
         });
@@ -108,32 +102,40 @@ export function useCollaboration(projectId: string | string[], fallbackContent: 
             channel.removeEventListener('message', handleLocalBroadcast);
             channel.close();
             if (socket) {
-                socket.emit('leave-doc', pid);
+                socket.emit('leave-doc', roomKey);
                 socket.disconnect();
             }
         };
-    }, [pid, user?._id, user?.id]);
+    }, [projectId, docId, roomKey, user?.id]);
 
-    // Autosave to localStorage
+    // Debounced Autosave to Neon PostgreSQL Database & Local Offline Buffer (Only when user edited)
     useEffect(() => {
         if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = setTimeout(() => {
-            if (content && typeof window !== 'undefined') {
+        if (!docId || docId === 'default' || docId.startsWith('doc_temp') || !hasUserEditedRef.current) return;
+
+        autosaveTimerRef.current = setTimeout(async () => {
+            if (typeof window !== 'undefined') {
                 localStorage.setItem(storageKey, content);
             }
-        }, 1500);
+            try {
+                await axios.patch(`/api/projects/${projectId}/documents/${docId}`, { content });
+            } catch (err) {
+                console.error('Failed to auto-save document to database:', err);
+            }
+        }, 1200);
 
         return () => {
             if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
         };
-    }, [content, storageKey]);
+    }, [content, projectId, docId, storageKey]);
 
     const updateContent = useCallback((newContent: string) => {
+        hasUserEditedRef.current = true;
         setContent(newContent);
-        const userId = user?._id || user?.id;
+        const userId = user?.id;
 
         // Broadcast to other tabs on same machine
-        if (channelRef.current) {
+        if (channelRef.current && userId) {
             channelRef.current.postMessage({
                 type: 'document-update',
                 payload: { userId, content: newContent }
@@ -143,20 +145,20 @@ export function useCollaboration(projectId: string | string[], fallbackContent: 
         // Broadcast over Socket.IO to other devices / users across network
         if (socketRef.current) {
             socketRef.current.emit('doc-update', {
-                documentId: pid,
+                documentId: roomKey,
                 content: newContent,
             });
         }
-    }, [user?._id, user?.id, pid]);
+    }, [user?.id, roomKey]);
 
     const updateCursor = useCallback((position: CursorPosition | null) => {
-        const userId = user?._id || user?.id;
+        const userId = user?.id;
         if (!userId) return;
 
         const cursor: UserCursor = {
-            userId: String(userId),
+            userId,
             name: user.name,
-            color: getUserColor(String(userId)),
+            color: getUserColor(userId),
             position
         };
 
@@ -169,17 +171,17 @@ export function useCollaboration(projectId: string | string[], fallbackContent: 
 
         if (socketRef.current) {
             socketRef.current.emit('doc-cursor', {
-                documentId: pid,
+                documentId: roomKey,
                 cursor,
             });
         }
-    }, [user, pid]);
+    }, [user, roomKey]);
 
     const saveVersion = useCallback((snapshotContent: string) => {
         if (!user) return;
-        const userId = user._id || user.id;
+        const userId = user.id;
         const versionNode = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: Math.random().toString(36).substring(2, 11),
             content: snapshotContent,
             author: {
                 name: user.name,
@@ -192,11 +194,11 @@ export function useCollaboration(projectId: string | string[], fallbackContent: 
         const newVersions = [versionNode, ...versions];
         setVersions(newVersions);
         if (typeof window !== 'undefined') {
-            localStorage.setItem(`document_versions_${pid}`, JSON.stringify(newVersions));
+            localStorage.setItem(`document_versions_${roomKey}`, JSON.stringify(newVersions));
         }
 
         return versionNode;
-    }, [user, versions, pid]);
+    }, [user, versions, roomKey]);
 
     const restoreVersion = useCallback((versionId: string) => {
         const ver = versions.find(v => v.id === versionId);

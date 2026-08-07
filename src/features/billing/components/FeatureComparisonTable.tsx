@@ -13,7 +13,7 @@ export function FeatureComparisonTable() {
     const rows: FeatureRow[] = [
         { feature: 'Projects', free: '3', pro: 'Unlimited', max: 'Unlimited' },
         { feature: 'Members', free: '5', pro: '20', max: 'Unlimited' },
-        { feature: 'AI Features', free: '-', pro: 'Writing/Summary', max: 'Premium Suite' },
+        { feature: 'AI Prompts', free: '10 / mo', pro: '500 / mo', max: 'Unlimited' },
         { feature: 'Video Calls', free: false, pro: true, max: true },
         { feature: 'Storage', free: '100MB', pro: '10GB', max: 'Unlimited' },
         { feature: 'Support', free: 'Community', pro: 'Priority Email', max: 'Account Manager' },

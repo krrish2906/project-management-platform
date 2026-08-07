@@ -45,7 +45,7 @@ export function TasksStatusOverviewBar({
                         : 'bg-white text-[#464555] border-transparent hover:bg-[#f5f2ff] hover:border-[#e4e1ee]'
                 }`}
             >
-                <span className="w-2 h-2 rounded-full bg-[#777587]"></span>
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                 <span>To Do</span>
                 <span className="text-[#777587] text-[11px]">{counts.todo}</span>
             </button>
@@ -59,7 +59,7 @@ export function TasksStatusOverviewBar({
                         : 'bg-white text-[#464555] border-transparent hover:bg-[#f5f2ff] hover:border-[#e4e1ee]'
                 }`}
             >
-                <span className="w-2 h-2 rounded-full bg-[#4f46e5]"></span>
+                <span className="w-2 h-2 rounded-full bg-purple-500"></span>
                 <span>In Progress</span>
                 <span className="text-[#777587] text-[11px]">{counts.inprogress}</span>
             </button>
@@ -73,7 +73,7 @@ export function TasksStatusOverviewBar({
                         : 'bg-white text-[#464555] border-transparent hover:bg-[#f5f2ff] hover:border-[#e4e1ee]'
                 }`}
             >
-                <span className="w-2 h-2 rounded-full bg-[#a44100]"></span>
+                <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                 <span>In Review</span>
                 <span className="text-[#777587] text-[11px]">{counts.review}</span>
             </button>
@@ -87,7 +87,7 @@ export function TasksStatusOverviewBar({
                         : 'bg-white text-[#464555] border-transparent hover:bg-[#f5f2ff] hover:border-[#e4e1ee]'
                 }`}
             >
-                <span className="w-2 h-2 rounded-full bg-[#006c49]"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 <span>Completed</span>
                 <span className="text-[#777587] text-[11px]">{counts.done}</span>
             </button>

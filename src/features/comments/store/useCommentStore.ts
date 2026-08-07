@@ -54,7 +54,7 @@ export const useCommentStore = create<CommentState>()((set) => ({
             const resData = res.data;
             if (resData.success) {
                 set(state => ({
-                    comments: state.comments.map(c => c._id === id ? resData.data.comment : c)
+                    comments: state.comments.map(c => c.id === id ? resData.data.comment : c)
                 }));
             }
         } catch (err: any) {
@@ -68,7 +68,7 @@ export const useCommentStore = create<CommentState>()((set) => ({
             const resData = res.data;
             if (resData.success) {
                 set(state => ({
-                    comments: state.comments.filter(c => c._id !== id && c.parentComment !== id)
+                    comments: state.comments.filter(c => c.id !== id && c.parentCommentId !== id)
                 }));
             }
         } catch (err: any) {

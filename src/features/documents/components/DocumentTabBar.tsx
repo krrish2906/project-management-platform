@@ -49,8 +49,9 @@ export function DocumentTabBar({
                         {editingPageId === page.id ? (
                             <input
                                 autoFocus
-                                className="bg-white border border-[#4f46e5] rounded px-1 py-0.5 text-xs text-[#1b1b24] outline-none w-full"
+                                className="bg-white border border-[#4f46e5] rounded px-1 py-0.5 text-xs text-[#1b1b24] outline-hidden w-full"
                                 defaultValue={page.name}
+                                onClick={(e) => e.stopPropagation()}
                                 onBlur={(e) => onFinishRename(page.id, e.target.value)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') onFinishRename(page.id, e.currentTarget.value);

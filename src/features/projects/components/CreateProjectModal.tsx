@@ -6,6 +6,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useProjectStore } from '../store/useProjectStore';
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 
 interface CreateProjectModalProps {
     isOpen: boolean;
@@ -43,6 +44,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
     const [mounted, setMounted] = useState(false);
 
     const { fetchProjects } = useProjectStore();
+    const { currentWorkspace } = useWorkspaceStore();
 
     useEffect(() => {
         setMounted(true);
@@ -66,12 +68,17 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         setIsSubmitting(true);
 
         try {
+            const activeWorkspaceId = currentWorkspace?.id || (typeof window !== 'undefined' ? localStorage.getItem('active_workspace_id') : null);
+
             const res = await axios.post('/api/projects', {
+                workspaceId: activeWorkspaceId,
                 name: name.trim(),
                 key: key.trim().toUpperCase() || undefined,
                 description: description.trim() || undefined,
                 color: selectedColor,
                 icon: selectedIcon,
+            }, {
+                headers: activeWorkspaceId ? { 'x-workspace-id': activeWorkspaceId } : undefined,
             });
 
             const json = res.data;

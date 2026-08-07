@@ -106,16 +106,33 @@ export async function GET(request: NextRequest) {
             take: 10,
         });
 
+        const workspaceMembers = await prisma.workspaceMember.findMany({
+            where: { workspaceId },
+            include: {
+                user: { select: { id: true, name: true, avatar: true, email: true } },
+            },
+            take: 5,
+        });
+
+        const workspaceMembersCount = await prisma.workspaceMember.count({
+            where: { workspaceId },
+        });
+
         return NextResponse.json({
             success: true,
             data: {
                 totalProjects: userProjects.length,
-                activeProjects: userProjects.filter(p => p.status === 'ACTIVE').length,
+                activeProjects: userProjects.filter(p => {
+                    const statusStr = String(p.status).toUpperCase();
+                    return statusStr === 'ACTIVE' || statusStr === 'PLANNING' || statusStr === 'IN_PROGRESS' || statusStr === 'INPROGRESS';
+                }).length,
                 totalTasks,
                 completedTasks,
                 completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
                 overdueTasks,
                 myAssignedTasks,
+                teamCount: workspaceMembersCount,
+                teamMembers: workspaceMembers.map(m => m.user),
                 myTasks: myTasks.map(t => ({
                     ...t,
                     _id: t.id,

@@ -1,6 +1,7 @@
 import { AccessToken } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
+import { prisma } from '@/services/db/prisma';
 
 interface TokenRequestBody {
     room?: string;
@@ -19,6 +20,25 @@ export async function POST(request: NextRequest) {
                     error: 'Not authenticated',
                 },
                 { status: 401 }
+            );
+        }
+
+        // Plan Check: Video and Audio calls require PRO or MAX plan
+        const membership = await (prisma as any).workspaceMember.findFirst({
+            where: { userId: authUser.userId },
+            include: { workspace: true },
+        });
+
+        const userPlan = (membership?.workspace?.plan || 'FREE').toUpperCase();
+        if (userPlan === 'FREE') {
+            return NextResponse.json(
+                {
+                    success: false,
+                    data: null,
+                    message: 'Video & Audio conference calls require a PRO or MAX plan subscription.',
+                    error: 'Video & Audio conference calls require a PRO or MAX plan subscription. Please upgrade your workspace at /billing.',
+                },
+                { status: 403 }
             );
         }
 

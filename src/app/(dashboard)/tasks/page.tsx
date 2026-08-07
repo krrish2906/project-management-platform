@@ -66,7 +66,7 @@ export default function TasksPage() {
             const matchesQuery = searchQuery.trim() === ''
                 ? true
                 : task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (task.key && task.key.toLowerCase().includes(searchQuery.toLowerCase()));
+                  (task.number && task.number.toString().includes(searchQuery));
 
             return matchesStatus && matchesPriority && matchesQuery;
         });
@@ -74,12 +74,12 @@ export default function TasksPage() {
 
     // Grouping tasks for Linear List View: Recently Updated, In Progress / To Do, Completed
     const recentlyUpdatedTasks = useMemo(() => {
-        return filteredTasks.filter(t => t.status !== 'done').slice(0, 4);
+        return filteredTasks.filter(t => t.status !== 'DONE').slice(0, 4);
     }, [filteredTasks]);
 
     const remainingTasks = useMemo(() => {
-        const recentIds = new Set(recentlyUpdatedTasks.map(t => t._id));
-        return filteredTasks.filter(t => !recentIds.has(t._id));
+        const recentIds = new Set(recentlyUpdatedTasks.map(t => t.id));
+        return filteredTasks.filter(t => !recentIds.has(t.id));
     }, [filteredTasks, recentlyUpdatedTasks]);
 
     if (authLoading) {
@@ -176,7 +176,7 @@ export default function TasksPage() {
             {/* Task Detail Slideout */}
             {selectedTask && (
                 <TaskDetailSlideout
-                    taskId={selectedTask._id}
+                    taskId={selectedTask.id}
                     onClose={() => setSelectedTask(null)}
                 />
             )}

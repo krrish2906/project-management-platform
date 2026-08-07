@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/services/db/prisma';
 import { getAuthUser } from '@/lib/auth';
 import getAIClient, { getAIModel } from '@/services/ai/ai';
+import { checkAndIncrementAIQuota } from '@/lib/aiQuota';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const user = getAuthUser(request);
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // AI Quota & Business Plan Check
+        const quota = await checkAndIncrementAIQuota(user.userId);
+        if (!quota.allowed) {
+            return NextResponse.json({ error: quota.error }, { status: 403 });
         }
 
         const { id: projectId } = await params;
@@ -66,7 +73,8 @@ Format as clean markdown with bullet points. Use **bold** for key terms. Keep it
 
         return NextResponse.json({
             summary,
-            messageCount: messages.length
+            messageCount: messages.length,
+            remainingQuota: quota.remaining
         });
 
     } catch (error: any) {

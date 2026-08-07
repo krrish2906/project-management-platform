@@ -4,7 +4,6 @@ import { useProjectStore } from '@/features/projects/store/useProjectStore';
 
 export interface WorkspaceItem {
     id: string;
-    _id?: string;
     name: string;
     slug: string;
     plan: 'FREE' | 'PRO' | 'MAX';
@@ -40,8 +39,7 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
             const res = await axios.get('/api/workspaces');
             if (res.data?.success && Array.isArray(res.data.data?.workspaces)) {
                 const fetched: WorkspaceItem[] = res.data.data.workspaces.map((w: any) => ({
-                    id: w.id || w._id,
-                    _id: w.id || w._id,
+                    id: w.id,
                     name: w.name,
                     slug: w.slug,
                     plan: w.plan || 'FREE',
@@ -50,8 +48,17 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
                     _count: w._count || { projects: w.projectsCount || 0, members: w.membersCount || 1 },
                 }));
 
+                const savedId = typeof window !== 'undefined' ? localStorage.getItem('active_workspace_id') : null;
                 const active = get().currentWorkspace;
-                const match = active ? fetched.find((w) => w.id === active.id) || fetched[0] : fetched[0];
+                const match = savedId
+                    ? fetched.find((w) => w.id === savedId) || fetched[0]
+                    : active
+                    ? fetched.find((w) => w.id === active.id) || fetched[0]
+                    : fetched[0];
+
+                if (match && typeof window !== 'undefined') {
+                    localStorage.setItem('active_workspace_id', match.id);
+                }
 
                 set({
                     workspaces: fetched,
@@ -88,8 +95,7 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
             if (res.data?.success && res.data.data?.workspace) {
                 const w = res.data.data.workspace;
                 const newWs: WorkspaceItem = {
-                    id: w.id || w._id,
-                    _id: w.id || w._id,
+                    id: w.id,
                     name: w.name,
                     slug: w.slug,
                     plan: w.plan || plan,
@@ -126,8 +132,7 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
             if (res.data?.success && res.data.data?.workspace) {
                 const w = res.data.data.workspace;
                 const updatedWs: WorkspaceItem = {
-                    id: w.id || w._id,
-                    _id: w.id || w._id,
+                    id: w.id,
                     name: w.name,
                     slug: w.slug,
                     plan: w.plan || 'FREE',

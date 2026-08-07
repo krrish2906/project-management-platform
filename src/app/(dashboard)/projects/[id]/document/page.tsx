@@ -31,14 +31,45 @@ export default function DocumentEditorPage() {
 
     const canEdit = user?.role !== 'viewer';
 
-    // Document Tabs State
-    const [pages, setPages] = useState<DocumentPageItem[]>([
-        { id: 'default', name: 'System Architecture Specification' },
-        { id: 'reqs', name: 'Q3 Product Requirements' },
-        { id: 'api-spec', name: 'Authentication API Guidelines' },
-    ]);
-    const [activePageId, setActivePageId] = useState('default');
+    // Document DB Persistence State
+    const [pages, setPages] = useState<DocumentPageItem[]>([]);
+    const [activePageId, setActivePageId] = useState<string>('');
+    const [docContentMap, setDocContentMap] = useState<Record<string, string>>({});
+    const [isLoadingDocs, setIsLoadingDocs] = useState<boolean>(true);
     const [editingPageId, setEditingPageId] = useState<string | null>(null);
+
+    // Fetch Project Documents from DB
+    useEffect(() => {
+        if (!projectId) return;
+        const fetchDocs = async () => {
+            setIsLoadingDocs(true);
+            try {
+                const res = await axios.get(`/api/projects/${projectId}/documents`);
+                if (res.data?.success && Array.isArray(res.data.data?.documents)) {
+                    const fetchedDocs = res.data.data.documents;
+                    const pageItems: DocumentPageItem[] = fetchedDocs.map((d: any) => ({
+                        id: d.id,
+                        name: d.title || 'Untitled Document',
+                    }));
+                    const initialContentMap: Record<string, string> = {};
+                    fetchedDocs.forEach((d: any) => {
+                        initialContentMap[d.id] = d.content || '';
+                    });
+                    setPages(pageItems);
+                    setDocContentMap(initialContentMap);
+                    if (pageItems.length > 0) {
+                        setActivePageId(pageItems[0].id);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch project documents:', err);
+                toast.error('Failed to load project documents');
+            } finally {
+                setIsLoadingDocs(false);
+            }
+        };
+        fetchDocs();
+    }, [projectId]);
 
     // Layout Panels State
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -55,61 +86,100 @@ export default function DocumentEditorPage() {
     const [aiWritingLoading, setAiWritingLoading] = useState(false);
     const [aiCustomPrompt, setAiCustomPrompt] = useState('');
 
-    // Real-Time Broadcast & Version Collaboration
+    // Real-Time Broadcast & Version Collaboration connected to DB active page
+    const activeDocContent = docContentMap[activePageId] || '';
+
     const {
-        content, updateContent, cursors,
+        content, updateContent, cursors, updateCursor,
         versions, saveVersion, restoreVersion
-    } = useCollaboration(`${projectId}_${activePageId}`, `
-        <h1 style="font-size: 2rem; font-weight: 800; color: #1b1b24; margin-bottom: 0.5rem;">System Architecture Specification</h1>
-        <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 2rem;">Core technical documentation for backend microservices deployment, security policies, and API integration flows.</p>
-        <h2 style="font-size: 1.4rem; font-weight: 700; color: #1b1b24; margin-top: 1.75rem; margin-bottom: 0.75rem;">1. System Overview</h2>
-        <p style="font-size: 1rem; line-height: 1.7; color: #334155;">This document outlines the core architectural decisions for the new microservices rollout. Our primary goal is to decouple the monolithic Auth cluster from main application servers to improve scalability.</p>
-        <blockquote style="border-left: 4px solid #4f46e5; background-color: #f5f2ff; padding: 0.75rem 1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 1.25rem 0; color: #3525cd;">
-            <strong>Migration Strategy:</strong> Phased migration starting with read-only traffic before full cutover next sprint.
-        </blockquote>
-    `);
+    } = useCollaboration(projectId, activePageId, activeDocContent);
 
     const editor = useEditor({
         extensions: [StarterKit],
-        content,
+        content: activeDocContent,
         editable: canEdit && !viewingVersionId,
         immediatelyRender: false,
         onUpdate: ({ editor }) => {
-            updateContent(editor.getHTML());
+            const html = editor.getHTML();
+            updateContent(html);
+            if (activePageId) {
+                setDocContentMap(prev => ({ ...prev, [activePageId]: html }));
+            }
+        },
+        onSelectionUpdate: ({ editor }) => {
+            const { from, to } = editor.state.selection;
+            updateCursor({ from, to });
         },
     });
 
     useEffect(() => {
-        if (editor && viewingVersionId) {
+        if (!editor) return;
+        if (viewingVersionId) {
             const v = versions.find((ver: any) => ver.id === viewingVersionId);
             if (v) editor.commands.setContent(v.content, { emitUpdate: false });
-        } else if (editor && !viewingVersionId) {
-            editor.commands.setContent(content, { emitUpdate: false });
+        } else if (activePageId && docContentMap[activePageId] !== undefined) {
+            editor.commands.setContent(docContentMap[activePageId] || '', { emitUpdate: false });
         }
     }, [activePageId, viewingVersionId, editor]);
 
-    // Document Tab Handlers
-    const handleAddPage = () => {
-        const newId = `doc_${Date.now()}`;
-        setPages(prev => [...prev, { id: newId, name: 'Untitled Document' }]);
-        setActivePageId(newId);
-        toast.success('Created new document tab');
+    // Document Tab DB Handlers
+    const handleAddPage = async () => {
+        try {
+            const res = await axios.post(`/api/projects/${projectId}/documents`, {
+                title: 'Untitled Document',
+                content: '<h1>Untitled Document</h1><p>Start typing...</p>',
+            });
+            if (res.data?.success && res.data.data?.document) {
+                const newDoc = res.data.data.document;
+                const newPageItem: DocumentPageItem = {
+                    id: newDoc.id,
+                    name: newDoc.title,
+                };
+                setPages(prev => [...prev, newPageItem]);
+                setDocContentMap(prev => ({ ...prev, [newDoc.id]: newDoc.content }));
+                setActivePageId(newDoc.id);
+                toast.success('Created new document');
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || 'Failed to create document');
+        }
     };
 
-    const handleClosePage = (e: React.MouseEvent, pageId: string) => {
+    const handleClosePage = async (e: React.MouseEvent, pageId: string) => {
         e.stopPropagation();
         if (pages.length <= 1) {
-            toast.error('Cannot close the last remaining document');
+            toast.error('Projects must retain at least one document');
             return;
         }
-        const filtered = pages.filter(p => p.id !== pageId);
-        setPages(filtered);
-        if (activePageId === pageId) setActivePageId(filtered[filtered.length - 1].id);
+        const confirmDelete = confirm('Are you sure you want to delete this document?');
+        if (!confirmDelete) return;
+
+        try {
+            const res = await axios.delete(`/api/projects/${projectId}/documents/${pageId}`);
+            if (res.data?.success) {
+                const filtered = pages.filter(p => p.id !== pageId);
+                setPages(filtered);
+                if (activePageId === pageId) {
+                    setActivePageId(filtered[filtered.length - 1].id);
+                }
+                toast.success('Document deleted');
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || 'Failed to delete document');
+        }
     };
 
-    const handleRenamePage = (pageId: string, newName: string) => {
+    const handleRenamePage = async (pageId: string, newName: string) => {
         if (newName.trim()) {
-            setPages(pages.map(p => p.id === pageId ? { ...p, name: newName.trim() } : p));
+            try {
+                await axios.patch(`/api/projects/${projectId}/documents/${pageId}`, {
+                    title: newName.trim(),
+                });
+                setPages(pages.map(p => p.id === pageId ? { ...p, name: newName.trim() } : p));
+                toast.success('Document renamed');
+            } catch (err: any) {
+                toast.error(err.response?.data?.error || 'Failed to rename document');
+            }
         }
         setEditingPageId(null);
     };
@@ -189,19 +259,26 @@ export default function DocumentEditorPage() {
             <Header user={user} />
 
             {/* VS Code Rectangular Tab Bar */}
-            <DocumentTabBar
-                pages={pages}
-                activePageId={activePageId}
-                editingPageId={editingPageId}
-                onSelectPage={(id) => {
-                    setActivePageId(id);
-                    setViewingVersionId(null);
-                }}
-                onAddPage={handleAddPage}
-                onClosePage={handleClosePage}
-                onStartRename={(id) => setEditingPageId(id)}
-                onFinishRename={handleRenamePage}
-            />
+            {isLoadingDocs ? (
+                <div className="bg-[#1e1e2e] text-[#a6adc8] px-4 py-2 text-xs flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                    Loading project documents from database...
+                </div>
+            ) : (
+                <DocumentTabBar
+                    pages={pages}
+                    activePageId={activePageId}
+                    editingPageId={editingPageId}
+                    onSelectPage={(id) => {
+                        setActivePageId(id);
+                        setViewingVersionId(null);
+                    }}
+                    onAddPage={handleAddPage}
+                    onClosePage={handleClosePage}
+                    onStartRename={(id) => setEditingPageId(id)}
+                    onFinishRename={handleRenamePage}
+                />
+            )}
 
             {/* Split Workspace View */}
             <div className="flex-1 flex overflow-hidden bg-[#f8fafc]">
@@ -264,7 +341,7 @@ export default function DocumentEditorPage() {
                                 </div>
                             </div>
                         ) : (
-                            <article className="bg-white w-full max-w-212.5 min-h-212.5 rounded-xl p-10 lg:p-14 border border-[#e4e1ee] shadow-sm relative">
+                            <article className="bg-[#ffffff] w-full max-w-212.5 min-h-212.5 rounded-xl p-10 lg:p-14 border border-[#e4e1ee] shadow-sm relative">
                                 <EditorContent
                                     editor={editor}
                                     className="prose prose-slate max-w-none min-h-162.5 [&>.ProseMirror]:outline-none [&>.ProseMirror]:ring-0 [&>.ProseMirror]:border-none"

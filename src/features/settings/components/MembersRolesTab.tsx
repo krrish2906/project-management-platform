@@ -31,7 +31,7 @@ export function MembersRolesTab({ currentUser, onInviteMember }: MembersRolesTab
             if (!currentWorkspace?.id) {
                 if (currentUser) {
                     setMembers([{
-                        id: currentUser._id,
+                        id: currentUser.id,
                         name: currentUser.name,
                         email: currentUser.email,
                         avatar: currentUser.avatar || undefined,

@@ -51,14 +51,6 @@ export default function KanbanPage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [targetColumnForNewTask, setTargetColumnForNewTask] = useState('todo');
 
-    // Local state for demo tasks if store has no tasks yet
-    const [localDemoTasks, setLocalDemoTasks] = useState<KanbanTaskData[]>([
-        { id: 't1', keyNumber: 'WR-52', title: 'Implement workspace switcher UI', priority: 'HIGH', category: 'Frontend', status: 'todo' },
-        { id: 't2', keyNumber: 'WR-53', title: 'Add plan gating for project creation', priority: 'MEDIUM', category: 'Backend', status: 'todo' },
-        { id: 't3', keyNumber: 'WR-41', title: 'Workspace settings - Members & Roles', priority: 'HIGH', category: 'Backend', status: 'inprogress' },
-        { id: 't4', keyNumber: 'WR-11', title: 'Project creation flow & database schema', priority: 'LOW', category: 'Backend', status: 'completed' },
-    ]);
-
     useEffect(() => {
         if (projectId) {
             fetchTasks({ project: projectId });
@@ -66,20 +58,42 @@ export default function KanbanPage() {
         }
     }, [projectId, fetchTasks, fetchProjects]);
 
-    // Socket.io real-time listener for task moves
+    // Socket.io real-time listener for task moves & project room join
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !projectId) return;
+
+        // Join project socket room
+        socket.emit('kanban:join', { projectId });
+
         const handleTaskMoved = (data: { taskId: string; newStatus: string; userId: string }) => {
-            if (data.userId === user?._id) return;
+            if (data.userId === user?.id) return;
+            // Update local Zustand store directly for instant live animation
+            useTaskStore.getState().moveTask(data.taskId, data.newStatus);
+        };
+
+        const handleTaskCreated = (data: { task: any; userId: string }) => {
+            if (data.userId === user?.id) return;
             fetchTasks({ project: projectId });
         };
-        socket.on('kanban:task_moved', handleTaskMoved);
-        return () => {
-            socket.off('kanban:task_moved', handleTaskMoved);
-        };
-    }, [socket, user, projectId, fetchTasks]);
 
-    const project = projects.find((p) => p._id === projectId);
+        const handleTaskDeleted = (data: { taskId: string; userId: string }) => {
+            if (data.userId === user?.id) return;
+            fetchTasks({ project: projectId });
+        };
+
+        socket.on('kanban:task_moved', handleTaskMoved);
+        socket.on('kanban:task_created', handleTaskCreated);
+        socket.on('kanban:task_deleted', handleTaskDeleted);
+
+        return () => {
+            socket.emit('kanban:leave', { projectId });
+            socket.off('kanban:task_moved', handleTaskMoved);
+            socket.off('kanban:task_created', handleTaskCreated);
+            socket.off('kanban:task_deleted', handleTaskDeleted);
+        };
+    }, [socket, user?.id, projectId, fetchTasks]);
+
+    const project = projects.find((p: any) => p.id === projectId);
 
     const columns: { id: string; title: string; color: 'blue' | 'orange' | 'purple' | 'green' }[] = [
         { id: 'todo', title: 'To Do', color: 'blue' },
@@ -89,17 +103,14 @@ export default function KanbanPage() {
     ];
 
     // Filter store tasks for this project
-    const realProjectTasks = tasks.filter((t: any) => {
-        const tProjId = typeof t.project === 'object' ? (t.project as any)?.id || (t.project as any)?._id : t.project || t.projectId;
-        return tProjId === projectId;
-    });
+    const realProjectTasks = tasks.filter((t: any) => (t.projectId || t.project) === projectId);
 
     const mappedTasks: KanbanTaskData[] = realProjectTasks.map((t: any) => ({
-        id: t.id || t._id,
-        keyNumber: t.key || `WR-${(t.id || t._id)?.slice(-2)}`,
+        id: t.id,
+        keyNumber: `#${t.number || 'TASK'}`,
         title: t.title,
         priority: t.priority?.toUpperCase() as any || 'MEDIUM',
-        category: 'Frontend',
+        category: 'Task',
         status: statusToColumnMap[t.status] || 'todo',
         assigneeName: typeof t.assignee === 'object' ? (t.assignee as any)?.name : undefined,
         assigneeAvatar: typeof t.assignee === 'object' ? (t.assignee as any)?.avatar : undefined,
@@ -127,7 +138,7 @@ export default function KanbanPage() {
                 taskId: draggableId,
                 newStatus: targetBackendStatus,
                 newOrder: destination.index,
-                userId: user?.id || user?._id,
+                userId: user?.id,
             });
         }
     };
@@ -148,19 +159,14 @@ export default function KanbanPage() {
             project: projectId,
         });
 
-        if (created) {
-            await fetchTasks({ project: projectId });
-        } else {
-            const newDemo: KanbanTaskData = {
-                id: `demo-${Date.now()}`,
-                keyNumber: `WR-${Math.floor(Math.random() * 90 + 10)}`,
-                title: taskData.title,
-                priority: taskData.priority.toUpperCase() as any,
-                category: taskData.category,
-                status: taskData.status,
-            };
-            setLocalDemoTasks((prev) => [newDemo, ...prev]);
+        if (created && socket) {
+            socket.emit('kanban:task_created', {
+                projectId,
+                task: created,
+            });
         }
+
+        await fetchTasks({ project: projectId });
     };
 
     if (authLoading || (tasksLoading && tasks.length === 0)) {
@@ -196,11 +202,17 @@ export default function KanbanPage() {
                     <div className="flex w-full h-full gap-4 lg:gap-6 overflow-x-auto">
                         {columns.map((col) => {
                             const colTasks = filteredTasks.filter((t) => t.status === col.id);
+                            const columnStylesMap: Record<string, string> = {
+                                todo: 'bg-[#EFF6FF]/80 border-[#93C5FD]',       // Darker Blue Border
+                                inprogress: 'bg-[#FFF7ED]/80 border-[#FDBA74]', // Darker Orange Border
+                                review: 'bg-[#F5F3FF]/80 border-[#C4B5FD]',     // Darker Purple Border
+                                completed: 'bg-[#ECFDF5]/80 border-[#6EE7B7]',  // Darker Emerald Border
+                            };
 
                             return (
                                 <div
                                     key={col.id}
-                                    className="flex-1 flex flex-col min-w-70 max-w-[320px] lg:max-w-[25%] bg-[#fcf8ff] rounded-2xl border border-[#E2E8F0] relative overflow-hidden shadow-xs"
+                                    className={`flex-1 flex flex-col min-w-70 max-w-[320px] lg:max-w-[25%] ${columnStylesMap[col.id] || 'bg-slate-100 border-slate-300'} rounded-2xl border-2 relative overflow-hidden shadow-xs`}
                                 >
                                     {/* Column Header */}
                                     <KanbanColumnHeader

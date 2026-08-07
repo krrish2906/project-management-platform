@@ -31,7 +31,7 @@ export function SecurityCard({ user }: SecurityCardProps) {
         setStatusMessage(null);
         if (!user) return;
 
-        const userId = user._id || user.id;
+        const userId = user.id;
 
         if (!currentPassword || !newPassword) {
             setStatusMessage({ type: 'error', text: 'Please fill in all password fields.' });

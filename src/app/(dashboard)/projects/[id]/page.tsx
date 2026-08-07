@@ -41,13 +41,13 @@ export default function ProjectOverviewPage() {
         }
     }, [id, fetchProjects, fetchTasks, fetchActivity]);
 
-    const project = allProjects.find((p) => p._id === id);
+    const project = allProjects.find((p) => p.id === id);
 
     const handleInviteMembers = async (invitees: { user: string; role: string }[]) => {
         if (!project) return;
         try {
-            const currentMembers = project.members.map((m: any) => ({
-                user: typeof m.user === 'object' ? m.user._id : m.user,
+            const currentMembers = (project.members || []).map((m: any) => ({
+                user: typeof m.user === 'object' ? m.user.id : m.user,
                 role: m.role,
             }));
             const updatedMembers = [...currentMembers, ...invitees];
@@ -72,9 +72,7 @@ export default function ProjectOverviewPage() {
     }
 
     // Calculated Task Stats
-    const projectTasks = allTasks.filter((t) =>
-        typeof t.project === 'object' ? t.project?._id === id : t.project === id
-    );
+    const projectTasks = allTasks.filter((t) => (t.projectId || (t as any).project) === id);
     const totalTasks = projectTasks.length || 48;
     const doneTasks = projectTasks.filter((t) => t.status === 'DONE').length || 32;
     const inProgressTasks = projectTasks.filter((t) => t.status === 'IN_PROGRESS').length || 8;
@@ -85,7 +83,7 @@ export default function ProjectOverviewPage() {
     // Team Members
     const formattedTeamMembers: ProjectTeamMember[] = project.members && project.members.length > 0
         ? project.members.map((m: any, idx: number) => ({
-              id: m.user?._id || idx.toString(),
+              id: m.user?.id || idx.toString(),
               name: m.user?.name || `Member ${idx + 1}`,
               email: m.user?.email || `member${idx + 1}@projecthub.io`,
               avatar: m.user?.avatar || null,
@@ -100,7 +98,7 @@ export default function ProjectOverviewPage() {
 
     // Existing Member IDs for Invite Modal
     const existingMemberIds = project.members
-        ? project.members.map((m: any) => (typeof m.user === 'object' ? m.user._id : m.user))
+        ? project.members.map((m: any) => (typeof m.user === 'object' ? m.user.id : m.user))
         : [];
 
     // Activity Log

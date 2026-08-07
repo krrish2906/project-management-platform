@@ -11,27 +11,24 @@ interface TaskDetailsPanelProps {
 }
 
 export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
-    const { tasks, isLoading, fetchTasks, updateTask } = useTaskStore();
+    const { tasks, isLoading, updateTask } = useTaskStore();
     const { user } = useAuth(false);
 
-    const projectTasks = tasks.filter(t => {
-        const tProjectId = typeof t.project === 'object' ? (t.project as any)._id : t.project;
-        return tProjectId === projectId;
-    });
+    const projectTasks = tasks.filter(t => t.projectId === projectId);
 
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
     useEffect(() => {
         if (projectTasks.length > 0 && !selectedTaskId) {
-            setSelectedTaskId(projectTasks[0]._id);
+            setSelectedTaskId(projectTasks[0].id);
         }
     }, [projectTasks, selectedTaskId]);
 
-    const task = projectTasks.find(t => t._id === selectedTaskId) || projectTasks[0];
+    const task = projectTasks.find(t => t.id === selectedTaskId) || projectTasks[0];
 
     if (isLoading) {
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-5 text-center">
+            <div className="bg-white rounded-xl shadow-xs border border-gray-200/50 p-5 text-center">
                 <Loader2 className="w-6 h-6 text-blue-500 animate-spin mx-auto" />
             </div>
         );
@@ -39,7 +36,7 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
 
     if (!task) {
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-5 text-center text-gray-500">
+            <div className="bg-white rounded-xl shadow-xs border border-gray-200/50 p-5 text-center text-gray-500">
                 <p>No tasks configured yet.</p>
                 <p className="text-xs mt-1">Add a task from the Kanban board to see details.</p>
             </div>
@@ -59,36 +56,34 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
     };
 
     const priorities = [
-        { value: 'lowest', label: 'Lowest', color: 'text-gray-500', bg: 'bg-gray-50' },
-        { value: 'low', label: 'Low', color: 'text-gray-600', bg: 'bg-gray-100' },
-        { value: 'medium', label: 'Medium', color: 'text-yellow-600', bg: 'bg-yellow-50' },
-        { value: 'high', label: 'High', color: 'text-orange-600', bg: 'bg-orange-50' },
-        { value: 'highest', label: 'Highest', color: 'text-red-500', bg: 'bg-red-50' },
-        { value: 'critical', label: 'Critical', color: 'text-red-700', bg: 'bg-red-100' },
+        { value: 'LOW', label: 'Low', color: 'text-green-600', bg: 'bg-green-50' },
+        { value: 'MEDIUM', label: 'Medium', color: 'text-yellow-600', bg: 'bg-yellow-50' },
+        { value: 'HIGH', label: 'High', color: 'text-orange-600', bg: 'bg-orange-50' },
+        { value: 'URGENT', label: 'Urgent', color: 'text-red-700', bg: 'bg-red-100' },
     ];
 
-    const currentPriority = priorities.find(p => p.value === task.priority) || priorities[2];
+    const currentPriority = priorities.find(p => p.value === task.priority) || priorities[1];
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-5">
+        <div className="bg-white rounded-xl shadow-xs border border-gray-200/50 p-5">
             <div className="flex items-center justify-between mb-5">
                 <h3 className="text-lg font-bold text-gray-900">Task Details</h3>
-                <select 
+                <select
                     className="text-sm border border-gray-200 rounded px-2 py-1 max-w-37.5 truncate text-gray-900"
-                    value={task._id}
+                    value={task.id}
                     onChange={(e) => setSelectedTaskId(e.target.value)}
                 >
                     {projectTasks.map(t => (
-                        <option key={t._id} value={t._id}>{t.key} - {t.title}</option>
+                        <option key={t.id} value={t.id}>#{t.number} - {t.title}</option>
                     ))}
                 </select>
             </div>
 
             <div className="space-y-4">
                 <div>
-                    <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Key</div>
+                    <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Number</div>
                     <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-mono font-semibold text-gray-900">
-                        {task.key}
+                        #{task.number || '1'}
                     </div>
                 </div>
 
@@ -117,14 +112,14 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
                     <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg cursor-not-allowed">
                         {reporter ? (
                             <>
-                                {(reporter as any).avatar ? (
-                                    <img src={(reporter as any).avatar} alt={(reporter as any).name} className="w-8 h-8 rounded-lg outline-1 outline-gray-200" />
+                                {reporter.avatar ? (
+                                    <img src={reporter.avatar} alt={reporter.name} className="w-8 h-8 rounded-lg outline-1 outline-gray-200" />
                                 ) : (
                                     <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
-                                        {getUserInitials((reporter as any).name)}
+                                        {getUserInitials(reporter.name)}
                                     </div>
                                 )}
-                                <span className="text-sm font-medium text-gray-900">{(reporter as any).name}</span>
+                                <span className="text-sm font-medium text-gray-900">{reporter.name}</span>
                             </>
                         ) : (
                              <div className="text-sm font-medium text-gray-500 italic">No Reporter</div>
@@ -136,14 +131,14 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
                     <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Priority</div>
                     <div className={`flex items-center gap-2 p-2 rounded-lg relative group cursor-pointer hover:brightness-95 transition-all ${currentPriority.bg}`}>
                         <span className={`${currentPriority.color} text-lg`}>
-                            {task.priority === 'high' || task.priority === 'highest' || task.priority === 'critical' ? '↑' : task.priority === 'low' || task.priority === 'lowest' ? '↓' : '•'}
+                            {task.priority === 'HIGH' || task.priority === 'URGENT' ? '↑' : task.priority === 'LOW' ? '↓' : '•'}
                         </span>
                         <span className={`text-sm font-bold ${currentPriority.color}`}>{currentPriority.label}</span>
                         <ChevronDown className={`w-4 h-4 ${currentPriority.color} absolute right-2 opacity-0 group-hover:opacity-100`} />
-                        <select 
+                        <select
                             className="absolute inset-0 opacity-0 cursor-pointer text-gray-900"
                             value={task.priority}
-                            onChange={(e) => handleUpdate(task._id, { priority: e.target.value })}
+                            onChange={(e) => handleUpdate(task.id, { priority: e.target.value })}
                         >
                             {priorities.map(p => (
                                 <option key={p.value} value={p.value}>{p.label}</option>
@@ -161,61 +156,14 @@ export default function TaskDetailsPanel({ projectId }: TaskDetailsPanelProps) {
                                 {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No Due Date'}
                             </span>
                         </div>
-                        <input 
+                        <input
                             type="date"
                             className="absolute inset-0 opacity-0 cursor-pointer text-gray-900 placeholder:text-gray-500"
                             value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
-                            onChange={(e) => handleUpdate(task._id, { dueDate: new Date(e.target.value).toISOString() })}
+                            onChange={(e) => handleUpdate(task.id, { dueDate: new Date(e.target.value).toISOString() })}
                         />
                     </div>
                 </div>
-
-                <div>
-                    <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Labels</div>
-                    <div className="flex gap-2 flex-wrap">
-                        {task.labels.map(label => (
-                            <span key={label} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold flex items-center gap-1 group">
-                                {label}
-                                <span 
-                                    className="cursor-pointer opacity-70 hover:opacity-100"
-                                    onClick={() => handleUpdate(task._id, { labels: task.labels.filter(l => l !== label) })}
-                                >
-                                    ×
-                                </span>
-                            </span>
-                        ))}
-                        <div className="relative">
-                            <button className="w-7 h-7 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all">
-                                <Plus className="w-3.5 h-3.5 text-gray-500" />
-                            </button>
-                            <select 
-                                className="absolute inset-0 opacity-0 cursor-pointer text-gray-900"
-                                value=""
-                                onChange={(e) => {
-                                    if (e.target.value && !task.labels.includes(e.target.value)) {
-                                        handleUpdate(task._id, { labels: [...task.labels, e.target.value] });
-                                    }
-                                }}
-                            >
-                                <option value="" disabled>Add Label</option>
-                                <option value="Frontend">Frontend</option>
-                                <option value="Backend">Backend</option>
-                                <option value="API">API</option>
-                                <option value="Design">Design</option>
-                                <option value="Bug">Bug</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                {task.storyPoints !== undefined && task.storyPoints > 0 && (
-                    <div>
-                        <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Story Points</div>
-                        <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-bold text-gray-900">
-                            {task.storyPoints} SP
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

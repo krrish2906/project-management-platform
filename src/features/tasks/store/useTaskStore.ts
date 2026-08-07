@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import type { Task } from '@/types';
-import { io } from 'socket.io-client';
 
 interface TaskState {
     tasks: Task[];
@@ -74,13 +74,17 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
             if (resData.success) {
                 const newTask = resData.data.task;
                 set(state => ({ tasks: [newTask, ...state.tasks] }));
+                toast.success('Task created successfully!');
                 return newTask;
             } else {
+                toast.error(resData.message || 'Failed to create task');
                 set({ error: resData.message });
                 return null;
             }
         } catch (err: any) {
-            set({ error: err.response?.data?.message || err.message || 'Failed to create task' });
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to create task';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
             return null;
         }
     },
@@ -93,20 +97,17 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
             if (resData.success) {
                 const updated = resData.data.task;
                 set(state => ({
-                    tasks: state.tasks.map(t => t._id === id ? updated : t)
+                    tasks: state.tasks.map(t => t.id === id ? updated : t)
                 }));
-
-                if (updates.assignee) {
-                    const socket = io();
-                    socket.emit('trigger-notification', { userId: updates.assignee });
-                    setTimeout(() => socket.disconnect(), 1000);
-                }
-
+                toast.success('Task updated');
                 return updated;
             }
+            toast.error(resData.message || 'Failed to update task');
             return null;
         } catch (err: any) {
-            set({ error: err.response?.data?.message || err.message || 'Failed to update task' });
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to update task';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
             return null;
         }
     },
@@ -118,11 +119,16 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
             if (resData.success) {
                 set(state => ({
-                    tasks: state.tasks.filter(t => t._id !== id)
+                    tasks: state.tasks.filter(t => t.id !== id)
                 }));
+                toast.success('Task deleted');
+            } else {
+                toast.error(resData.message || 'Failed to delete task');
             }
         } catch (err: any) {
-            set({ error: err.response?.data?.message || err.message || 'Failed to delete task' });
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to delete task';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
         }
     },
 
@@ -130,18 +136,16 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         // Optimistic update in Zustand store
         set(state => ({
             tasks: state.tasks.map(t =>
-                t._id === id ? { ...t, status: newStatus as Task['status'] } : t
+                t.id === id ? { ...t, status: newStatus as Task['status'] } : t
             )
         }));
 
-        // Only call backend API if this is a valid MongoDB ObjectId (24 hex characters)
-        const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
-        if (isMongoId) {
-            try {
-                await axios.put(`/api/tasks/${id}`, { status: newStatus });
-            } catch (err) {
-                console.error('Failed to sync task status to server:', err);
-            }
+        try {
+            await axios.put(`/api/tasks/${id}`, { status: newStatus });
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.message || 'Failed to sync task status to server';
+            toast.error(errorMsg);
+            get().fetchTasks();
         }
     },
 }));

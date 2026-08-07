@@ -43,8 +43,8 @@ export function RecentProjectsCard() {
 
                         return (
                             <div
-                                key={p._id || p.id}
-                                onClick={() => router.push(`/projects/${p._id || p.id}`)}
+                                key={p.id}
+                                onClick={() => router.push(`/projects/${p.id}`)}
                                 className="p-4 rounded-xl border border-[#e4e1ee]/60 hover:bg-[#f5f2ff]/40 transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
                             >
                                 <div className="flex-1 min-w-0">

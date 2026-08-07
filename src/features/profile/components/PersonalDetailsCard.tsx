@@ -72,7 +72,7 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
         setStatusMessage(null);
         if (!user) return;
 
-        const userId = user._id || user.id;
+        const userId = user.id;
         setIsSaving(true);
         try {
             const res = await axios.put(`/api/users/${userId}`, {

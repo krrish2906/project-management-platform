@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import getAIClient, { getAIModel } from '@/services/ai/ai';
+import { checkAndIncrementAIQuota } from '@/lib/aiQuota';
 
 // POST /api/projects/[id]/ai/summarize-document — Generate AI summary of document content
 export async function POST(request: NextRequest) {
@@ -8,6 +9,12 @@ export async function POST(request: NextRequest) {
         const user = getAuthUser(request);
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // AI Quota & Business Plan Check
+        const quota = await checkAndIncrementAIQuota(user.userId);
+        if (!quota.allowed) {
+            return NextResponse.json({ error: quota.error }, { status: 403 });
         }
 
         const body = await request.json();
@@ -59,7 +66,7 @@ Format as clean markdown. Use **bold** for emphasis. Be concise but don't miss c
 
         const summary = completion.choices[0]?.message?.content || 'Unable to generate summary.';
 
-        return NextResponse.json({ summary });
+        return NextResponse.json({ summary, remainingQuota: quota.remaining });
     } catch (error: any) {
         console.error('AI Document Summarize Error:', error);
         return NextResponse.json({

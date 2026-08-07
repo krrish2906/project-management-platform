@@ -2,7 +2,7 @@ import { Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../src/services/db/prisma';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'project_management_tool';
+const JWT_SECRET = process.env.JWT_SECRET || 'project-management-tool';
 
 export interface SocketAuth {
     userId: string;

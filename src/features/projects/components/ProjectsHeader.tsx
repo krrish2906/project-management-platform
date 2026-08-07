@@ -7,6 +7,9 @@ interface ProjectsHeaderProps {
     user: User | null;
     activeCount: number;
     viewMode: 'grid' | 'list';
+    workspaceName?: string;
+    planName?: string;
+    membersCount?: number;
     onViewModeChange: (mode: 'grid' | 'list') => void;
     onOpenCreateModal: () => void;
 }
@@ -15,10 +18,13 @@ export function ProjectsHeader({
     user,
     activeCount,
     viewMode,
+    workspaceName,
+    planName = 'FREE',
+    membersCount = 1,
     onViewModeChange,
     onOpenCreateModal,
 }: ProjectsHeaderProps) {
-    const workspaceName = user?.name ? `${user.name}'s Workspace` : "Krish's Workspace";
+    const displayName = workspaceName || (user?.name ? `${user.name}'s Workspace` : 'Workspace');
 
     return (
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -36,18 +42,18 @@ export function ProjectsHeader({
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#eae6f4]/60 text-[#464555] text-[12px] font-medium border border-[#c7c4d8]/40">
                         <span className="material-symbols-outlined text-[16px] mr-1.5">work</span>
-                        {workspaceName}
+                        {displayName}
                     </span>
                     <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#4f46e5]/10 text-[#4f46e5] text-[12px] font-semibold">
                         <span className="w-2 h-2 rounded-full bg-[#4f46e5] mr-2"></span>
                         {activeCount} Active {activeCount === 1 ? 'Project' : 'Projects'}
                     </span>
                     <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#eae6f4]/60 text-[#464555] text-[12px] font-medium border border-[#c7c4d8]/40">
-                        FREE Plan
+                        {planName} Plan
                     </span>
                     <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#eae6f4]/60 text-[#464555] text-[12px] font-medium border border-[#c7c4d8]/40">
                         <span className="material-symbols-outlined text-[16px] mr-1.5">group</span>
-                        4 Members
+                        {membersCount} {membersCount === 1 ? 'Member' : 'Members'}
                     </span>
                 </div>
             </div>

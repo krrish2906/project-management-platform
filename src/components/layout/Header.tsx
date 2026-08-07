@@ -162,7 +162,7 @@ export default function Header({ user }: HeaderProps) {
                                 ) : (
                                     notifications.map((n) => (
                                         <div
-                                            key={n._id}
+                                            key={n.id}
                                             onClick={() => handleNotificationClick(n)}
                                             className={`p-3.5 hover:bg-[#f5f2ff]/60 transition-colors cursor-pointer flex items-start gap-3 ${
                                                 !n.read ? 'bg-[#4f46e5]/5' : ''
@@ -240,7 +240,7 @@ export default function Header({ user }: HeaderProps) {
                                     className="w-full flex items-center px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                                 >
                                     <span className="material-symbols-outlined text-[18px] mr-2.5 text-rose-600">logout</span>
-                                    Sign Out / Log Out
+                                    Log out
                                 </button>
                             </div>
                         </div>

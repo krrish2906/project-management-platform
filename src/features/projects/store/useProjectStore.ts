@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import type { Project } from '@/types';
 import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 
@@ -63,7 +64,9 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
                 workspaceId: activeWorkspaceId,
             };
 
-            const res = await axios.post('/api/projects', payload);
+            const res = await axios.post('/api/projects', payload, {
+                headers: activeWorkspaceId ? { 'x-workspace-id': activeWorkspaceId } : undefined,
+            });
             const resData = res.data;
 
             if (resData.success) {
@@ -71,11 +74,14 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
                 set(state => ({ projects: [newProject, ...state.projects] }));
                 return newProject;
             } else {
+                toast.error(resData.message || 'Failed to create project');
                 set({ error: resData.message });
                 return null;
             }
         } catch (err: any) {
-            set({ error: err.response?.data?.message || err.message || 'Failed to create project' });
+            const errorMsg = err.response?.data?.message || err.message || 'Failed to create project';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
             return null;
         }
     },
@@ -88,11 +94,15 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
             if (resData.success) {
                 const updated = resData.data.project;
                 set(state => ({
-                    projects: state.projects.map(p => p._id === id ? updated : p)
+                    projects: state.projects.map(p => p.id === id ? updated : p)
                 }));
+            } else {
+                toast.error(resData.message || 'Failed to update project');
             }
         } catch (err: any) {
-            set({ error: err.response?.data?.message || err.message || 'Failed to update project' });
+            const errorMsg = err.response?.data?.message || err.message || 'Failed to update project';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
         }
     },
 
@@ -103,11 +113,15 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
 
             if (resData.success) {
                 set(state => ({
-                    projects: state.projects.filter(p => p._id !== id)
+                    projects: state.projects.filter(p => p.id !== id)
                 }));
+            } else {
+                toast.error(resData.message || 'Failed to delete project');
             }
         } catch (err: any) {
-            set({ error: err.response?.data?.message || err.message || 'Failed to delete project' });
+            const errorMsg = err.response?.data?.message || err.message || 'Failed to delete project';
+            set({ error: errorMsg });
+            toast.error(errorMsg);
         }
     },
 
@@ -115,7 +129,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
         // Optimistic update
         set(state => ({
             projects: state.projects.map(p =>
-                p._id === id ? { ...p, isStarred: !p.isStarred } : p
+                p.id === id ? { ...p, isStarred: !p.isStarred } : p
             )
         }));
 
@@ -125,9 +139,10 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
             // Revert on error
             set(state => ({
                 projects: state.projects.map(p =>
-                    p._id === id ? { ...p, isStarred: !p.isStarred } : p
+                    p.id === id ? { ...p, isStarred: !p.isStarred } : p
                 )
             }));
+            toast.error('Failed to update star');
         }
     },
 }));

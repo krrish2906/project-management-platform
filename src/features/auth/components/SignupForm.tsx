@@ -41,7 +41,7 @@ export function SignupForm() {
         setError('');
 
         if (!fullName.trim()) return setError('Please enter your full name');
-        if (!email.trim()) return setError('Please enter your work email');
+        if (!email.trim()) return setError('Please enter your email');
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError('Please enter a valid email address');
         if (password.length < 8) return setError('Password must be at least 8 characters long');
         if (!termsAccepted) return setError('You must agree to the Terms of Service');
@@ -141,13 +141,13 @@ export function SignupForm() {
                         {/* Email */}
                         <div className="space-y-1">
                             <label className="text-xs font-bold uppercase tracking-wider text-[#475569] block">
-                                Work Email
+                                Email
                             </label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="name@company.com"
+                                placeholder="Your email"
                                 required
                                 disabled={loading}
                                 className="w-full px-3.5 py-2.5 bg-[#f8fafc] border border-[#E2E8F0] rounded-xl text-sm text-[#1e293b] focus:border-[#4F46E5] outline-none"
@@ -164,7 +164,7 @@ export function SignupForm() {
                                     type={showPassword ? 'text' : 'password'}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Minimum 8 characters"
+                                    placeholder="Your password"
                                     required
                                     disabled={loading}
                                     className="w-full px-3.5 py-2.5 bg-[#f8fafc] border border-[#E2E8F0] rounded-xl text-sm text-[#1e293b] focus:border-[#4F46E5] outline-none pr-10"
@@ -224,17 +224,42 @@ export function SignupForm() {
                     <form onSubmit={handleVerifyAndSignup} className="space-y-4">
                         <div className="p-5 bg-[#f5f2ff] border border-[#4F46E5]/20 rounded-2xl text-center">
                             <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-3">
-                                Enter 6-Digit Email Verification Code
+                                Enter 6-Digit Verification Code
                             </p>
-                            <input
-                                type="text"
-                                maxLength={6}
-                                value={otpCode}
-                                onChange={(e) => setOtpCode(e.target.value)}
-                                placeholder="123456"
-                                required
-                                className="w-48 text-center text-2xl font-mono tracking-widest px-3 py-2 bg-white border-2 border-[#4F46E5] rounded-xl text-[#1e293b] outline-none shadow-xs"
-                            />
+                            <div className="flex justify-center gap-2 mb-2">
+                                {Array.from({ length: 6 }).map((_, idx) => (
+                                    <input
+                                        key={idx}
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={1}
+                                        value={otpCode[idx] || ''}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '');
+                                            if (!val && !otpCode[idx]) return;
+                                            const chars = otpCode.split('');
+                                            chars[idx] = val.slice(-1);
+                                            const nextOtp = chars.join('').slice(0, 6);
+                                            setOtpCode(nextOtp);
+                                            if (val && e.target.nextElementSibling) {
+                                                (e.target.nextElementSibling as HTMLInputElement).focus();
+                                            }
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Backspace' && !otpCode[idx] && e.currentTarget.previousElementSibling) {
+                                                (e.currentTarget.previousElementSibling as HTMLInputElement).focus();
+                                            }
+                                        }}
+                                        onPaste={(e) => {
+                                            e.preventDefault();
+                                            const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                                            if (pasted) setOtpCode(pasted);
+                                        }}
+                                        disabled={loading}
+                                        className="w-10 h-12 text-center text-xl font-bold text-[#1e293b] bg-white border border-[#E2E8F0] rounded-xl focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20 outline-none transition-all shadow-xs"
+                                    />
+                                ))}
+                            </div>
                             <p className="text-[11px] text-[#64748b] mt-3">
                                 Check your email inbox or spam folder for the code.
                             </p>

@@ -36,7 +36,7 @@ export function TasksGroupSection({ title, tasks, onTaskClick }: TasksGroupSecti
                 <div className="space-y-1">
                     {tasks.map((task) => (
                         <TaskLinearRowItem
-                            key={task._id}
+                            key={task.id}
                             task={task}
                             onClick={() => onTaskClick?.(task)}
                         />

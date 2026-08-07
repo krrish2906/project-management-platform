@@ -46,14 +46,14 @@ export type {
     SprintStatus
 };
 
-export type WorkspaceDTO = PrismaWorkspace & { _id?: string; role?: string };
+export type WorkspaceDTO = PrismaWorkspace & { role?: string };
 export type Workspace = WorkspaceDTO;
 
 export interface User {
-    _id: string;
-    id?: string;
+    id: string;
     name: string;
     email: string;
+    role?: string;
     password?: string;
     avatar?: string | null;
     bio?: string | null;
@@ -96,12 +96,14 @@ export interface Task {
     projectId: string;
     sprintId?: string | null;
     number: number;
+    key?: string;
     title: string;
     description?: string | null;
     type: TaskType;
     status: TaskStatus;
     priority: TaskPriority;
     order: number;
+    storyPoints?: number;
     dueDate?: Date | string | null;
     assignee?: User | null;
     reporter: User;
@@ -135,6 +137,8 @@ export interface Project {
     color: string;
     icon?: string | null;
     taskCounter: number;
+    isStarred?: boolean;
+    endDate?: Date | string | null;
     members?: ProjectMember[];
     sprints?: Sprint[];
     tasks?: Task[];
@@ -183,6 +187,8 @@ export interface Notification {
     readAt?: Date | string | null;
     createdAt: Date | string;
 }
+
+export type AppNotification = Notification;
 
 export interface ChatMessage {
     id: string;

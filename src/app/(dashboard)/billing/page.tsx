@@ -14,9 +14,9 @@ import { PricingTierCard, PricingPlan } from '@/features/billing/components/Pric
 import { FeatureComparisonTable } from '@/features/billing/components/FeatureComparisonTable';
 
 const PLAN_LIMITS_MAP = {
-    FREE: { maxProjects: 3, maxStorageBytes: 500 * 1024 * 1024 },
-    PRO: { maxProjects: 10, maxStorageBytes: 15 * 1024 * 1024 * 1024 },
-    MAX: { maxProjects: Infinity, maxStorageBytes: Infinity },
+    FREE: { maxProjects: 3, maxStorageBytes: 500 * 1024 * 1024, maxAiPrompts: 10 },
+    PRO: { maxProjects: 10, maxStorageBytes: 15 * 1024 * 1024 * 1024, maxAiPrompts: 500 },
+    MAX: { maxProjects: Infinity, maxStorageBytes: Infinity, maxAiPrompts: Infinity },
 };
 
 export default function BillingPage() {
@@ -34,18 +34,20 @@ export default function BillingPage() {
 
     const usedProjectsCount = projects.length;
     const usedStorageBytes = currentWorkspace?.storageUsed || 0;
+    const usedAiPrompts = (currentWorkspace as any)?.aiPromptsUsed || 0;
 
     const plans: PricingPlan[] = [
         {
             id: 'free',
             name: 'FREE',
-            price: '£0',
+            price: '₹0',
             period: '/month',
             isCurrent: activePlan === 'FREE',
             features: [
                 'Up to 3 Projects',
                 '5 Members per project',
                 'Kanban & Real-time Chat',
+                '10 AI Prompts / mo',
                 '500MB Cloud Storage',
             ],
             buttonText: activePlan === 'FREE' ? 'Current Plan' : 'Select Free',
@@ -53,14 +55,14 @@ export default function BillingPage() {
         {
             id: 'pro',
             name: 'PRO',
-            price: '£19',
+            price: '₹499',
             period: '/month',
             isRecommended: true,
             isCurrent: activePlan === 'PRO',
             features: [
                 'Up to 10 Projects',
                 '25 Members per project',
-                'AI Writing & Summaries',
+                '500 AI Prompts / mo',
                 'Video & Audio Calls',
                 '15GB Cloud Storage',
                 'Priority Support',
@@ -70,15 +72,15 @@ export default function BillingPage() {
         {
             id: 'max',
             name: 'MAX',
-            price: '£49',
+            price: '₹1,999',
             period: '/month',
             isCurrent: activePlan === 'MAX',
             features: [
                 'Unlimited Projects',
                 'Unlimited Members',
-                'Generous AI Tier',
+                'Unlimited AI Suite',
                 'Unlimited Cloud Storage',
-                'Dedicated Support',
+                'Dedicated Account Manager',
             ],
             buttonText: activePlan === 'MAX' ? 'Current Plan' : 'Upgrade to Max',
         },
@@ -118,13 +120,15 @@ export default function BillingPage() {
                         {/* Page Header */}
                         <BillingHeader />
 
-                        {/* Current Plan Usage Banner with Live Storage Meter */}
+                        {/* Current Plan Usage Banner with Live Meters */}
                         <CurrentPlanBanner
                             planName={`${activePlan} Plan`}
                             usedProjects={usedProjectsCount}
                             maxProjects={activeLimits.maxProjects}
                             usedStorageBytes={usedStorageBytes}
                             maxStorageBytes={activeLimits.maxStorageBytes}
+                            usedAiPrompts={usedAiPrompts}
+                            maxAiPrompts={activeLimits.maxAiPrompts}
                         />
 
                         {/* Pricing Cards Grid */}

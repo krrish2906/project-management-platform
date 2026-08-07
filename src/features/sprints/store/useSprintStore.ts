@@ -56,7 +56,7 @@ export const useSprintStore = create<SprintState>()((set, get) => ({
             if (resData.success) {
                 const updated = resData.data.sprint;
                 set(state => ({
-                    sprints: state.sprints.map(s => s._id === id ? updated : s)
+                    sprints: state.sprints.map(s => s.id === id ? updated : s)
                 }));
                 return updated;
             }
@@ -68,12 +68,12 @@ export const useSprintStore = create<SprintState>()((set, get) => ({
     },
 
     startSprint: async (id) => {
-        const result = await get().updateSprint(id, { status: 'active' });
+        const result = await get().updateSprint(id, { status: 'ACTIVE' });
         if (!result) set({ error: 'Failed to start sprint' });
     },
 
     completeSprint: async (id) => {
-        const result = await get().updateSprint(id, { status: 'completed' });
+        const result = await get().updateSprint(id, { status: 'COMPLETED' });
         if (!result) set({ error: 'Failed to complete sprint' });
     },
 }));

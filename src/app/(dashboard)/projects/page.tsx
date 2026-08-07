@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import CreateProjectModal from '@/features/projects/components/CreateProjectModal';
@@ -37,6 +38,16 @@ export default function ProjectsPage() {
         }
     }, [currentWorkspace?.id, fetchProjects]);
 
+    const isOwnerOrAdmin = currentWorkspace?.role === 'OWNER' || currentWorkspace?.role === 'ADMIN';
+
+    const handleOpenCreateModal = () => {
+        if (!isOwnerOrAdmin) {
+            toast.error('Only Workspace Owners and Admins can create new projects');
+            return;
+        }
+        setIsModalOpen(true);
+    };
+
     const handleProjectCreated = () => {
         setIsModalOpen(false);
         fetchProjects();
@@ -48,6 +59,10 @@ export default function ProjectsPage() {
     };
 
     const handleDeleteProject = (projectId: string) => {
+        if (!isOwnerOrAdmin) {
+            toast.error('Only Workspace Owners and Admins can delete projects');
+            return;
+        }
         const accept = confirm('Are you sure you want to delete this project? This action cannot be undone.');
         if (!accept) return;
         deleteProject(projectId);
@@ -59,7 +74,7 @@ export default function ProjectsPage() {
             filterStatus === 'All'
                 ? true
                 : filterStatus === 'Starred'
-                ? project.isStarred
+                ? Boolean((project as any).isStarred)
                 : project.status?.toLowerCase() === filterStatus.toLowerCase();
 
         const matchesQuery = searchQuery.trim() === ''
@@ -71,13 +86,29 @@ export default function ProjectsPage() {
         return matchesStatus && matchesQuery;
     });
 
-    const activeCount = projects.filter((p) => p.status === 'active').length;
-    const inProgressCount = projects.filter((p) => p.status === 'inprogress' || p.status === 'active').length;
-    const completedCount = projects.filter((p) => p.status === 'completed').length;
-    const archivedCount = projects.filter((p) => p.status === 'archived').length;
+    const activeCount = projects.filter((p) => {
+        const s = (p.status || '').toUpperCase();
+        return s === 'ACTIVE' || s === 'PLANNING' || s === 'IN_PROGRESS' || s === 'INPROGRESS' || s === '';
+    }).length;
+
+    const inProgressCount = projects.filter((p) => {
+        const s = (p.status || '').toUpperCase();
+        return s === 'IN_PROGRESS' || s === 'INPROGRESS' || s === 'ACTIVE' || s === 'PLANNING' || s === '';
+    }).length;
+
+    const completedCount = projects.filter((p) => {
+        const s = (p.status || '').toUpperCase();
+        return s === 'COMPLETED' || s === 'DONE';
+    }).length;
+
+    const archivedCount = projects.filter((p) => {
+        const s = (p.status || '').toUpperCase();
+        return s === 'ARCHIVED';
+    }).length;
 
     const currentPlan = currentWorkspace?.plan || 'FREE';
     const totalQuota = currentPlan === 'FREE' ? 3 : currentPlan === 'PRO' ? 10 : 999;
+    const membersCount = (currentWorkspace as any)?.members?.length || (currentWorkspace as any)?.memberCount || 1;
 
     if (authLoading) {
         return (
@@ -109,8 +140,11 @@ export default function ProjectsPage() {
                             user={user}
                             activeCount={activeCount}
                             viewMode={viewMode}
+                            workspaceName={currentWorkspace?.name}
+                            planName={currentPlan}
+                            membersCount={membersCount}
                             onViewModeChange={setViewMode}
-                            onOpenCreateModal={() => setIsModalOpen(true)}
+                            onOpenCreateModal={handleOpenCreateModal}
                         />
 
                         {/* Quota Usage Banner - Synchronized with Workspace Plan */}
@@ -160,7 +194,7 @@ export default function ProjectsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredProjects.map((project) => (
                                     <ProjectGridCard
-                                        key={project._id || project.id}
+                                        key={project.id || (project as any)._id}
                                         project={project}
                                         onToggleStar={handleToggleStar}
                                         onDeleteProject={handleDeleteProject}
@@ -171,7 +205,7 @@ export default function ProjectsPage() {
                             <div className="space-y-3">
                                 {filteredProjects.map((project) => (
                                     <ProjectListViewItem
-                                        key={project._id || project.id}
+                                        key={project.id || (project as any)._id}
                                         project={project}
                                         onToggleStar={handleToggleStar}
                                         onDeleteProject={handleDeleteProject}

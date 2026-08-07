@@ -89,7 +89,7 @@ model User {
     location         String?
     phoneNumber      String?
     googleId         String?              @unique
-    authProvider     AuthProvider?        @default(local)
+    authProvider     AuthProvider?        @default(LOCAL)
     isSuperAdmin     Boolean              @default(false)
     resetToken       String?
     resetTokenExpiry DateTime?
@@ -108,6 +108,7 @@ model User {
     actedNotifications Notification[]       @relation("NotificationActor")
     messages           Message[]            @relation("MessageSender")
     sentInvites        WorkspaceInvite[]    @relation("InvitedBy")
+    createdDocuments   Document[]           @relation("DocumentCreator")
 
     @@index([email])
 }
@@ -118,6 +119,7 @@ model Workspace {
     slug        String            @unique
     plan        Plan              @default(FREE)
     storageUsed BigInt            @default(0)
+    aiPromptsUsed Int            @default(0)
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
 
@@ -186,6 +188,7 @@ model Project {
     tasks       Task[]
     messages    Message[]
     activities  Activity[]
+    documents   Document[]
 
     @@unique([workspaceId, key])
     @@index([workspaceId])
@@ -348,4 +351,19 @@ model Message {
 
     @@index([projectId])
     @@index([senderId])
+}
+
+model Document {
+    id        String   @id @default(cuid())
+    projectId String
+    title     String
+    content   String   @db.Text
+    creatorId String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    creator   User?    @relation("DocumentCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+
+    @@index([projectId])
 }

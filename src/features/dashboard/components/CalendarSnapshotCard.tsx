@@ -79,11 +79,11 @@ export function CalendarSnapshotCard() {
                 ) : (
                     <div className="space-y-2 max-h-36 overflow-y-auto">
                         {todaysAgenda.map((t) => (
-                            <div key={t.id || t._id} className="flex items-center gap-3 p-2 bg-[#fcf8ff] rounded-xl border border-[#E2E8F0]">
+                            <div key={t.id} className="flex items-center gap-3 p-2 bg-[#fcf8ff] rounded-xl border border-[#E2E8F0]">
                                 <div className="w-1 h-6 bg-[#4f46e5] rounded-full shrink-0" />
                                 <div className="min-w-0 flex-1">
                                     <p className="text-[12px] font-semibold text-[#1b1b24] truncate">{t.title}</p>
-                                    <p className="text-[10px] text-[#777587] font-mono">{t.key || 'TASK'}</p>
+                                    <p className="text-[10px] text-[#777587] font-mono">#{t.number || 'TASK'}</p>
                                 </div>
                             </div>
                         ))}

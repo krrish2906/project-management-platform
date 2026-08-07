@@ -36,22 +36,18 @@ export default function BacklogPage() {
         fetchSprints(projectId);
     }, [fetchTasks, fetchProjects, fetchSprints, projectId]);
 
-    const project = projects.find(p => p._id === projectId);
+    const project = projects.find(p => p.id === projectId);
     const canEdit = user?.role !== 'viewer';
 
-    const projectTasks = tasks.filter(t => {
-        const tProjectId = typeof t.project === 'object' ? (t.project as any)._id : t.project;
-        return tProjectId === projectId;
-    });
+    const projectTasks = tasks.filter(t => (t.projectId || (t as any).project) === projectId);
 
-    const activeSprints = sprints.filter(s => s.status === 'active');
-    const planningSprints = sprints.filter(s => s.status === 'planning');
+    const activeSprints = sprints.filter(s => s.status === 'ACTIVE');
+    const planningSprints = sprints.filter(s => s.status === 'PLANNING');
     
     const getTasksForSprint = (sprintId: string | null) => {
         return projectTasks.filter(t => {
-            if (sprintId === null) return !t.sprint;
-            const tSprintId = typeof t.sprint === 'object' ? (t.sprint as any)._id : t.sprint;
-            return tSprintId === sprintId;
+            if (sprintId === null) return !t.sprintId;
+            return t.sprintId === sprintId;
         }).sort((a, b) => a.order - b.order);
     };
 
@@ -64,7 +60,7 @@ export default function BacklogPage() {
 
         if (source.droppableId !== destination.droppableId) {
             const newSprintId = destination.droppableId === 'backlog' ? null : destination.droppableId;
-            await updateTask(draggableId, { sprint: newSprintId });
+            await updateTask(draggableId, { sprintId: newSprintId });
         }
     };
 
@@ -100,10 +96,10 @@ export default function BacklogPage() {
         await completeSprint(completingSprintId);
         
         const sprintTasks = getTasksForSprint(completingSprintId);
-        const unfinishedTasks = sprintTasks.filter(t => t.status !== 'done');
+        const unfinishedTasks = sprintTasks.filter(t => t.status !== 'DONE');
         
         for (const task of unfinishedTasks) {
-            await updateTask(task._id, { sprint: null });
+            await updateTask(task.id, { sprintId: null });
         }
         
         setShowCompleteModal(false);
@@ -115,11 +111,11 @@ export default function BacklogPage() {
     };
 
     const getTypeIcon = (type: string) => {
-        switch (type) {
-            case 'bug': return <Bug className="w-4 h-4 text-red-500" />;
-            case 'story': return <BookOpen className="w-4 h-4 text-green-500" />;
-            case 'epic': return <Zap className="w-4 h-4 text-purple-500" />;
-            case 'improvement': return <Layers className="w-4 h-4 text-blue-500" />;
+        switch (type?.toUpperCase()) {
+            case 'BUG': return <Bug className="w-4 h-4 text-red-500" />;
+            case 'STORY': return <BookOpen className="w-4 h-4 text-green-500" />;
+            case 'EPIC': return <Zap className="w-4 h-4 text-purple-500" />;
+            case 'FEATURE': return <Layers className="w-4 h-4 text-blue-500" />;
             default: return <ListChecks className="w-4 h-4 text-blue-400" />;
         }
     };
@@ -133,7 +129,7 @@ export default function BacklogPage() {
     }
 
     const renderTaskItem = (task: Task, index: number) => (
-        <Draggable draggableId={task._id} index={index} key={task._id} isDragDisabled={!canEdit}>
+        <Draggable draggableId={task.id} index={index} key={task.id} isDragDisabled={!canEdit}>
             {(provided, snapshot) => (
                 <div
                     {...provided.draggableProps}
@@ -146,7 +142,7 @@ export default function BacklogPage() {
                     <div className="flex items-center gap-4 flex-1">
                         {getTypeIcon(task.type)}
                         <span className="text-xs font-mono font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {task.key}
+                            #{task.number || 'TASK'}
                         </span>
                         <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate max-w-md">
                             {task.title}
@@ -156,7 +152,7 @@ export default function BacklogPage() {
                     <div className="flex items-center gap-6">
                         <div className="w-24">
                             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                                {task.status.replace('-', ' ')}
+                                {task.status.replace('_', ' ')}
                             </span>
                         </div>
                         
@@ -169,7 +165,7 @@ export default function BacklogPage() {
                                 onBlur={(e) => {
                                     const val = parseInt(e.target.value);
                                     if (!isNaN(val) && val !== task.storyPoints) {
-                                        updateTask(task._id, { storyPoints: val });
+                                        updateTask(task.id, { storyPoints: val });
                                     }
                                 }}
                             />
@@ -193,13 +189,13 @@ export default function BacklogPage() {
     );
 
     const renderSprintList = (sprint: Sprint, isActive: boolean) => {
-        const sprintTasks = getTasksForSprint(sprint._id);
-        const isExpanded = expandedSprints[sprint._id] !== false;
-        const totalPoints = sprintTasks.reduce((acc, t) => acc + (t.storyPoints || 0), 0);
+        const sprintTasks = getTasksForSprint(sprint.id);
+        const isExpanded = expandedSprints[sprint.id] !== false;
+        const totalPoints = sprintTasks.reduce((acc, t) => acc + 1, 0);
 
         return (
-            <div key={sprint._id} className="mb-8 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                <div className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${isActive ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`} onClick={() => toggleSprint(sprint._id)}>
+            <div key={sprint.id} className="mb-8 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
+                <div className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${isActive ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`} onClick={() => toggleSprint(sprint.id)}>
                     <div className="flex items-center gap-3">
                         <button className="text-gray-500">
                             {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
@@ -215,7 +211,6 @@ export default function BacklogPage() {
                             </div>
                             <div className="text-xs text-gray-500 mt-1 flex items-center gap-4">
                                 <span>{sprintTasks.length} issues</span>
-                                <span>{totalPoints} points</span>
                                 {sprint.startDate && sprint.endDate && (
                                     <span className="flex items-center gap-1">
                                         <Calendar className="w-3 h-3" />
@@ -229,16 +224,16 @@ export default function BacklogPage() {
                     <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
                         {isActive ? (
                             <button 
-                                onClick={() => handleCompleteSprintClick(sprint._id)}
-                                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                                onClick={() => handleCompleteSprintClick(sprint.id)}
+                                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
                             >
                                 <CheckCircle className="w-4 h-4" />
                                 Complete Sprint
                             </button>
                         ) : (
                             <button 
-                                onClick={() => handleStartSprint(sprint._id)}
-                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-medium rounded-lg transition-colors"
+                                onClick={() => handleStartSprint(sprint.id)}
+                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-medium rounded-lg transition-colors cursor-pointer"
                             >
                                 Start Sprint
                             </button>
@@ -250,7 +245,7 @@ export default function BacklogPage() {
                 </div>
 
                 {isExpanded && (
-                    <Droppable droppableId={sprint._id}>
+                    <Droppable droppableId={sprint.id}>
                         {(provided, snapshot) => (
                             <div
                                 {...provided.droppableProps}

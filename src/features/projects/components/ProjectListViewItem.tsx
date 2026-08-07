@@ -30,21 +30,21 @@ export function ProjectListViewItem({
     }, []);
 
     const statusBadgeStyle =
-        project.status === 'active'
+        project.status === 'ACTIVE'
             ? 'bg-[#4f46e5]/10 text-[#4f46e5]'
-            : project.status === 'archived'
+            : project.status === 'ARCHIVED'
             ? 'bg-[#e4e1ee] text-[#464555]'
             : 'bg-emerald-100 text-emerald-700';
 
     return (
         <div
-            onClick={() => router.push(`/projects/${project._id}`)}
+            onClick={() => router.push(`/projects/${project.id}`)}
             className="bg-white rounded-xl border border-[#e4e1ee] p-4 shadow-level-1 hover:shadow-level-2 transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
         >
             {/* Left: Icon & Info */}
             <div className="flex items-center gap-4 flex-1 min-w-0">
                 <button
-                    onClick={(e) => onToggleStar(project._id, e)}
+                    onClick={(e) => onToggleStar(project.id, e)}
                     className="text-gray-400 hover:text-amber-400 transition-colors cursor-pointer shrink-0"
                 >
                     <span
@@ -132,7 +132,7 @@ export function ProjectListViewItem({
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setIsMenuOpen(false);
-                                    onDeleteProject(project._id);
+                                    onDeleteProject(project.id);
                                 }}
                                 className="w-full text-left px-4 py-2 text-xs font-semibold text-[#ba1a1a] hover:bg-[#ffdad6]/30 flex items-center gap-2 cursor-pointer"
                             >
