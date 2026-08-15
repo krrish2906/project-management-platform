@@ -7,51 +7,60 @@ export type SettingsTabId = 'general' | 'members' | 'danger';
 interface SettingsHeaderProps {
     activeTab: SettingsTabId;
     onTabChange: (tab: SettingsTabId) => void;
+    membersCount?: number;
 }
 
-export function SettingsHeader({ activeTab, onTabChange }: SettingsHeaderProps) {
+export function SettingsHeader({ activeTab, onTabChange, membersCount }: SettingsHeaderProps) {
     return (
-        <div className="mb-8">
+        <div>
             <div className="mb-6">
-                <h2 className="text-[30px] leading-9.5 tracking-tight font-semibold text-[#1b1b24] mb-2">
+                <h1 className="text-[28px] sm:text-[34px] leading-tight font-bold text-[#0f172a] tracking-tight">
                     Workspace Settings
-                </h2>
-                <p className="text-[16px] leading-6 text-[#464555] max-w-2xl font-normal">
-                    Manage your active workspace configuration, members, permissions and integrations.
+                </h1>
+                <p className="text-sm text-[#64748b] mt-1 font-normal">
+                    Manage your active workspace configuration, members, permissions and security.
                 </p>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="border-b border-[#c7c4d8]/60 flex space-x-8">
+            <div className="border-b border-[#E2E8F0] flex space-x-6">
                 <button
                     onClick={() => onTabChange('general')}
-                    className={`text-[14px] leading-5 font-medium pb-3 px-1 transition-colors cursor-pointer ${
+                    className={`text-xs font-bold pb-3 px-1 transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
                         activeTab === 'general'
-                            ? 'text-[#3525cd] border-b-2 border-[#3525cd]'
-                            : 'text-[#464555] hover:text-[#1b1b24]'
+                            ? 'text-[#4F46E5] border-[#4F46E5]'
+                            : 'text-[#64748b] border-transparent hover:text-[#0f172a]'
                     }`}
                 >
-                    General
+                    <span className="material-symbols-outlined text-[16px]">tune</span>
+                    <span>General</span>
                 </button>
                 <button
                     onClick={() => onTabChange('members')}
-                    className={`text-[14px] leading-5 font-medium pb-3 px-1 transition-colors cursor-pointer ${
+                    className={`text-xs font-bold pb-3 px-1 transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
                         activeTab === 'members'
-                            ? 'text-[#3525cd] border-b-2 border-[#3525cd]'
-                            : 'text-[#464555] hover:text-[#1b1b24]'
+                            ? 'text-[#4F46E5] border-[#4F46E5]'
+                            : 'text-[#64748b] border-transparent hover:text-[#0f172a]'
                     }`}
                 >
-                    Members & Roles
+                    <span className="material-symbols-outlined text-[16px]">group</span>
+                    <span>Members & Roles</span>
+                    {typeof membersCount === 'number' && (
+                        <span className="ml-1 px-1.5 py-0.2 bg-[#F1F5F9] text-[#64748b] rounded-full text-[10px] font-bold border border-[#E2E8F0]">
+                            {membersCount}
+                        </span>
+                    )}
                 </button>
                 <button
                     onClick={() => onTabChange('danger')}
-                    className={`text-[14px] leading-5 font-medium pb-3 px-1 transition-colors cursor-pointer ${
+                    className={`text-xs font-bold pb-3 px-1 transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
                         activeTab === 'danger'
-                            ? 'text-[#ba1a1a] border-b-2 border-[#ba1a1a]'
-                            : 'text-[#ba1a1a]/80 hover:text-[#ba1a1a]'
+                            ? 'text-rose-600 border-rose-600'
+                            : 'text-[#64748b] border-transparent hover:text-rose-600'
                     }`}
                 >
-                    Danger Zone
+                    <span className="material-symbols-outlined text-[16px]">warning</span>
+                    <span>Danger Zone</span>
                 </button>
             </div>
         </div>

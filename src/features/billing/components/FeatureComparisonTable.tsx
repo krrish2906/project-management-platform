@@ -11,61 +11,60 @@ interface FeatureRow {
 
 export function FeatureComparisonTable() {
     const rows: FeatureRow[] = [
-        { feature: 'Projects', free: '3', pro: 'Unlimited', max: 'Unlimited' },
-        { feature: 'Members', free: '5', pro: '20', max: 'Unlimited' },
+        { feature: 'Projects', free: '3', pro: '10', max: 'Unlimited' },
+        { feature: 'Members per project', free: '5', pro: '25', max: 'Unlimited' },
         { feature: 'AI Prompts', free: '10 / mo', pro: '500 / mo', max: 'Unlimited' },
-        { feature: 'Video Calls', free: false, pro: true, max: true },
-        { feature: 'Storage', free: '100MB', pro: '10GB', max: 'Unlimited' },
-        { feature: 'Support', free: 'Community', pro: 'Priority Email', max: 'Account Manager' },
+        { feature: 'Cloud Storage', free: '500 MB', pro: '15 GB', max: 'Unlimited' },
+        { feature: 'Video & Audio Calls', free: false, pro: true, max: true },
     ];
 
     const renderCell = (val: string | boolean, isPro: boolean = false) => {
         if (typeof val === 'boolean') {
             return val ? (
-                <span className={`material-symbols-outlined text-[20px] ${isPro ? 'text-[#3525cd]' : 'text-[#1b1b24]'}`}>
+                <span className={`material-symbols-outlined text-[18px] ${isPro ? 'text-[#4F46E5]' : 'text-[#0f172a]'}`}>
                     check
                 </span>
             ) : (
-                <span className="text-[#777587]">-</span>
+                <span className="text-[#94a3b8] font-bold">-</span>
             );
         }
         return (
-            <span className={val === 'Unlimited' && isPro ? 'font-semibold text-[#3525cd]' : ''}>
+            <span className={val === 'Unlimited' && isPro ? 'font-bold text-[#4F46E5]' : 'font-medium'}>
                 {val}
             </span>
         );
     };
 
     return (
-        <section className="bg-white border border-[#c7c4d8]/60 rounded-3xl overflow-hidden shadow-xs">
-            <div className="px-6 py-4 border-b border-[#c7c4d8]/60 bg-[#fcf8ff]">
-                <h3 className="text-[24px] leading-8 font-semibold text-[#1b1b24]">
-                    Compare Features
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-2xs">
+            <div className="px-6 py-3.5 border-b border-[#E2E8F0] bg-[#F8FAFC]">
+                <h3 className="text-sm font-bold text-[#0f172a]">
+                    Compare Plan Features
                 </h3>
             </div>
 
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="border-b border-[#c7c4d8]/60 bg-[#f5f2ff]/50">
-                            <th className="py-3 px-6 text-[14px] font-semibold text-[#464555] w-2/5">Feature</th>
-                            <th className="py-3 px-6 text-[14px] font-semibold text-[#464555] text-center w-1/5">FREE</th>
-                            <th className="py-3 px-6 text-[14px] font-semibold text-[#3525cd] text-center w-1/5 bg-[#4f46e5]/5">PRO</th>
-                            <th className="py-3 px-6 text-[14px] font-semibold text-[#464555] text-center w-1/5">MAX</th>
+                        <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]/50 text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">
+                            <th className="py-3 px-6 w-2/5">Feature</th>
+                            <th className="py-3 px-6 text-center w-1/5">FREE</th>
+                            <th className="py-3 px-6 text-center w-1/5 bg-[#EEF2FF]/60 text-[#4F46E5] font-bold">PRO</th>
+                            <th className="py-3 px-6 text-center w-1/5">MAX</th>
                         </tr>
                     </thead>
-                    <tbody className="text-sm text-[#1b1b24] divide-y divide-[#c7c4d8]/40">
+                    <tbody className="text-xs text-[#0f172a] divide-y divide-[#E2E8F0]">
                         {rows.map((r, idx) => (
-                            <tr key={idx} className="hover:bg-[#f5f2ff]/30 transition-colors">
-                                <td className="py-3.5 px-6 font-medium">{r.feature}</td>
-                                <td className="py-3.5 px-6 text-center text-[#464555]">{renderCell(r.free)}</td>
-                                <td className="py-3.5 px-6 text-center font-medium bg-[#4f46e5]/5">{renderCell(r.pro, true)}</td>
-                                <td className="py-3.5 px-6 text-center text-[#464555]">{renderCell(r.max)}</td>
+                            <tr key={idx} className="hover:bg-[#F8FAFC]/50 transition-colors">
+                                <td className="py-3.5 px-6 font-semibold text-[#334155]">{r.feature}</td>
+                                <td className="py-3.5 px-6 text-center text-[#64748b]">{renderCell(r.free)}</td>
+                                <td className="py-3.5 px-6 text-center bg-[#EEF2FF]/30 text-[#0f172a]">{renderCell(r.pro, true)}</td>
+                                <td className="py-3.5 px-6 text-center text-[#64748b]">{renderCell(r.max)}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-        </section>
+        </div>
     );
 }

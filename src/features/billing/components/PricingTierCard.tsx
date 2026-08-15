@@ -21,54 +21,56 @@ interface PricingTierCardProps {
 export function PricingTierCard({ plan, onSelectPlan }: PricingTierCardProps) {
     return (
         <div
-            className={`bg-white rounded-3xl p-6 flex flex-col relative transition-all duration-300 shadow-xs ${
+            className={`bg-white rounded-2xl p-6 flex flex-col justify-between relative transition-all duration-200 ${
                 plan.isRecommended
-                    ? 'border-2 border-[#4f46e5]/40 shadow-md ring-1 ring-[#4f46e5]/10'
-                    : 'border border-[#c7c4d8]/60 hover:border-[#4f46e5]/30'
+                    ? 'border-2 border-[#4F46E5] shadow-md ring-4 ring-[#4F46E5]/5'
+                    : 'border border-[#E2E8F0] shadow-2xs hover:shadow-md hover:border-[#CBD5E1]'
             }`}
         >
             {plan.isRecommended && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#4f46e5] text-white text-[12px] font-semibold px-4 py-1 rounded-full whitespace-nowrap shadow-xs">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#4F46E5] text-white text-[11px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap shadow-xs">
                     Recommended
                 </div>
             )}
 
-            <div className="mb-6 mt-1">
-                <h4 className="text-[24px] leading-8 font-bold text-[#1b1b24] mb-1">
-                    {plan.name}
-                </h4>
-                <div className="flex items-baseline gap-1">
-                    <span className="text-[48px] leading-14 font-extrabold text-[#1b1b24]">
-                        {plan.price}
-                    </span>
-                    <span className="text-[14px] text-[#464555]">
-                        {plan.period}
-                    </span>
+            <div>
+                <div className="mb-5 mt-0.5">
+                    <h4 className="text-base font-bold text-[#0f172a] mb-1.5">
+                        {plan.name}
+                    </h4>
+                    <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-extrabold text-[#0f172a] tracking-tight">
+                            {plan.price}
+                        </span>
+                        <span className="text-xs font-medium text-[#64748b]">
+                            {plan.period}
+                        </span>
+                    </div>
                 </div>
-            </div>
 
-            <ul className="space-y-3 flex-1 mb-8">
-                {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm text-[#1b1b24]">
-                        <span className="material-symbols-outlined text-[#3525cd] text-[20px] shrink-0">
-                            check_circle
-                        </span>
-                        <span className={plan.isRecommended && idx === 0 ? 'font-semibold' : ''}>
-                            {feature}
-                        </span>
-                    </li>
-                ))}
-            </ul>
+                <ul className="space-y-2.5 mb-8">
+                    {plan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-xs text-[#334155]">
+                            <span className="material-symbols-outlined text-[#4F46E5] text-[17px] shrink-0">
+                                check_circle
+                            </span>
+                            <span className={plan.isRecommended && idx === 0 ? 'font-semibold text-[#0f172a]' : ''}>
+                                {feature}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
 
             <button
                 disabled={plan.isCurrent}
                 onClick={() => onSelectPlan?.(plan.id)}
-                className={`w-full py-3 rounded-xl font-semibold text-[14px] transition-all cursor-pointer ${
+                className={`w-full py-2.5 rounded-xl font-semibold text-xs transition-all ${
                     plan.isCurrent
-                        ? 'bg-[#eae6f4] text-[#777587] cursor-not-allowed'
+                        ? 'bg-[#F1F5F9] text-[#64748b] cursor-default border border-[#E2E8F0]'
                         : plan.isRecommended
-                        ? 'bg-[#4f46e5] text-white hover:bg-[#3525cd] shadow-xs'
-                        : 'bg-[#fcf8ff] text-[#3525cd] border border-[#c7c4d8] hover:bg-[#f5f2ff]'
+                        ? 'bg-[#4F46E5] hover:bg-[#4338CA] text-white shadow-xs cursor-pointer'
+                        : 'bg-white border border-[#E2E8F0] text-[#0f172a] hover:bg-[#F8FAFC] shadow-2xs cursor-pointer'
                 }`}
             >
                 {plan.buttonText}

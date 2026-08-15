@@ -4,12 +4,12 @@ import React from 'react';
 
 export function ProfileHeader() {
     return (
-        <div className="mb-8">
-            <h2 className="text-[30px] leading-9.5 md:text-[48px] md:leading-14 tracking-tight font-bold text-[#1b1b24]">
+        <div>
+            <h1 className="text-[28px] sm:text-[34px] leading-tight font-bold text-[#0f172a] tracking-tight">
                 My Profile
-            </h2>
-            <p className="text-[16px] leading-6 text-[#464555] mt-2 font-normal">
-                Manage your personal account and security settings.
+            </h1>
+            <p className="text-sm text-[#64748b] mt-1 font-normal">
+                Manage your personal account details, password credentials, and active security sessions.
             </p>
         </div>
     );

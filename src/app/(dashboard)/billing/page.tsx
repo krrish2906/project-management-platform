@@ -65,7 +65,6 @@ export default function BillingPage() {
                 '500 AI Prompts / mo',
                 'Video & Audio Calls',
                 '15GB Cloud Storage',
-                'Priority Support',
             ],
             buttonText: activePlan === 'PRO' ? 'Current Plan' : 'Upgrade to Pro',
         },
@@ -79,8 +78,8 @@ export default function BillingPage() {
                 'Unlimited Projects',
                 'Unlimited Members',
                 'Unlimited AI Suite',
+                'Video & Audio Calls',
                 'Unlimited Cloud Storage',
-                'Dedicated Account Manager',
             ],
             buttonText: activePlan === 'MAX' ? 'Current Plan' : 'Upgrade to Max',
         },
@@ -114,8 +113,8 @@ export default function BillingPage() {
                 <Header user={user} />
 
                 {/* Scrollable Canvas */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#fcf8ff]">
-                    <div className="max-w-7xl mx-auto w-full pb-16">
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-white">
+                    <div className="max-w-7xl mx-auto space-y-6 pb-24">
                         
                         {/* Page Header */}
                         <BillingHeader />
@@ -132,7 +131,7 @@ export default function BillingPage() {
                         />
 
                         {/* Pricing Cards Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                             {plans.map((plan) => (
                                 <PricingTierCard
                                     key={plan.id}

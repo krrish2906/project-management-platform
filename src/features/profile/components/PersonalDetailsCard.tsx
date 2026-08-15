@@ -17,7 +17,6 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
     const [department, setDepartment] = useState(user?.department || 'Engineering');
     const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatar || null);
     
-    const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
@@ -32,6 +31,13 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
             if (user.department) setDepartment(user.department);
         }
     }, [user]);
+
+    const isChanged = (
+        name.trim() !== (user?.name || '').trim() ||
+        jobTitle.trim() !== (user?.jobTitle || 'Senior Engineer').trim() ||
+        department.trim() !== (user?.department || 'Engineering').trim() ||
+        avatarUrl !== (user?.avatar || null)
+    ) && name.trim().length > 0;
 
     const initials = name
         ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -55,7 +61,7 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
                 const newAvatarUrl = res.data.data.url;
                 setAvatarUrl(newAvatarUrl);
                 useAuthStore.getState().updateUser({ avatar: newAvatarUrl });
-                toast.success('Profile picture updated!');
+                toast.success('Profile picture updated successfully!');
             } else {
                 toast.error(res.data?.error || 'Failed to upload profile picture');
             }
@@ -69,56 +75,39 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        setStatusMessage(null);
-        if (!user) return;
+        if (!user || !isChanged) return;
 
         const userId = user.id;
         setIsSaving(true);
         try {
             const res = await axios.put(`/api/users/${userId}`, {
-                name,
-                jobTitle,
+                name: name.trim(),
+                jobTitle: jobTitle.trim(),
                 department,
                 avatar: avatarUrl,
             });
             if (res.data?.success) {
-                useAuthStore.getState().updateUser({ name, avatar: avatarUrl || undefined, jobTitle, department });
-                setStatusMessage({ type: 'success', text: 'Personal details saved successfully!' });
+                useAuthStore.getState().updateUser({ name: name.trim(), avatar: avatarUrl || undefined, jobTitle: jobTitle.trim(), department });
+                toast.success('Personal details saved successfully!');
             } else {
-                setStatusMessage({ type: 'error', text: res.data?.message || 'Failed to update details' });
+                toast.error(res.data?.message || 'Failed to update details');
             }
         } catch (err: any) {
             const serverMsg = err.response?.data?.message;
-            const text = (serverMsg && typeof serverMsg === 'string' && !serverMsg.includes('Prisma') && !serverMsg.includes('TURBOPACK'))
-                ? serverMsg
-                : 'Failed to update personal details. Please try again.';
-            setStatusMessage({ type: 'error', text });
+            toast.error(serverMsg || 'Failed to update personal details.');
         } finally {
             setIsSaving(false);
         }
     };
 
     return (
-        <div className="bg-white rounded-2xl p-6 md:p-8 border border-[#E2E8F0] shadow-xs">
-            <h3 className="text-[22px] font-bold text-[#1b1b24] mb-6">
+        <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-2xs">
+            <h2 className="text-base font-bold text-[#0f172a] mb-5">
                 Personal Details
-            </h3>
+            </h2>
 
-            {statusMessage && (
-                <div className={`mb-6 p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 ${
-                    statusMessage.type === 'success'
-                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-                        : 'bg-rose-50 border border-rose-200 text-rose-800'
-                }`}>
-                    <span className="material-symbols-outlined text-[18px]">
-                        {statusMessage.type === 'success' ? 'check_circle' : 'error'}
-                    </span>
-                    {statusMessage.text}
-                </div>
-            )}
-
-            {/* Interactive Circular Avatar (Camera Icon on Hover, Direct Upload) */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 border-b border-[#E2E8F0] pb-6">
+            {/* Profile Avatar Section */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-6 border-b border-[#E2E8F0] pb-5">
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -129,52 +118,61 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
 
                 <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-28 h-28 rounded-full overflow-hidden border-4 border-[#4F46E5]/20 relative group bg-[#f5f2ff] flex items-center justify-center shrink-0 cursor-pointer shadow-md transition-all hover:ring-4 hover:ring-[#4F46E5]/30"
+                    className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#E2E8F0] relative group bg-[#EEF2FF] flex items-center justify-center shrink-0 cursor-pointer shadow-2xs transition-all hover:border-[#4F46E5]"
                     title="Click to change profile picture"
                 >
                     {avatarUrl ? (
                         <img src={avatarUrl} alt={name} className="w-full h-full object-cover z-10" />
                     ) : (
-                        <span className="text-[40px] font-bold text-[#4F46E5]">{initials}</span>
+                        <span className="text-[26px] font-bold text-[#4F46E5]">{initials}</span>
                     )}
 
                     {/* Camera Overlay on Hover */}
                     <div className="absolute inset-0 bg-[#0f172a]/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center z-20 transition-opacity duration-200 text-white">
-                        <span className="material-symbols-outlined text-[28px]">
+                        <span className="material-symbols-outlined text-[20px]">
                             {isUploadingAvatar ? 'progress_activity' : 'photo_camera'}
                         </span>
-                        <span className="text-[10px] font-bold mt-1 uppercase tracking-wider">
-                            {isUploadingAvatar ? 'Uploading...' : 'Change'}
+                        <span className="text-[9px] font-bold mt-0.5 uppercase tracking-wider">
+                            {isUploadingAvatar ? 'Uploading' : 'Change'}
                         </span>
                     </div>
                 </div>
 
-                <div className="text-center sm:text-left space-y-1 my-auto">
-                    <h4 className="text-lg font-bold text-[#1b1b24]">{name || 'Your Profile'}</h4>
-                    <p className="text-xs text-[#64748b] font-medium">{email}</p>
-                    <p className="text-[11px] text-[#4F46E5] font-semibold">
+                <div className="text-center sm:text-left space-y-0.5 my-auto">
+                    <h3 className="text-sm font-bold text-[#0f172a]">{name || 'Your Profile'}</h3>
+                    <p className="text-xs text-[#64748b]">{email}</p>
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-[11px] text-[#4F46E5] hover:text-[#4338CA] font-semibold hover:underline cursor-pointer pt-0.5 inline-block"
+                    >
                         Click avatar to upload a new picture
-                    </p>
+                    </button>
                 </div>
             </div>
 
             {/* Profile Form */}
-            <form onSubmit={handleSave} className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <form onSubmit={handleSave} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Full Name */}
                     <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1.5">
-                            Full Name
+                        <label className="block text-xs font-semibold text-[#0f172a] mb-1.5">
+                            Full Name <span className="text-rose-500">*</span>
                         </label>
                         <input
                             type="text"
+                            required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full bg-[#f8fafc] border border-[#E2E8F0] rounded-xl py-2.5 px-3.5 text-xs sm:text-sm text-[#1e293b] focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20 outline-none transition-all"
+                            placeholder="Your full name"
+                            disabled={isSaving}
+                            className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#4F46E5] focus:outline-none shadow-2xs transition-all disabled:opacity-50"
                         />
                     </div>
 
+                    {/* Email Address */}
                     <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1.5">
+                        <label className="block text-xs font-semibold text-[#0f172a] mb-1.5">
                             Email Address
                         </label>
                         <div className="relative">
@@ -182,51 +180,73 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
                                 type="email"
                                 value={email}
                                 readOnly
-                                className="w-full bg-[#f1f5f9] border border-[#E2E8F0] rounded-xl py-2.5 px-3.5 text-xs sm:text-sm text-[#64748b] outline-none cursor-not-allowed pr-10"
+                                disabled
+                                className="w-full h-10 pl-3.5 pr-10 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#64748b] outline-none cursor-not-allowed select-all"
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-emerald-600" title="Verified Email">
-                                <span className="material-symbols-outlined text-lg">verified</span>
+                                <span className="material-symbols-outlined text-[13px]">verified</span>
                             </span>
                         </div>
                     </div>
 
+                    {/* Job Title */}
                     <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1.5">
+                        <label className="block text-xs font-semibold text-[#0f172a] mb-1.5">
                             Job Title
                         </label>
                         <input
                             type="text"
                             value={jobTitle}
                             onChange={(e) => setJobTitle(e.target.value)}
-                            className="w-full bg-[#f8fafc] border border-[#E2E8F0] rounded-xl py-2.5 px-3.5 text-xs sm:text-sm text-[#1e293b] focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20 outline-none transition-all"
+                            placeholder="e.g. Senior Engineer"
+                            disabled={isSaving}
+                            className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#4F46E5] focus:outline-none shadow-2xs transition-all disabled:opacity-50"
                         />
                     </div>
 
+                    {/* Department */}
                     <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-1.5">
+                        <label className="block text-xs font-semibold text-[#0f172a] mb-1.5">
                             Department
                         </label>
                         <select
                             value={department}
                             onChange={(e) => setDepartment(e.target.value)}
-                            className="w-full bg-white border border-[#E2E8F0] rounded-xl py-2.5 px-3.5 text-xs sm:text-sm text-[#1e293b] focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20 outline-none transition-all cursor-pointer"
+                            disabled={isSaving}
+                            className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#0f172a] focus:border-[#4F46E5] focus:outline-none shadow-2xs transition-all cursor-pointer disabled:opacity-50"
                         >
                             <option value="Engineering">Engineering</option>
                             <option value="Product">Product</option>
                             <option value="Design">Design</option>
                             <option value="Marketing">Marketing</option>
                             <option value="Sales">Sales</option>
+                            <option value="Operations">Operations</option>
+                            <option value="Human Resources">Human Resources</option>
                         </select>
                     </div>
                 </div>
 
-                <div className="pt-4 flex justify-end border-t border-[#E2E8F0]">
+                <div className="pt-3 flex justify-end">
                     <button
                         type="submit"
-                        disabled={isSaving}
-                        className="bg-[#4F46E5] text-white py-2.5 px-6 rounded-xl text-xs font-semibold hover:bg-[#3730a3] transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+                        disabled={!isChanged || isSaving}
+                        className={`px-4 py-2.5 rounded-xl font-semibold text-xs transition-all flex items-center gap-1.5 ${
+                            isChanged && !isSaving
+                                ? 'bg-[#4F46E5] hover:bg-[#4338CA] text-white shadow-xs cursor-pointer'
+                                : 'bg-[#F1F5F9] text-[#94a3b8] border border-[#E2E8F0] cursor-not-allowed'
+                        }`}
                     >
-                        {isSaving ? 'Saving...' : 'Save Profile Changes'}
+                        {isSaving ? (
+                            <>
+                                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                <span>Saving Changes...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="material-symbols-outlined text-[16px]">save</span>
+                                <span>Save Profile Changes</span>
+                            </>
+                        )}
                     </button>
                 </div>
             </form>
