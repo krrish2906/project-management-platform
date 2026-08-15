@@ -9,6 +9,8 @@ export interface CreateProjectDTO {
     status?: ProjectStatus;
     color?: string;
     icon?: string;
+    startDate?: string | Date;
+    endDate?: string | Date | null;
 }
 
 export interface UpdateProjectDTO {
@@ -17,6 +19,8 @@ export interface UpdateProjectDTO {
     status?: ProjectStatus;
     color?: string;
     icon?: string;
+    startDate?: string | Date;
+    endDate?: string | Date | null;
 }
 
 // Generate an uppercase 2-4 letter immutable project key prefix and resolve collisions within the workspace
@@ -70,8 +74,18 @@ export async function createProject(workspaceId: string, ownerId: string, data: 
     // 3. Generate or validate collision-resistant project key
     const key = data.key?.trim() ? data.key.trim().toUpperCase() : await generateProjectKey(workspaceId, data.name);
 
-    // 4. Create project and owner ProjectMember in Prisma
-    const project = await prisma.project.create({
+    // 4. Validate Start Date & End Date
+    const startDate = data.startDate ? new Date(data.startDate) : new Date();
+    let endDate: Date | null = null;
+    if (data.endDate) {
+        endDate = new Date(data.endDate);
+        if (endDate < startDate) {
+            throw new Error('End date must be on or after start date');
+        }
+    }
+
+    // 5. Create project and owner ProjectMember in Prisma
+    const project = await (prisma.project.create as any)({
         data: {
             workspaceId,
             ownerId,
@@ -81,6 +95,8 @@ export async function createProject(workspaceId: string, ownerId: string, data: 
             status: data.status || ProjectStatus.ACTIVE,
             color: data.color || '#3b82f6',
             icon: data.icon || null,
+            startDate,
+            endDate,
             members: {
                 create: {
                     userId: ownerId,
@@ -125,6 +141,9 @@ export async function getWorkspaceProjects(workspaceId: string, userId: string) 
                     },
                 },
             },
+            tasks: {
+                select: { id: true, status: true },
+            },
             _count: {
                 select: { tasks: true, members: true },
             },
@@ -134,10 +153,17 @@ export async function getWorkspaceProjects(workspaceId: string, userId: string) 
 
     return projects.map(p => {
         const userMember = p.members.find(m => m.userId === userId);
+        const totalTasks = p.tasks.length;
+        const completedTasks = p.tasks.filter(t => t.status === 'DONE').length;
+        const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
         return {
             ...p,
             _id: p.id,
             isStarred: userMember?.starred || false,
+            progress,
+            completedTasksCount: completedTasks,
+            totalTasksCount: totalTasks,
         };
     });
 }
@@ -157,6 +183,9 @@ export async function getProjectById(projectId: string, userId: string) {
                     },
                 },
             },
+            tasks: {
+                select: { id: true, status: true },
+            },
             _count: {
                 select: { tasks: true, members: true },
             },
@@ -170,13 +199,28 @@ export async function getProjectById(projectId: string, userId: string) {
     // Verify workspace access (Any workspace member can access workspace projects)
     const wsMembership = await verifyWorkspaceAccess(userId, project.workspaceId);
     const userMember = project.members.find(m => m.userId === userId);
+    const totalTasks = project.tasks.length;
+    const completedTasks = project.tasks.filter(t => t.status === 'DONE').length;
+    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     return {
         ...project,
         _id: project.id,
         isStarred: userMember ? userMember.starred : false,
         userRole: userMember ? userMember.role : wsMembership.role,
+        progress,
+        completedTasksCount: completedTasks,
+        totalTasksCount: totalTasks,
     };
+}
+
+// Verify user has write access to a project (rejects read-only VIEWER roles)
+export async function verifyProjectWriteAccess(projectId: string, userId: string) {
+    const project = await getProjectById(projectId, userId);
+    if (project.userRole === ProjectRole.VIEWER) {
+        throw new Error('Access denied: Read-only (VIEWER) role cannot create, edit, or delete items in this project.');
+    }
+    return project;
 }
 
 // Toggle per-user starring state for a project
@@ -237,7 +281,16 @@ export async function updateProject(projectId: string, userId: string, data: Upd
         throw new Error('Only Workspace Owners, Admins, and Project Owners can edit project settings');
     }
 
-    const updated = await prisma.project.update({
+    const startDate = data.startDate !== undefined ? new Date(data.startDate) : (project as any).startDate;
+    let endDate: Date | null | undefined = undefined;
+    if (data.endDate !== undefined) {
+        endDate = data.endDate ? new Date(data.endDate) : null;
+        if (endDate && startDate && endDate < startDate) {
+            throw new Error('End date must be on or after start date');
+        }
+    }
+
+    const updated = await (prisma.project.update as any)({
         where: { id: projectId },
         data: {
             name: data.name ? data.name.trim() : undefined,
@@ -245,6 +298,8 @@ export async function updateProject(projectId: string, userId: string, data: Upd
             status: data.status ? data.status : undefined,
             color: data.color ? data.color : undefined,
             icon: data.icon !== undefined ? data.icon : undefined,
+            startDate: data.startDate !== undefined ? new Date(data.startDate) : undefined,
+            endDate: data.endDate !== undefined ? (data.endDate ? new Date(data.endDate) : null) : undefined,
         },
         include: {
             owner: {

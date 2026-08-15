@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { name, key, description, status, color, icon } = body;
+        const { name, key, description, status, color, icon, startDate, endDate } = body;
 
         if (!name) {
             return NextResponse.json({
@@ -100,6 +100,8 @@ export async function POST(request: NextRequest) {
             status,
             color,
             icon,
+            startDate,
+            endDate,
         });
 
         return NextResponse.json({

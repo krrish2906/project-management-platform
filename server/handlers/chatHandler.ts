@@ -18,11 +18,7 @@ export function registerChatHandlers(socket: Socket, io: SocketIOServer, state: 
 
             const project = await prisma.project.findUnique({
                 where: { id: projectId },
-                include: {
-                    members: {
-                        where: { userId: user.userId },
-                    },
-                },
+                select: { id: true, workspaceId: true },
             });
 
             if (!project) {
@@ -30,9 +26,31 @@ export function registerChatHandlers(socket: Socket, io: SocketIOServer, state: 
                 return;
             }
 
-            const hasAccess = project.ownerId === user.userId || project.members.length > 0;
-            if (!hasAccess) {
+            const wsMember = await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId: project.workspaceId,
+                        userId: user.userId,
+                    },
+                },
+            });
+
+            if (!wsMember) {
                 socket.emit('error', { message: 'Not authorized to send messages in this project' });
+                return;
+            }
+
+            const prjMember = await prisma.projectMember.findUnique({
+                where: {
+                    projectId_userId: {
+                        projectId,
+                        userId: user.userId,
+                    },
+                },
+            });
+
+            if (prjMember?.role === 'VIEWER') {
+                socket.emit('error', { message: 'Read-only access: VIEWER role cannot send chat messages.' });
                 return;
             }
 
@@ -62,8 +80,8 @@ export function registerChatHandlers(socket: Socket, io: SocketIOServer, state: 
                 },
             });
 
-            io.to(`project:${projectId}`).emit('new-message', {
-                message: { ...message, _id: message.id },
+            io.to(`project:${projectId}`).emit('chat:new_message', {
+                message,
             });
 
         } catch (error: any) {
@@ -100,7 +118,7 @@ export function registerChatHandlers(socket: Socket, io: SocketIOServer, state: 
                 data: { pinned: !message.pinned },
             });
 
-            io.to(`project:${projectId}`).emit('message-pinned', {
+            io.to(`project:${projectId}`).emit('chat:message_pinned', {
                 messageId,
                 pinned: updated.pinned,
             });

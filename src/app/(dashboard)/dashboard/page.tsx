@@ -17,6 +17,8 @@ import { UpcomingDeadlinesCard } from '@/features/dashboard/components/UpcomingD
 import { CalendarSnapshotCard } from '@/features/dashboard/components/CalendarSnapshotCard';
 import { RecentActivityTimeline } from '@/features/dashboard/components/RecentActivityTimeline';
 
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
+
 interface DashboardData {
     totalProjects: number;
     activeProjects: number;
@@ -27,19 +29,26 @@ interface DashboardData {
     myAssignedTasks: number;
     teamCount?: number;
     teamMembers?: { id: string; name?: string; avatar?: string; email: string }[];
+    myTasks?: any[];
 }
 
 export default function DashboardPage() {
     const { user, isLoading: authLoading } = useAuth(true);
     const router = useRouter();
+    const { currentWorkspace, fetchWorkspaces } = useWorkspaceStore();
     const [data, setData] = useState<DashboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
 
     useEffect(() => {
+        fetchWorkspaces();
+    }, [fetchWorkspaces]);
+
+    useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const res = await axios.get('/api/dashboard');
+                const headers = currentWorkspace?.id ? { 'x-workspace-id': currentWorkspace.id } : {};
+                const res = await axios.get('/api/dashboard', { headers });
                 const json = res.data;
                 if (json.success) {
                     setData(json.data);
@@ -50,8 +59,10 @@ export default function DashboardPage() {
                 setIsLoading(false);
             }
         };
-        fetchDashboard();
-    }, []);
+        if (!authLoading) {
+            fetchDashboard();
+        }
+    }, [authLoading, currentWorkspace?.id]);
 
     if (authLoading || isLoading) {
         return (
@@ -103,7 +114,7 @@ export default function DashboardPage() {
                                 <RecentProjectsCard />
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <MyTasksCard />
+                                    <MyTasksCard tasks={data?.myTasks} />
                                     <UpcomingDeadlinesCard />
                                 </div>
                             </div>

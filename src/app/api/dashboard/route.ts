@@ -42,13 +42,10 @@ export async function GET(request: NextRequest) {
             }, { status: 200 });
         }
 
-        // Fetch projects in active workspace where user is a member
+        // Fetch projects in active workspace
         const userProjects = await prisma.project.findMany({
             where: {
                 workspaceId,
-                members: {
-                    some: { userId: authUser.userId },
-                },
             },
         });
 

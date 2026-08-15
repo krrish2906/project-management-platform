@@ -20,54 +20,50 @@ export function WorkspaceSummaryBento({
     const activeCount = onlineCount || activeTodayCount;
 
     return (
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {/* Card 1: Members */}
-            <div className="bg-white rounded-3xl p-6 shadow-xs border border-[#E2E8F0] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-[14px] font-semibold text-[#464555]">Workspace Members</span>
-                    <span className="material-symbols-outlined text-[#4f46e5]/70 text-lg">group</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Card 1: Workspace Members */}
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 shadow-2xs flex items-center justify-between">
+                <div>
+                    <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Workspace Members</p>
+                    <p className="text-2xl font-bold text-[#0f172a] mt-0.5">{totalMembers}</p>
                 </div>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-[28px] font-bold text-[#1b1b24]">{totalMembers}</span>
-                    <span className="text-xs text-[#777587]">active</span>
+                <div className="w-9 h-9 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-[#4F46E5] border border-[#C7D2FE]/60">
+                    <span className="material-symbols-outlined text-[19px]">group</span>
                 </div>
             </div>
 
-            {/* Card 2: Admins */}
-            <div className="bg-white rounded-3xl p-6 shadow-xs border border-[#E2E8F0] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-[14px] font-semibold text-[#464555]">Admins & Lead</span>
-                    <span className="material-symbols-outlined text-[#4f46e5]/70 text-lg">admin_panel_settings</span>
+            {/* Card 2: Admins & Leads */}
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 shadow-2xs flex items-center justify-between">
+                <div>
+                    <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Admins & Leads</p>
+                    <p className="text-2xl font-bold text-[#0f172a] mt-0.5">{adminsCount}</p>
                 </div>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-[28px] font-bold text-[#1b1b24]">{adminsCount || 1}</span>
-                    <span className="text-xs text-[#777587]">managers</span>
+                <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-200/60">
+                    <span className="material-symbols-outlined text-[19px]">shield_person</span>
                 </div>
             </div>
 
             {/* Card 3: Pending Invites */}
-            <div className="bg-white rounded-3xl p-6 shadow-xs border border-[#E2E8F0] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-[14px] font-semibold text-[#464555]">Pending Invites</span>
-                    <span className="material-symbols-outlined text-[#4f46e5]/70 text-lg">mail</span>
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 shadow-2xs flex items-center justify-between">
+                <div>
+                    <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Pending Invites</p>
+                    <p className="text-2xl font-bold text-[#0f172a] mt-0.5">{pendingInvitesCount}</p>
                 </div>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-[28px] font-bold text-[#1b1b24]">{pendingInvitesCount}</span>
-                    <span className="text-xs text-[#777587]">sent</span>
+                <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 border border-purple-200/60">
+                    <span className="material-symbols-outlined text-[19px]">mail</span>
                 </div>
             </div>
 
-            {/* Card 4: Active Online */}
-            <div className="bg-white rounded-3xl p-6 shadow-xs border border-[#E2E8F0] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-[14px] font-semibold text-[#464555]">Online Now</span>
-                    <span className="material-symbols-outlined text-emerald-600 text-lg">sensors</span>
+            {/* Card 4: Online Now */}
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 shadow-2xs flex items-center justify-between">
+                <div>
+                    <p className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Online Now</p>
+                    <p className="text-2xl font-bold text-[#0f172a] mt-0.5">{activeCount}</p>
                 </div>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-[28px] font-bold text-[#1b1b24]">{activeCount}</span>
-                    <span className="text-xs text-emerald-600 font-semibold">online</span>
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-200/60">
+                    <span className="material-symbols-outlined text-[19px]">sensors</span>
                 </div>
             </div>
-        </section>
+        </div>
     );
 }

@@ -15,6 +15,7 @@ export function registerPresenceHandlers(socket: Socket, io: SocketIOServer, sta
     // Track global active users
     state.globalActiveUsers.add(user.userId);
     state.userSockets.set(user.userId, socket.id);
+    socket.join(`user:${user.userId}`);
     io.emit('global-active-users', { users: Array.from(state.globalActiveUsers) });
 
     // Join project room
@@ -22,10 +23,10 @@ export function registerPresenceHandlers(socket: Socket, io: SocketIOServer, sta
         try {
             const project = await prisma.project.findUnique({
                 where: { id: projectId },
-                include: {
-                    members: {
-                        where: { userId: user.userId },
-                    },
+                select: {
+                    id: true,
+                    workspaceId: true,
+                    ownerId: true,
                 },
             });
 
@@ -34,9 +35,16 @@ export function registerPresenceHandlers(socket: Socket, io: SocketIOServer, sta
                 return;
             }
 
-            const hasAccess = project.ownerId === user.userId || project.members.length > 0;
+            const wsMember = await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId: project.workspaceId,
+                        userId: user.userId,
+                    },
+                },
+            });
 
-            if (!hasAccess) {
+            if (!wsMember) {
                 socket.emit('error', { message: 'Not authorized to access this project' });
                 return;
             }

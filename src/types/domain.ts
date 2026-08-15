@@ -138,10 +138,16 @@ export interface Project {
     icon?: string | null;
     taskCounter: number;
     isStarred?: boolean;
+    userRole?: string;
+    startDate?: Date | string | null;
     endDate?: Date | string | null;
     members?: ProjectMember[];
     sprints?: Sprint[];
     tasks?: Task[];
+    _count?: { tasks?: number; members?: number };
+    completedTasksCount?: number;
+    totalTasksCount?: number;
+    progress?: number;
     createdAt: Date | string;
     updatedAt: Date | string;
 }

@@ -101,14 +101,9 @@ export default function ProjectsPage() {
         return s === 'COMPLETED' || s === 'DONE';
     }).length;
 
-    const archivedCount = projects.filter((p) => {
-        const s = (p.status || '').toUpperCase();
-        return s === 'ARCHIVED';
-    }).length;
-
     const currentPlan = currentWorkspace?.plan || 'FREE';
     const totalQuota = currentPlan === 'FREE' ? 3 : currentPlan === 'PRO' ? 10 : 999;
-    const membersCount = (currentWorkspace as any)?.members?.length || (currentWorkspace as any)?.memberCount || 1;
+    const membersCount = currentWorkspace?._count?.members ?? (currentWorkspace as any)?.members?.length ?? 1;
 
     if (authLoading) {
         return (
@@ -135,15 +130,13 @@ export default function ProjectsPage() {
                 <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-white">
                     <div className="max-w-7xl mx-auto space-y-8 pb-16">
                         
-                        {/* Header & Controls */}
+                        {/* Header */}
                         <ProjectsHeader
                             user={user}
                             activeCount={activeCount}
-                            viewMode={viewMode}
                             workspaceName={currentWorkspace?.name}
                             planName={currentPlan}
                             membersCount={membersCount}
-                            onViewModeChange={setViewMode}
                             onOpenCreateModal={handleOpenCreateModal}
                         />
 
@@ -155,15 +148,16 @@ export default function ProjectsPage() {
                             totalProjects={projects.length}
                             inProgressCount={inProgressCount}
                             completedCount={completedCount}
-                            archivedCount={archivedCount}
                         />
 
-                        {/* Search and Filters */}
+                        {/* Unified Search, Filters & View Mode Toolbar */}
                         <ProjectsFilterBar
                             searchQuery={searchQuery}
                             onSearchChange={setSearchQuery}
                             activeFilter={filterStatus}
                             onFilterChange={setFilterStatus}
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
                         />
 
                         {/* Projects Content Section */}

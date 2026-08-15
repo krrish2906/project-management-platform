@@ -28,82 +28,83 @@ export function TeamToolbar({
     onViewModeChange,
 }: TeamToolbarProps) {
     return (
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-3 rounded-2xl shadow-xs border border-[#E2E8F0] mb-6">
-            {/* Search Input */}
-            <div className="relative w-full lg:w-72 bg-[#f5f2ff] rounded-xl border border-[#E2E8F0] flex items-center px-3 py-1.5 focus-within:border-[#3525cd] transition-all">
-                <span className="material-symbols-outlined text-[#464555] text-[18px] mr-2">search</span>
+        <div className="flex flex-col lg:flex-row gap-3.5 justify-between items-stretch lg:items-center">
+            {/* 1. Search Input */}
+            <div className="flex-1 w-full lg:max-w-md relative">
+                <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[18px]">
+                    search
+                </span>
                 <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Search members..."
-                    className="w-full bg-transparent border-none outline-none text-sm text-[#1b1b24] placeholder:text-[#777587] p-0 h-8"
+                    placeholder="Search members by name, email..."
+                    className="w-full h-9 pl-10 pr-4 bg-white border border-[#E2E8F0] rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#4F46E5]/10 focus:border-[#4F46E5] outline-none transition-all text-[#0f172a] placeholder:text-[#94a3b8] shadow-2xs"
                 />
             </div>
 
-            {/* Filter Dropdowns & View Toggle */}
-            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                {/* Role Filter */}
+            {/* 2. Filter Dropdowns & 3. View Switcher */}
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0 justify-between lg:justify-end">
+                {/* Role Filter - Matching WorkspaceRole */}
                 <select
                     value={roleFilter}
                     onChange={(e) => onRoleFilterChange(e.target.value)}
-                    className="h-10 px-3 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#464555] focus:outline-none focus:border-[#3525cd] cursor-pointer"
+                    className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#64748b] hover:text-[#0f172a] hover:border-[#CBD5E1] shadow-2xs focus:outline-none focus:border-[#4F46E5] cursor-pointer"
                 >
                     <option value="all">Role: All</option>
                     <option value="owner">Owner</option>
                     <option value="admin">Admin</option>
-                    <option value="manager">Manager</option>
-                    <option value="developer">Developer</option>
-                    <option value="designer">Designer</option>
+                    <option value="member">Member</option>
+                    <option value="guest">Guest</option>
                 </select>
 
                 {/* Dept Filter */}
                 <select
                     value={deptFilter}
                     onChange={(e) => onDeptFilterChange(e.target.value)}
-                    className="h-10 px-3 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#464555] focus:outline-none focus:border-[#3525cd] cursor-pointer"
+                    className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#64748b] hover:text-[#0f172a] hover:border-[#CBD5E1] shadow-2xs focus:outline-none focus:border-[#4F46E5] cursor-pointer"
                 >
                     <option value="all">Dept: All</option>
-                    <option value="executive">Executive</option>
-                    <option value="product">Product</option>
                     <option value="engineering">Engineering</option>
                     <option value="design">Design</option>
+                    <option value="product">Product</option>
+                    <option value="marketing">Marketing</option>
                 </select>
 
                 {/* Status Filter */}
                 <select
                     value={statusFilter}
                     onChange={(e) => onStatusFilterChange(e.target.value)}
-                    className="h-10 px-3 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#464555] focus:outline-none focus:border-[#3525cd] cursor-pointer"
+                    className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#64748b] hover:text-[#0f172a] hover:border-[#CBD5E1] shadow-2xs focus:outline-none focus:border-[#4F46E5] cursor-pointer"
                 >
                     <option value="all">Status: All</option>
                     <option value="online">Online</option>
-                    <option value="away">Away</option>
                     <option value="offline">Offline</option>
-                    <option value="leave">On Leave</option>
                 </select>
 
-                <div className="w-px h-6 bg-[#E2E8F0] hidden sm:block mx-1" />
-
-                {/* View Toggle Buttons */}
-                <div className="flex items-center border border-[#E2E8F0] rounded-xl overflow-hidden h-10">
+                {/* View Mode Toggle (Grid / List) */}
+                <div className="flex items-center gap-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-1 shadow-2xs shrink-0">
                     <button
                         onClick={() => onViewModeChange('list')}
-                        className={`px-3 h-full flex items-center justify-center transition-colors cursor-pointer ${
-                            viewMode === 'list' ? 'bg-[#f5f2ff] text-[#3525cd]' : 'bg-white text-[#464555] hover:bg-[#f5f2ff]/50'
+                        className={`w-6 h-5.5 rounded-lg transition-all cursor-pointer flex items-center justify-center ${
+                            viewMode === 'list'
+                                ? 'bg-white text-[#4F46E5] shadow-xs'
+                                : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/60'
                         }`}
                         title="List View"
                     >
-                        <span className="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+                        <span className="material-symbols-outlined text-[15px] leading-none">view_list</span>
                     </button>
                     <button
                         onClick={() => onViewModeChange('grid')}
-                        className={`px-3 h-full flex items-center justify-center transition-colors border-l border-[#E2E8F0] cursor-pointer ${
-                            viewMode === 'grid' ? 'bg-[#f5f2ff] text-[#3525cd]' : 'bg-white text-[#464555] hover:bg-[#f5f2ff]/50'
+                        className={`w-6 h-5.5 rounded-lg transition-all cursor-pointer flex items-center justify-center ${
+                            viewMode === 'grid'
+                                ? 'bg-white text-[#4F46E5] shadow-xs'
+                                : 'text-[#64748b] hover:text-[#0f172a] hover:bg-white/60'
                         }`}
                         title="Grid View"
                     >
-                        <span className="material-symbols-outlined text-[18px]">grid_view</span>
+                        <span className="material-symbols-outlined text-[15px] leading-none">grid_view</span>
                     </button>
                 </div>
             </div>

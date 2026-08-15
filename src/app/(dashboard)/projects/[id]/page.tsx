@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import Header from '@/components/layout/Header';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -32,16 +33,57 @@ export default function ProjectOverviewPage() {
     const { events, fetchActivity } = useActivityStore();
 
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [fetchedMembers, setFetchedMembers] = useState<ProjectTeamMember[]>([]);
+
+    const fetchProjectMembers = useCallback(async () => {
+        if (!id) return;
+        try {
+            const res = await axios.get(`/api/projects/${id}/members`);
+            if (res.data?.success && Array.isArray(res.data?.data?.members)) {
+                const mapped: ProjectTeamMember[] = res.data.data.members.map((m: any) => ({
+                    id: m.id,
+                    name: m.name,
+                    email: m.email,
+                    avatar: m.avatar || null,
+                    role: m.role || 'DEVELOPER',
+                    joinedDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently',
+                }));
+                setFetchedMembers(mapped);
+            }
+        } catch (err) {
+            console.error('Failed to fetch project members:', err);
+        }
+    }, [id]);
 
     useEffect(() => {
         if (id) {
             fetchProjects();
             fetchTasks({ project: id as string });
             fetchActivity(id as string);
+            fetchProjectMembers();
         }
-    }, [id, fetchProjects, fetchTasks, fetchActivity]);
+    }, [id, fetchProjects, fetchTasks, fetchActivity, fetchProjectMembers]);
 
     const project = allProjects.find((p) => p.id === id);
+
+    const handleUpdateMemberRole = async (memberUserId: string, newRole: string) => {
+        if (!id) return;
+        try {
+            const res = await axios.put(`/api/projects/${id}/members`, {
+                memberUserId,
+                role: newRole,
+            });
+            if (res.data?.success) {
+                toast.success(`Role updated to ${newRole}`);
+                fetchProjectMembers();
+                fetchProjects();
+            } else {
+                toast.error(res.data?.message || 'Failed to update member role');
+            }
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to update member role');
+        }
+    };
 
     const handleInviteMembers = async (invitees: { user: string; role: string }[]) => {
         if (!project) return;
@@ -55,11 +97,14 @@ export default function ProjectOverviewPage() {
             const response = await axios.put(`/api/projects/${id}`, { members: updatedMembers });
             const data = response.data;
             if (data.success) {
+                toast.success('Members invited successfully');
                 fetchProjects();
+                fetchProjectMembers();
                 setIsInviteModalOpen(false);
             }
         } catch (error) {
             console.error('Failed to invite members:', error);
+            toast.error('Failed to invite members');
         }
     };
 
@@ -81,25 +126,31 @@ export default function ProjectOverviewPage() {
     const completionProgress = Math.round((doneTasks / totalTasks) * 100) || 68;
 
     // Team Members
-    const formattedTeamMembers: ProjectTeamMember[] = project.members && project.members.length > 0
-        ? project.members.map((m: any, idx: number) => ({
-              id: m.user?.id || idx.toString(),
-              name: m.user?.name || `Member ${idx + 1}`,
-              email: m.user?.email || `member${idx + 1}@projecthub.io`,
-              avatar: m.user?.avatar || null,
-              role: m.role || (idx === 0 ? 'Lead Marketer' : idx === 1 ? 'Content Strategy' : 'Designer'),
-              joinedDate: 'Jul 01, 2023',
-          }))
-        : [
-              { id: '1', name: 'Elena Rodriguez', email: 'elena@projecthub.io', avatar: null, role: 'Lead Marketer', joinedDate: 'Jul 01, 2023' },
-              { id: '2', name: 'Marcus Chen', email: 'marcus@projecthub.io', avatar: null, role: 'Content Strategy', joinedDate: 'Jul 05, 2023' },
-              { id: '3', name: 'Sarah Jenkins', email: 'sarah@projecthub.io', avatar: null, role: 'Designer', joinedDate: 'Jul 12, 2023' },
-          ];
+    const formattedTeamMembers: ProjectTeamMember[] = fetchedMembers.length > 0
+        ? fetchedMembers
+        : (project.members && project.members.length > 0
+            ? project.members.map((m: any, idx: number) => ({
+                  id: m.user?.id || m.userId || idx.toString(),
+                  name: m.user?.name || `Member ${idx + 1}`,
+                  email: m.user?.email || `member${idx + 1}@projecthub.io`,
+                  avatar: m.user?.avatar || null,
+                  role: m.role || 'DEVELOPER',
+                  joinedDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently',
+              }))
+            : []);
+
+    // Check if user has permissions to manage project roles
+    const canManageRoles =
+        user?.role === 'OWNER' ||
+        user?.role === 'ADMIN' ||
+        project.ownerId === user?.id ||
+        (project as any)?.userRole === 'OWNER' ||
+        (project as any)?.userRole === 'ADMIN';
 
     // Existing Member IDs for Invite Modal
-    const existingMemberIds = project.members
-        ? project.members.map((m: any) => (typeof m.user === 'object' ? m.user.id : m.user))
-        : [];
+    const existingMemberIds = (fetchedMembers.length > 0 ? fetchedMembers : (project.members || [])).map(
+        (m: any) => m.id || (typeof m.user === 'object' ? m.user?.id : m.user)
+    );
 
     // Activity Log
     const formattedActivities: ActivityLogItem[] = events && events.length > 0
@@ -111,11 +162,7 @@ export default function ProjectOverviewPage() {
               timestamp: ev.createdAt ? new Date(ev.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
               type: idx === 0 ? 'done' : idx === 1 ? 'create' : 'start',
           }))
-        : [
-              { id: '1', userName: 'Alex', action: 'moved', target: 'WR-14 to Done', timestamp: '2 hours ago', type: 'done' },
-              { id: '2', userName: 'Sarah', action: 'created task', target: 'WR-27', timestamp: '5 hours ago', type: 'create' },
-              { id: '3', userName: 'Sprint 4', action: 'started', target: '', timestamp: 'Yesterday, 9:00 AM', type: 'start' },
-          ];
+        : [];
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] flex flex-col text-[#1b1b24] relative">
@@ -174,10 +221,12 @@ export default function ProjectOverviewPage() {
                                 />
                             </div>
 
-                            {/* Project Team Table Card */}
+                            {/* Project Team Table Card with Role Management */}
                             <ProjectTeamTableCard
                                 members={formattedTeamMembers}
+                                canManageRoles={canManageRoles}
                                 onAddMember={() => setIsInviteModalOpen(true)}
+                                onUpdateMemberRole={handleUpdateMemberRole}
                             />
                         </div>
 

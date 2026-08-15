@@ -44,43 +44,38 @@ export function RecentActivityTimeline() {
     }, []);
 
     return (
-        <div className="bg-white rounded-3xl p-6 shadow-level-1 border border-[#E2E8F0]">
-            <h3 className="text-[20px] leading-7 font-bold text-[#1b1b24] mb-4">Recent Activity</h3>
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 shadow-xs flex flex-col">
+            <h3 className="text-sm font-bold text-[#1e293b] mb-3.5">Recent Activity</h3>
 
             {isLoading ? (
                 <div className="py-6 flex items-center justify-center">
-                    <span className="material-symbols-outlined animate-spin text-[#4f46e5] text-2xl">
+                    <span className="material-symbols-outlined animate-spin text-[#4F46E5] text-xl">
                         progress_activity
                     </span>
                 </div>
             ) : activities.length === 0 ? (
-                <div className="py-8 text-center border border-dashed border-[#e4e1ee] rounded-2xl bg-[#fcf8ff]">
-                    <span className="material-symbols-outlined text-3xl text-[#777587] mb-1 block">
-                        history
-                    </span>
-                    <p className="text-xs font-semibold text-[#1b1b24] mb-0.5">No recent activity</p>
-                    <p className="text-[11px] text-[#777587]">Activities will log as your team creates tasks and collaborates.</p>
+                <div className="py-7 px-4 text-center border border-dashed border-[#E2E8F0] rounded-xl bg-[#F8FAFC]">
+                    <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mx-auto mb-1.5">
+                        <span className="material-symbols-outlined text-[18px]">history</span>
+                    </div>
+                    <p className="text-xs font-semibold text-[#1e293b]">No activity yet</p>
+                    <p className="text-[11px] text-[#64748b] mt-0.5">Team events and task updates will appear here.</p>
                 </div>
             ) : (
-                <div className="relative pl-4 space-y-4 before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-[#e4e1ee]">
+                <div className="relative pl-3 space-y-3 before:absolute before:inset-y-0 before:left-4 before:w-px before:bg-[#E2E8F0]">
                     {activities.slice(0, 5).map((act) => (
-                        <div key={act.id} className="relative flex gap-3">
-                            <div className="absolute -left-6 w-5 h-5 rounded-full bg-white border-2 border-[#4f46e5] z-10 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-[10px] text-[#4f46e5]">
-                                    notifications
-                                </span>
-                            </div>
-                            <div className="w-8 h-8 rounded-full bg-[#f5f2ff] text-[#4f46e5] flex items-center justify-center font-bold text-xs border border-[#e4e1ee] shrink-0">
+                        <div key={act.id} className="relative flex gap-2.5 items-start">
+                            <div className="w-7 h-7 rounded-full bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center font-bold text-[10px] border border-[#E2E8F0] shrink-0 z-10">
                                 {act.actorName.slice(0, 2).toUpperCase()}
                             </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-[13px] leading-snug text-[#1b1b24]">
+                            <div className="min-w-0 flex-1 pt-0.5">
+                                <p className="text-xs leading-snug text-[#1e293b]">
                                     <span className="font-semibold">{act.actorName}</span> {act.action}{' '}
                                     {act.entityName && (
-                                        <span className="font-semibold text-[#4f46e5]">{act.entityName}</span>
+                                        <span className="font-semibold text-[#4F46E5]">{act.entityName}</span>
                                     )}
                                 </p>
-                                <p className="text-[10px] text-[#777587] mt-0.5">
+                                <p className="text-[10px] text-[#94a3b8] mt-0.5">
                                     {formatDistanceToNow(new Date(act.createdAt), { addSuffix: true })}
                                 </p>
                             </div>

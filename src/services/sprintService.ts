@@ -1,6 +1,6 @@
 import { prisma } from './db/prisma';
 import { SprintStatus, TaskStatus } from '@prisma/client';
-import { getProjectById } from './projectService';
+import { getProjectById, verifyProjectWriteAccess } from './projectService';
 
 export interface CreateSprintDTO {
     name: string;
@@ -19,7 +19,7 @@ export interface UpdateSprintDTO {
 
 // Create a new sprint for a project
 export async function createSprint(projectId: string, userId: string, data: CreateSprintDTO) {
-    await getProjectById(projectId, userId);
+    await verifyProjectWriteAccess(projectId, userId);
 
     const sprint = await prisma.sprint.create({
         data: {
@@ -68,7 +68,7 @@ export async function updateSprint(sprintId: string, userId: string, data: Updat
         throw new Error('Sprint not found');
     }
 
-    await getProjectById(sprint.projectId, userId);
+    await verifyProjectWriteAccess(sprint.projectId, userId);
 
     // Sprint completion logic: if status is being updated to COMPLETED, auto-move incomplete tasks to Backlog
     if (data.status === SprintStatus.COMPLETED && sprint.status !== SprintStatus.COMPLETED) {
@@ -112,7 +112,7 @@ export async function deleteSprint(sprintId: string, userId: string) {
         throw new Error('Sprint not found');
     }
 
-    await getProjectById(sprint.projectId, userId);
+    await verifyProjectWriteAccess(sprint.projectId, userId);
 
     // Unassign tasks from sprint before deletion
     await prisma.task.updateMany({

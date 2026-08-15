@@ -5,30 +5,23 @@ import { useNotificationStore } from '@/features/notifications/store/useNotifica
 import toast from 'react-hot-toast';
 
 interface Message {
-    _id: string;
-    project: string;
+    id: string;
+    projectId: string;
+    senderId: string;
+    content: string;
+    type: string;
+    pinned: boolean;
+    attachments?: any;
+    replyToId?: string;
+    replyToContent?: string;
+    replyToAuthor?: string;
+    createdAt: string;
     sender: {
-        _id: string;
+        id: string;
         name: string;
         email: string;
         avatar?: string;
     };
-    content: string;
-    type: 'text' | 'file' | 'system';
-    pinned: boolean;
-    edited: boolean;
-    editedAt?: string;
-    readBy: Array<{
-        user: string;
-        readAt: string;
-    }>;
-    reactions?: Array<{
-        emoji: string;
-        users: string[];
-    }>;
-    replyTo?: string;
-    createdAt: string;
-    updatedAt: string;
 }
 
 interface MessagePinnedPayload {
@@ -36,9 +29,20 @@ interface MessagePinnedPayload {
     pinned: boolean;
 }
 
+interface MessageEditedPayload {
+    messageId: string;
+    content: string;
+}
+
+interface MessageDeletedPayload {
+    messageId: string;
+}
+
 interface UseSocketOptions {
     projectId: string | null;
     onMessage?: (message: Message) => void;
+    onMessageEdited?: (data: MessageEditedPayload) => void;
+    onMessageDeleted?: (data: MessageDeletedPayload) => void;
     onUserJoined?: (data: { userId: string; timestamp: Date }) => void;
     onUserLeft?: (data: { userId: string; timestamp: Date }) => void;
     onUserTyping?: (data: { userId: string; isTyping: boolean }) => void;
@@ -60,7 +64,7 @@ interface UseSocketReturn {
 }
 
 export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
-    const { projectId, onMessage, onUserJoined, onUserLeft, onUserTyping, onError, onActiveUsers, onMessagePinned, onGlobalActiveUsers } = options;
+    const { projectId, onMessage, onMessageEdited, onMessageDeleted, onUserJoined, onUserLeft, onUserTyping, onError, onActiveUsers, onMessagePinned, onGlobalActiveUsers } = options;
     const { user } = useAuthStore();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -71,6 +75,8 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
 
     const callbacksRef = useRef({
         onMessage,
+        onMessageEdited,
+        onMessageDeleted,
         onUserJoined,
         onUserLeft,
         onUserTyping,
@@ -83,6 +89,8 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
     useEffect(() => {
         callbacksRef.current = {
             onMessage,
+            onMessageEdited,
+            onMessageDeleted,
             onUserJoined,
             onUserLeft,
             onUserTyping,
@@ -132,9 +140,24 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
             setIsConnected(false);
         });
 
-        newSocket.on('new-message', (data: { message: Message }) => {
-            if (callbacksRef.current.onMessage) {
+        const handleNewMessage = (data: { message: Message }) => {
+            if (callbacksRef.current.onMessage && data?.message) {
                 callbacksRef.current.onMessage(data.message);
+            }
+        };
+
+        newSocket.on('chat:new_message', handleNewMessage);
+        newSocket.on('new-message', handleNewMessage);
+
+        newSocket.on('chat:message_edited', (data: MessageEditedPayload) => {
+            if (callbacksRef.current.onMessageEdited) {
+                callbacksRef.current.onMessageEdited(data);
+            }
+        });
+
+        newSocket.on('chat:message_deleted', (data: MessageDeletedPayload) => {
+            if (callbacksRef.current.onMessageDeleted) {
+                callbacksRef.current.onMessageDeleted(data);
             }
         });
 
@@ -177,11 +200,14 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
             }
         });
 
-        newSocket.on('message-pinned', (data: MessagePinnedPayload) => {
+        const handleMessagePinned = (data: MessagePinnedPayload) => {
             if (callbacksRef.current.onMessagePinned) {
                 callbacksRef.current.onMessagePinned(data);
             }
-        });
+        };
+
+        newSocket.on('chat:message_pinned', handleMessagePinned);
+        newSocket.on('message-pinned', handleMessagePinned);
 
         newSocket.on('global-active-users', (data: { users: string[] }) => {
             if (callbacksRef.current.onGlobalActiveUsers) {
@@ -192,18 +218,6 @@ export const useSocket = (options: UseSocketOptions): UseSocketReturn => {
         newSocket.on('new-notification', (data: { notification?: any } | undefined) => {
             if (data?.notification) {
                 useNotificationStore.getState().addNotification(data.notification);
-
-                toast(data.notification.title || 'New notification', {
-                    icon: '🔔',
-                    duration: 4000,
-                    style: {
-                        borderRadius: '12px',
-                        background: '#1e293b',
-                        color: '#f8fafc',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                    },
-                });
             } else {
                 useNotificationStore.getState().fetchNotifications();
             }

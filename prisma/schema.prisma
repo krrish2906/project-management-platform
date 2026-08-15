@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
 }
 
 enum AuthProvider {
@@ -177,6 +177,8 @@ model Project {
     status      ProjectStatus   @default(ACTIVE)
     color       String          @default("#3b82f6")
     icon        String?
+    startDate   DateTime        @default(now())
+    endDate     DateTime?
     taskCounter Int             @default(0)
     createdAt   DateTime        @default(now())
     updatedAt   DateTime        @updatedAt

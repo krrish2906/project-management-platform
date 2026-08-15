@@ -20,31 +20,31 @@ export function CalendarSnapshotCard() {
     const todaysAgenda = tasks.filter((t) => t.dueDate && isToday(new Date(t.dueDate)));
 
     return (
-        <div className="bg-white rounded-3xl p-6 shadow-level-1 border border-[#E2E8F0]">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-[18px] leading-7 font-bold text-[#1b1b24]">
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 shadow-xs flex flex-col">
+            <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm font-bold text-[#1e293b]">
                     {format(currentMonth, 'MMMM yyyy')}
                 </h3>
-                <div className="flex space-x-1">
+                <div className="flex items-center gap-1">
                     <button
                         onClick={() => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-                        className="p-1 rounded hover:bg-[#eae6f4] transition-colors cursor-pointer text-[#464555]"
+                        className="w-7 h-7 rounded-lg hover:bg-[#F1F5F9] transition-colors flex items-center justify-center cursor-pointer text-[#64748b]"
                     >
-                        <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                        <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                     </button>
                     <button
                         onClick={() => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-                        className="p-1 rounded hover:bg-[#eae6f4] transition-colors cursor-pointer text-[#464555]"
+                        className="w-7 h-7 rounded-lg hover:bg-[#F1F5F9] transition-colors flex items-center justify-center cursor-pointer text-[#64748b]"
                     >
-                        <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                     </button>
                 </div>
             </div>
 
             {/* Mini Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1 text-center mb-4">
+            <div className="grid grid-cols-7 gap-1 text-center mb-3">
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                    <div key={i} className="text-[10px] font-medium text-[#777587] py-1">
+                    <div key={i} className="text-[10px] font-semibold text-[#94a3b8] py-0.5">
                         {day}
                     </div>
                 ))}
@@ -56,15 +56,15 @@ export function CalendarSnapshotCard() {
                     return (
                         <div
                             key={day.toString()}
-                            className={`text-[12px] py-1 relative flex items-center justify-center ${
+                            className={`text-[11px] h-7 w-7 mx-auto relative flex items-center justify-center rounded-lg ${
                                 activeToday
-                                    ? 'bg-[#4f46e5] text-white rounded-full font-bold shadow-xs'
-                                    : 'text-[#1b1b24]'
+                                    ? 'bg-[#4F46E5] text-white font-bold shadow-2xs'
+                                    : 'text-[#1e293b] hover:bg-[#F8FAFC]'
                             }`}
                         >
                             {format(day, 'd')}
                             {hasTask && !activeToday && (
-                                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#4f46e5] rounded-full" />
+                                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#4F46E5] rounded-full" />
                             )}
                         </div>
                     );
@@ -72,18 +72,18 @@ export function CalendarSnapshotCard() {
             </div>
 
             {/* Today's Agenda */}
-            <div className="pt-4 border-t border-[#e4e1ee]/60">
-                <p className="text-xs font-semibold text-[#464555] mb-2">Today&apos;s Agenda</p>
+            <div className="pt-3 border-t border-[#E2E8F0]/70">
+                <p className="text-xs font-semibold text-[#64748b] mb-1.5">Today&apos;s Agenda</p>
                 {todaysAgenda.length === 0 ? (
-                    <p className="text-xs text-[#777587] py-2">No scheduled agenda for today.</p>
+                    <p className="text-[11px] text-[#94a3b8] py-1">No scheduled agenda for today.</p>
                 ) : (
-                    <div className="space-y-2 max-h-36 overflow-y-auto">
+                    <div className="space-y-1.5 max-h-32 overflow-y-auto">
                         {todaysAgenda.map((t) => (
-                            <div key={t.id} className="flex items-center gap-3 p-2 bg-[#fcf8ff] rounded-xl border border-[#E2E8F0]">
-                                <div className="w-1 h-6 bg-[#4f46e5] rounded-full shrink-0" />
+                            <div key={t.id} className="flex items-center gap-2 p-2 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+                                <div className="w-1 h-5 bg-[#4F46E5] rounded-full shrink-0" />
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-[12px] font-semibold text-[#1b1b24] truncate">{t.title}</p>
-                                    <p className="text-[10px] text-[#777587] font-mono">#{t.number || 'TASK'}</p>
+                                    <p className="text-xs font-semibold text-[#1e293b] truncate">{t.title}</p>
+                                    <p className="text-[10px] text-[#94a3b8] font-mono">#{t.number || 'TASK'}</p>
                                 </div>
                             </div>
                         ))}

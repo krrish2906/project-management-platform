@@ -5,31 +5,42 @@ import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useTaskStore } from '@/features/tasks/store/useTaskStore';
+import { useProjectStore } from '@/features/projects/store/useProjectStore';
 import type { Task } from '@/types';
+import toast from 'react-hot-toast';
 
 // Modular Tasks Components
 import { TasksHeader } from '@/features/tasks/components/TasksHeader';
-import { TasksStatusOverviewBar } from '@/features/tasks/components/TasksStatusOverviewBar';
-import { TasksStickyToolbar } from '@/features/tasks/components/TasksStickyToolbar';
-import { TasksGroupSection } from '@/features/tasks/components/TasksGroupSection';
+import { TasksSummaryBento } from '@/features/tasks/components/TasksSummaryBento';
+import { TasksToolbar } from '@/features/tasks/components/TasksToolbar';
+import { TasksTableList } from '@/features/tasks/components/TasksTableList';
+import { TasksKanbanView } from '@/features/tasks/components/TasksKanbanView';
+import { TasksCalendarView } from '@/features/tasks/components/TasksCalendarView';
+import { CreateTaskModal } from '@/features/tasks/components/CreateTaskModal';
 import TaskDetailSlideout from '@/features/tasks/components/TaskDetailSlideout';
 
 export default function TasksPage() {
     const { user, isLoading: authLoading } = useAuth(true);
-    const { tasks, isLoading, fetchTasks } = useTaskStore();
+    const { tasks, isLoading, fetchTasks, createTask } = useTaskStore();
+    const { projects, fetchProjects } = useProjectStore();
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [scopeFilter, setScopeFilter] = useState<'assigned' | 'all'>('assigned');
+    const [projectFilter, setProjectFilter] = useState('all');
     const [priorityFilter, setPriorityFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'calendar'>('list');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     useEffect(() => {
         fetchTasks();
-    }, [fetchTasks]);
+        fetchProjects();
+    }, [fetchTasks, fetchProjects]);
 
     // Status normalization helper
-    const normalizeStatus = (status: string) => {
+    const normalizeStatus = (status?: string) => {
+        if (!status) return 'todo';
         const s = status.toLowerCase().replace(/[^a-z]/g, '');
         if (s === 'todo' || s === 'backlog') return 'todo';
         if (s === 'inprogress') return 'inprogress';
@@ -38,56 +49,94 @@ export default function TasksPage() {
         return s;
     };
 
-    // Status counts for Overview Bar
-    const statusCounts = useMemo(() => {
+    // Live KPI Summary metrics from database tasks
+    const kpiStats = useMemo(() => {
+        const totalTasks = tasks.length;
+        const inProgressCount = tasks.filter((t) => normalizeStatus(t.status) === 'inprogress').length;
+        const completedCount = tasks.filter((t) => normalizeStatus(t.status) === 'done').length;
+
+        const dueSoonCount = tasks.filter((t) => {
+            if (!t.dueDate) return false;
+            const diffDays = (new Date(t.dueDate).getTime() - Date.now()) / (1000 * 3600 * 24);
+            return diffDays >= -1 && diffDays <= 3 && normalizeStatus(t.status) !== 'done';
+        }).length;
+
         return {
-            all: tasks.length,
-            todo: tasks.filter(t => normalizeStatus(t.status) === 'todo').length,
-            inprogress: tasks.filter(t => normalizeStatus(t.status) === 'inprogress').length,
-            review: tasks.filter(t => normalizeStatus(t.status) === 'review').length,
-            done: tasks.filter(t => normalizeStatus(t.status) === 'done').length,
+            totalTasks,
+            inProgressCount,
+            dueSoonCount,
+            completedCount,
         };
     }, [tasks]);
 
-    // Filter tasks
+    // Filter tasks based on all active filters
     const filteredTasks = useMemo(() => {
         return tasks.filter((task) => {
-            const taskNormStatus = normalizeStatus(task.status);
-            const matchesStatus =
-                statusFilter === 'all'
-                    ? true
-                    : taskNormStatus === statusFilter;
+            // Scope filter: Assigned to current user vs All tasks
+            if (scopeFilter === 'assigned' && user?.id) {
+                const assigneeId = (task as any).assigneeId || (task.assignee as any)?.id;
+                const assigneeEmail = (task.assignee as any)?.email;
+                const isAssigned = assigneeId === user.id || assigneeEmail === user.email;
+                if (!isAssigned) return false;
+            }
 
-            const matchesPriority =
-                priorityFilter === 'all'
-                    ? true
-                    : task.priority?.toLowerCase() === priorityFilter.toLowerCase();
+            // Project filter
+            if (projectFilter !== 'all') {
+                const taskProjId = (task as any).project?.id || (task as any).projectId || (task as any).project;
+                if (taskProjId !== projectFilter) return false;
+            }
 
-            const matchesQuery = searchQuery.trim() === ''
-                ? true
-                : task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (task.number && task.number.toString().includes(searchQuery));
+            // Priority filter
+            if (priorityFilter !== 'all') {
+                if (task.priority?.toLowerCase() !== priorityFilter.toLowerCase()) return false;
+            }
 
-            return matchesStatus && matchesPriority && matchesQuery;
+            // Status filter
+            if (statusFilter !== 'all') {
+                if (normalizeStatus(task.status) !== statusFilter) return false;
+            }
+
+            // Search query filter (title or key)
+            if (searchQuery.trim() !== '') {
+                const q = searchQuery.toLowerCase();
+                const titleMatch = task.title.toLowerCase().includes(q);
+                const keyMatch = (task as any).key ? (task as any).key.toLowerCase().includes(q) : false;
+                const numberMatch = task.number ? task.number.toString().includes(q) : false;
+                if (!titleMatch && !keyMatch && !numberMatch) return false;
+            }
+
+            return true;
         });
-    }, [tasks, searchQuery, statusFilter, priorityFilter]);
+    }, [tasks, user, scopeFilter, projectFilter, priorityFilter, statusFilter, searchQuery]);
 
-    // Grouping tasks for Linear List View: Recently Updated, In Progress / To Do, Completed
-    const recentlyUpdatedTasks = useMemo(() => {
-        return filteredTasks.filter(t => t.status !== 'DONE').slice(0, 4);
-    }, [filteredTasks]);
-
-    const remainingTasks = useMemo(() => {
-        const recentIds = new Set(recentlyUpdatedTasks.map(t => t.id));
-        return filteredTasks.filter(t => !recentIds.has(t.id));
-    }, [filteredTasks, recentlyUpdatedTasks]);
+    const handleCreateTask = async (taskData: {
+        title: string;
+        project: string;
+        description?: string;
+        priority?: string;
+        status?: string;
+        dueDate?: string;
+    }) => {
+        try {
+            const res = await createTask({
+                ...taskData,
+                assignee: user?.id,
+            });
+            if (res) {
+                toast.success('Task created successfully');
+                fetchTasks();
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to create task');
+        }
+    };
 
     if (authLoading) {
         return (
             <div className="flex h-screen bg-[#F8FAFC]">
                 <Sidebar />
                 <div className="flex-1 flex items-center justify-center">
-                    <div className="w-10 h-10 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-10 h-10 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
         );
@@ -105,73 +154,73 @@ export default function TasksPage() {
 
                 {/* Scrollable Content Container */}
                 <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-white">
-                    <div className="max-w-7xl mx-auto space-y-4 pb-16">
-                        
+                    <div className="max-w-7xl mx-auto space-y-6 pb-24">
                         {/* Page Header */}
-                        <TasksHeader />
+                        <TasksHeader onOpenCreateTask={() => setIsCreateModalOpen(true)} />
 
-                        {/* Task Overview Bar */}
-                        <TasksStatusOverviewBar
-                            activeStatus={statusFilter}
-                            onSelectStatus={setStatusFilter}
-                            counts={statusCounts}
+                        {/* Top 4 Summary KPI Cards */}
+                        <TasksSummaryBento
+                            totalTasks={kpiStats.totalTasks}
+                            inProgressCount={kpiStats.inProgressCount}
+                            dueSoonCount={kpiStats.dueSoonCount}
+                            completedCount={kpiStats.completedCount}
                         />
 
-                        {/* Sticky Toolbar */}
-                        <TasksStickyToolbar
+                        {/* Unified Single-Row Toolbar */}
+                        <TasksToolbar
                             searchQuery={searchQuery}
                             onSearchChange={setSearchQuery}
+                            scopeFilter={scopeFilter}
+                            onScopeChange={setScopeFilter}
+                            projectFilter={projectFilter}
+                            onProjectChange={setProjectFilter}
+                            projects={projects}
                             priorityFilter={priorityFilter}
                             onPriorityChange={setPriorityFilter}
+                            statusFilter={statusFilter}
+                            onStatusChange={setStatusFilter}
                             viewMode={viewMode}
                             onViewModeChange={setViewMode}
                         />
 
-                        {/* Task List / Content View */}
+                        {/* Active View: List / Kanban / Calendar */}
                         {isLoading ? (
                             <div className="flex items-center justify-center py-20">
-                                <div className="w-10 h-10 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin"></div>
-                            </div>
-                        ) : filteredTasks.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-[#e4e1ee] rounded-2xl bg-[#f8fafc]/50 p-8">
-                                <div className="w-16 h-16 bg-[#4f46e5]/10 rounded-2xl flex items-center justify-center mb-4 text-[#4f46e5]">
-                                    <span className="material-symbols-outlined text-[32px]">task</span>
-                                </div>
-                                <h3 className="text-[20px] font-bold text-[#1b1b24] mb-1">You're all caught up!</h3>
-                                <p className="text-[14px] text-[#464555] max-w-sm mb-6">
-                                    There are no tasks matching your current filters. Enjoy the peace and quiet, or clear filters.
-                                </p>
-                                <button
-                                    onClick={() => {
-                                        setStatusFilter('all');
-                                        setPriorityFilter('all');
-                                        setSearchQuery('');
-                                    }}
-                                    className="px-5 py-2.5 bg-white border border-[#e4e1ee] hover:bg-[#f5f2ff] text-[#1b1b24] font-semibold text-sm rounded-lg transition-all shadow-xs cursor-pointer"
-                                >
-                                    Clear Filters
-                                </button>
+                                <div className="w-10 h-10 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                {/* Recently Updated Section */}
-                                <TasksGroupSection
-                                    title="Recently Updated"
-                                    tasks={recentlyUpdatedTasks}
-                                    onTaskClick={setSelectedTask}
-                                />
-
-                                {/* Other / Remaining Tasks Section */}
-                                <TasksGroupSection
-                                    title="All Workspace Tasks"
-                                    tasks={remainingTasks}
-                                    onTaskClick={setSelectedTask}
-                                />
-                            </div>
+                            <>
+                                {viewMode === 'list' && (
+                                    <TasksTableList
+                                        tasks={filteredTasks}
+                                        onTaskClick={setSelectedTask}
+                                    />
+                                )}
+                                {viewMode === 'kanban' && (
+                                    <TasksKanbanView
+                                        tasks={filteredTasks}
+                                        onTaskClick={setSelectedTask}
+                                    />
+                                )}
+                                {viewMode === 'calendar' && (
+                                    <TasksCalendarView
+                                        tasks={filteredTasks}
+                                        onTaskClick={setSelectedTask}
+                                    />
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* Create Task Modal */}
+            <CreateTaskModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                projects={projects}
+                onCreate={handleCreateTask}
+            />
 
             {/* Task Detail Slideout */}
             {selectedTask && (

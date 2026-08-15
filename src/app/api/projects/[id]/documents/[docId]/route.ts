@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/services/db/prisma';
 import { getAuthUser } from '@/lib/auth';
 import { verifyWorkspaceAccess } from '@/services/workspaceService';
+import { verifyProjectWriteAccess } from '@/services/projectService';
 
 // PATCH /api/projects/[id]/documents/[docId] — Update document title or content
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; docId: string }> }) {
@@ -25,6 +26,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         }
 
         await verifyWorkspaceAccess(authUser.userId, doc.project.workspaceId);
+        await verifyProjectWriteAccess(projectId, authUser.userId);
 
         const updatedDoc = await prisma.document.update({
             where: { id: docId },
@@ -69,6 +71,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         }
 
         await verifyWorkspaceAccess(authUser.userId, doc.project.workspaceId);
+        await verifyProjectWriteAccess(projectId, authUser.userId);
 
         await prisma.document.delete({
             where: { id: docId },

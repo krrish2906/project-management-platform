@@ -1,6 +1,6 @@
 import { prisma } from './db/prisma';
 import { TaskType, TaskPriority, TaskStatus } from '@prisma/client';
-import { getProjectById } from './projectService';
+import { getProjectById, verifyProjectWriteAccess } from './projectService';
 
 export interface CreateTaskDTO {
     title: string;
@@ -27,7 +27,7 @@ export interface UpdateTaskDTO {
 
 // Create a new task with atomic task counter increment (e.g. 14 for WR-14)
 export async function createTask(projectId: string, userId: string, data: CreateTaskDTO) {
-    const project = await getProjectById(projectId, userId);
+    const project = await verifyProjectWriteAccess(projectId, userId);
 
     // Atomically increment project task counter
     const updatedProject = await prisma.project.update({
@@ -199,6 +199,7 @@ export async function getTaskById(taskId: string, userId: string) {
 // Update task
 export async function updateTask(taskId: string, userId: string, data: UpdateTaskDTO) {
     const existing = await getTaskById(taskId, userId);
+    await verifyProjectWriteAccess(existing.projectId, userId);
 
     const updated = await prisma.task.update({
         where: { id: taskId },
@@ -242,7 +243,8 @@ export async function updateTask(taskId: string, userId: string, data: UpdateTas
 
 // Delete task
 export async function deleteTask(taskId: string, userId: string) {
-    await getTaskById(taskId, userId);
+    const existing = await getTaskById(taskId, userId);
+    await verifyProjectWriteAccess(existing.projectId, userId);
 
     return prisma.task.delete({
         where: { id: taskId },

@@ -19,33 +19,33 @@ export function TeamHeader({
     const handleInvite = onOpenInviteModal || onInviteClick;
 
     return (
-        <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h1 className="text-[30px] leading-9.5 md:text-[36px] md:leading-11 font-bold text-[#1b1b24] tracking-tight">
+                <h1 className="text-[28px] sm:text-[34px] leading-tight font-bold text-[#0f172a] tracking-tight">
                     {workspaceName ? `${workspaceName} Team` : 'Workspace Team'}
                 </h1>
-                <p className="text-[16px] leading-6 text-[#464555] mt-1 font-normal">
+                <p className="text-sm text-[#64748b] mt-1 font-normal">
                     Manage members, roles and collaboration within your workspace.
                 </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-3 shrink-0">
                 <Link
                     href="/settings"
-                    className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#E2E8F0] text-[#4f46e5] font-semibold text-[14px] leading-5 rounded-xl hover:bg-[#f5f2ff] transition-colors shadow-xs whitespace-nowrap"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E2E8F0] text-[#334155] hover:text-[#4F46E5] hover:border-[#CBD5E1] font-semibold text-xs rounded-xl transition-all shadow-2xs whitespace-nowrap"
                 >
-                    <span className="material-symbols-outlined text-[18px]">manage_accounts</span>
+                    <span className="material-symbols-outlined text-[16px]">manage_accounts</span>
                     Manage Roles
                 </Link>
 
                 <button
                     onClick={handleInvite}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-[#4f46e5] text-white font-semibold text-[14px] leading-5 rounded-xl hover:bg-[#3730a3] transition-all shadow-xs cursor-pointer whitespace-nowrap"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold text-xs rounded-xl transition-all shadow-xs cursor-pointer whitespace-nowrap"
                 >
-                    <span className="material-symbols-outlined text-[18px]">person_add</span>
+                    <span className="material-symbols-outlined text-[16px]">person_add</span>
                     Invite Member
                 </button>
             </div>
-        </section>
+        </div>
     );
 }

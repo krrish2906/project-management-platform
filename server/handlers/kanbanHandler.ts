@@ -1,4 +1,5 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
+import { prisma } from '../../src/services/db/prisma';
 import { SocketAuth } from '../middleware/socketAuth';
 
 export function registerKanbanHandlers(socket: Socket, io: SocketIOServer) {
@@ -17,9 +18,23 @@ export function registerKanbanHandlers(socket: Socket, io: SocketIOServer) {
         }
     });
 
-    socket.on('kanban:task_moved', (data: { projectId: string; taskId: string; newStatus: string; newOrder?: number }) => {
+    socket.on('kanban:task_moved', async (data: { projectId: string; taskId: string; newStatus: string; newOrder?: number }) => {
         const { projectId, taskId, newStatus, newOrder } = data;
         if (projectId && taskId) {
+            const prjMember = await prisma.projectMember.findUnique({
+                where: {
+                    projectId_userId: {
+                        projectId,
+                        userId: user.userId,
+                    },
+                },
+            });
+
+            if (prjMember?.role === 'VIEWER') {
+                socket.emit('error', { message: 'Read-only access: VIEWER role cannot move tasks.' });
+                return;
+            }
+
             socket.to(`project:${projectId}`).emit('kanban:task_moved', {
                 taskId,
                 newStatus,

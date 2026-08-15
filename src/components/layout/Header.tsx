@@ -98,36 +98,42 @@ export default function Header({ user }: HeaderProps) {
         }
     };
 
+    const rootPaths = ['/dashboard', '/projects', '/tasks', '/teams', '/billing', '/settings', '/profile', '/help'];
+    const isRootPage = rootPaths.includes(pathname);
+    const shouldShowBackButton = !isRootPage || Boolean(projectId);
+
     return (
-        <header className="bg-white/80 backdrop-blur-md text-[#1b1b24] sticky top-0 border-b border-[#e4e1ee] flex justify-between items-center h-16 px-6 w-full z-20 transition-all">
-            {/* Left: Go Back Button & Title / Search */}
+        <header className="bg-white/90 backdrop-blur-md text-[#1b1b24] sticky top-0 border-b border-[#E2E8F0] flex justify-between items-center h-16 px-6 w-full z-20 transition-all">
+            {/* Left: Go Back Button (only on sub-pages) & Search */}
             <div className="flex items-center flex-1 max-w-md">
-                <button
-                    onClick={handleBackClick}
-                    className="p-2 rounded-xl text-[#464555] hover:text-[#4f46e5] hover:bg-[#e4e1ee]/50 transition-colors mr-3 flex items-center justify-center cursor-pointer shrink-0"
-                    title="Go Back"
-                >
-                    <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-                </button>
+                {shouldShowBackButton && (
+                    <button
+                        onClick={handleBackClick}
+                        className="p-2 rounded-xl text-[#475569] hover:text-[#4F46E5] hover:bg-[#EEF2FF] transition-colors mr-3 flex items-center justify-center cursor-pointer shrink-0 border border-[#E2E8F0]"
+                        title="Go Back"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                    </button>
+                )}
 
                 {/* Mobile Header Title */}
                 <div className="flex items-center md:hidden">
-                    <h1 className="text-[20px] font-bold text-[#1b1b24] tracking-tight">ProjectHub</h1>
+                    <h1 className="text-[18px] font-bold text-[#1b1b24] tracking-tight">ProjectHub</h1>
                 </div>
 
                 {/* Desktop Search Bar */}
                 <div className="flex-1 hidden md:block">
                     <div className="relative group">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#777587] group-focus-within:text-[#4f46e5] transition-colors text-[20px]">
+                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] group-focus-within:text-[#4F46E5] transition-colors text-[18px]">
                             search
                         </span>
                         <input
-                            className="w-full pl-10 pr-12 py-2 bg-[#e4e1ee]/40 border-none rounded-lg text-sm focus:ring-2 focus:ring-[#4f46e5]/20 focus:bg-white transition-all text-[#1b1b24] placeholder:text-[#777587] outline-none"
+                            className="w-full pl-10 pr-12 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#4F46E5]/10 focus:border-[#4F46E5] focus:bg-white transition-all text-[#1b1b24] placeholder:text-[#94a3b8] outline-none"
                             placeholder="Search projects, tasks, or members..."
                             type="text"
                         />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-[#777587] border border-[#c7c4d8]/40 px-1.5 py-0.5 rounded bg-[#f5f2ff]">
-                            ⌘ K
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono font-medium text-[#64748b] border border-[#E2E8F0] px-1.5 py-0.5 rounded-md bg-white shadow-2xs">
+                            ⌘K
                         </span>
                     </div>
                 </div>
@@ -138,25 +144,25 @@ export default function Header({ user }: HeaderProps) {
                 {/* Notification Bell */}
                 <div className="relative" ref={notifRef}>
                     <button
-                        className="text-[#464555] hover:text-[#4f46e5] transition-colors p-2 rounded-full hover:bg-[#eae6f4] relative cursor-pointer flex items-center justify-center"
+                        className="text-[#475569] hover:text-[#4F46E5] transition-colors p-2 rounded-xl hover:bg-[#EEF2FF] relative cursor-pointer flex items-center justify-center border border-transparent hover:border-[#E2E8F0]"
                         onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                     >
-                        <span className="material-symbols-outlined text-[22px]">notifications</span>
+                        <span className="material-symbols-outlined text-[20px]">notifications</span>
                         {unreadCount > 0 && (
-                            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-[#ba1a1a] rounded-full border border-white" />
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
                         )}
                     </button>
 
                     {/* Notifications Popover */}
                     {isNotificationOpen && (
-                        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-level-2 border border-[#e4e1ee] z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
-                            <div className="px-4 py-3 border-b border-[#e4e1ee] flex items-center justify-between bg-[#f8fafc]">
-                                <h3 className="font-semibold text-sm text-[#1b1b24]">Notifications</h3>
+                        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-[#E2E8F0] z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+                            <div className="px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+                                <h3 className="font-semibold text-xs text-[#1e293b] uppercase tracking-wider">Notifications</h3>
                             </div>
 
-                            <div className="max-h-80 overflow-y-auto divide-y divide-[#e4e1ee]/60">
+                            <div className="max-h-80 overflow-y-auto divide-y divide-[#E2E8F0]">
                                 {notifications.length === 0 ? (
-                                    <div className="p-6 text-center text-[#777587] text-sm">
+                                    <div className="p-6 text-center text-[#94a3b8] text-xs">
                                         No notifications yet
                                     </div>
                                 ) : (
@@ -164,23 +170,23 @@ export default function Header({ user }: HeaderProps) {
                                         <div
                                             key={n.id}
                                             onClick={() => handleNotificationClick(n)}
-                                            className={`p-3.5 hover:bg-[#f5f2ff]/60 transition-colors cursor-pointer flex items-start gap-3 ${
-                                                !n.read ? 'bg-[#4f46e5]/5' : ''
+                                            className={`p-3.5 hover:bg-[#F8FAFC] transition-colors cursor-pointer flex items-start gap-3 ${
+                                                !n.read ? 'bg-[#EEF2FF]/40' : ''
                                             }`}
                                         >
-                                            <div className="w-8 h-8 rounded-full bg-[#4f46e5]/10 text-[#4f46e5] flex items-center justify-center shrink-0">
-                                                <span className="material-symbols-outlined text-[18px]">
+                                            <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center shrink-0">
+                                                <span className="material-symbols-outlined text-[16px]">
                                                     notifications
                                                 </span>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-semibold text-[#1b1b24] truncate">
+                                                <p className="text-xs font-semibold text-[#1e293b] truncate">
                                                     {n.title}
                                                 </p>
-                                                <p className="text-xs text-[#464555] line-clamp-2 mt-0.5">
+                                                <p className="text-[11px] text-[#64748b] line-clamp-2 mt-0.5">
                                                     {n.message}
                                                 </p>
-                                                <span className="text-[10px] text-[#777587] mt-1 block">
+                                                <span className="text-[10px] text-[#94a3b8] mt-1 block">
                                                     {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                                                 </span>
                                             </div>
@@ -192,55 +198,102 @@ export default function Header({ user }: HeaderProps) {
                     )}
                 </div>
 
-                {/* User Avatar with Logout Dropdown Popover */}
+                {/* User Avatar with Dropdown Indicator */}
                 <div className="relative" ref={userMenuRef}>
                     <button
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                        className="w-9 h-9 rounded-full bg-[#4f46e5] hover:bg-[#3730a3] text-white flex items-center justify-center font-bold text-xs shadow-xs border-2 border-white cursor-pointer transition-transform hover:scale-105"
+                        className="flex items-center gap-1.5 p-1 pl-1.5 pr-2 rounded-full hover:bg-[#F8FAFC] border border-transparent hover:border-[#E2E8F0] transition-all cursor-pointer group"
                         title="Account Menu"
                     >
-                        {user?.avatar ? (
-                            <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
-                        ) : (
-                            userInitials
-                        )}
+                        <div className="w-8 h-8 rounded-full bg-[#4F46E5] text-white flex items-center justify-center font-bold text-xs shadow-2xs border border-white overflow-hidden">
+                            {user?.avatar ? (
+                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                            ) : (
+                                userInitials
+                            )}
+                        </div>
+                        <span className="material-symbols-outlined text-[15px] text-[#64748b] group-hover:text-[#1e293b] transition-transform">
+                            {isUserMenuOpen ? 'expand_less' : 'expand_more'}
+                        </span>
                     </button>
 
                     {/* User Menu Popover */}
                     {isUserMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-[#e4e1ee] z-50 overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150">
-                            <div className="px-4 py-3 border-b border-[#e4e1ee]">
-                                <p className="text-xs font-bold text-[#1b1b24] truncate">{user?.name || 'User'}</p>
-                                <p className="text-[11px] text-[#64748b] truncate">{user?.email}</p>
+                        <div className="absolute right-0 mt-2.5 w-64 bg-white rounded-2xl shadow-2xl border border-[#E2E8F0] z-50 overflow-hidden p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                            {/* User Info Header */}
+                            <div className="p-3 bg-linear-to-br from-[#F8FAFC] to-[#EEF2FF]/60 rounded-xl border border-[#E2E8F0] mb-1">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-9 h-9 rounded-full bg-linear-to-br from-[#4F46E5] to-[#7C3AED] text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0 overflow-hidden">
+                                        {user?.avatar ? (
+                                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            userInitials
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-bold text-[#0f172a] truncate">{user?.name || 'User'}</p>
+                                        <p className="text-[11px] text-[#64748b] truncate">{user?.email}</p>
+                                    </div>
+                                </div>
+                                {user?.role && (
+                                    <div className="mt-2 pt-2 border-t border-[#E2E8F0]/70 flex items-center justify-between">
+                                        <span className="text-[10px] text-[#64748b] font-medium">Workspace Role</span>
+                                        <span className="text-[10px] font-bold px-2 py-0.2 bg-[#4F46E5]/10 text-[#4F46E5] rounded-md border border-[#4F46E5]/20 uppercase">
+                                            {user.role}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="py-1">
+                            {/* Menu Links */}
+                            <div className="space-y-0.5 py-1">
                                 <Link
                                     href="/profile"
                                     onClick={() => setIsUserMenuOpen(false)}
-                                    className="flex items-center px-4 py-2 text-xs font-semibold text-[#1b1b24] hover:bg-[#f5f2ff] transition-colors"
+                                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#334155] hover:text-[#4F46E5] hover:bg-[#EEF2FF]/60 rounded-xl transition-all group"
                                 >
-                                    <span className="material-symbols-outlined text-[18px] mr-2.5 text-[#4f46e5]">account_circle</span>
-                                    My Profile
+                                    <div className="w-6 h-6 rounded-lg bg-[#F1F5F9] text-[#64748b] group-hover:bg-[#EEF2FF] group-hover:text-[#4F46E5] flex items-center justify-center transition-colors">
+                                        <span className="material-symbols-outlined text-[15px]">account_circle</span>
+                                    </div>
+                                    <span className="flex-1">My Profile</span>
+                                    <span className="material-symbols-outlined text-[14px] text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
                                 </Link>
 
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsUserMenuOpen(false)}
-                                    className="flex items-center px-4 py-2 text-xs font-semibold text-[#1b1b24] hover:bg-[#f5f2ff] transition-colors"
+                                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#334155] hover:text-[#4F46E5] hover:bg-[#EEF2FF]/60 rounded-xl transition-all group"
                                 >
-                                    <span className="material-symbols-outlined text-[18px] mr-2.5 text-[#4f46e5]">settings</span>
-                                    Settings
+                                    <div className="w-6 h-6 rounded-lg bg-[#F1F5F9] text-[#64748b] group-hover:bg-[#EEF2FF] group-hover:text-[#4F46E5] flex items-center justify-center transition-colors">
+                                        <span className="material-symbols-outlined text-[15px]">settings</span>
+                                    </div>
+                                    <span className="flex-1">Settings</span>
+                                    <span className="material-symbols-outlined text-[14px] text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                                </Link>
+
+                                <Link
+                                    href="/billing"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#334155] hover:text-[#4F46E5] hover:bg-[#EEF2FF]/60 rounded-xl transition-all group"
+                                >
+                                    <div className="w-6 h-6 rounded-lg bg-[#F1F5F9] text-[#64748b] group-hover:bg-[#EEF2FF] group-hover:text-[#4F46E5] flex items-center justify-center transition-colors">
+                                        <span className="material-symbols-outlined text-[15px]">payments</span>
+                                    </div>
+                                    <span className="flex-1">Billing & Plans</span>
+                                    <span className="material-symbols-outlined text-[14px] text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
                                 </Link>
                             </div>
 
-                            <div className="border-t border-[#e4e1ee] pt-1">
+                            {/* Logout Action */}
+                            <div className="border-t border-[#E2E8F0] pt-1 mt-0.5">
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer group"
                                 >
-                                    <span className="material-symbols-outlined text-[18px] mr-2.5 text-rose-600">logout</span>
-                                    Log out
+                                    <div className="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100 flex items-center justify-center transition-colors">
+                                        <span className="material-symbols-outlined text-[15px]">logout</span>
+                                    </div>
+                                    <span>Log out</span>
                                 </button>
                             </div>
                         </div>

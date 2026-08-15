@@ -10,6 +10,12 @@ import { registerKanbanHandlers } from './handlers/kanbanHandler';
 import { registerNotificationHandlers } from './handlers/notificationHandler';
 import { registerDocHandlers } from './handlers/docHandler';
 
+let ioInstance: SocketIOServer | null = null;
+
+export function getSocketIO(): SocketIOServer | null {
+    return ioInstance || (globalThis as any).io || null;
+}
+
 export function startServer() {
     const dev = process.env.NODE_ENV !== 'production';
     const hostname = process.env.HOSTNAME || 'localhost';
@@ -44,6 +50,9 @@ export function startServer() {
             },
             path: '/api/socket.io',
         });
+
+        ioInstance = io;
+        (globalThis as any).io = io;
 
         // Register authentication middleware
         io.use(socketAuthMiddleware);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -18,6 +18,39 @@ import { ChatMessageBubble, ChatMessageItem } from '@/features/chat/components/C
 import { ChatComposer } from '@/features/chat/components/ChatComposer';
 import { ChatSidebarRight, SharedFileItem, PinnedMessageItem } from '@/features/chat/components/ChatSidebarRight';
 
+function getMessageDateLabel(dateInput?: string | Date): string {
+    if (!dateInput) return 'Today';
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return 'Today';
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    if (msgDate.getTime() === today.getTime()) {
+        return 'Today';
+    } else if (msgDate.getTime() === yesterday.getTime()) {
+        return 'Yesterday';
+    } else {
+        return date.toLocaleDateString(undefined, {
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric',
+            year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+        });
+    }
+}
+
+function isImageAttachment(filename: string, mimetype?: string, url?: string): boolean {
+    if (mimetype?.startsWith('image/')) return true;
+    const cleanUrl = (url || filename || '').split('?')[0].toLowerCase();
+    const ext = cleanUrl.split('.').pop() || '';
+    return ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'avif'].includes(ext);
+}
+
 export default function ProjectChatRoomPage() {
     const { id } = useParams();
     const projectId = id as string;
@@ -25,7 +58,64 @@ export default function ProjectChatRoomPage() {
     const { user, isLoading: authLoading } = useAuth(true);
 
     const { projects, fetchProjects } = useProjectStore();
-    const { socket } = useSocket({ projectId });
+    const [typingUserIds, setTypingUserIds] = useState<Set<string>>(new Set());
+
+    const formatMessage = useCallback(
+        (m: any): ChatMessageItem => ({
+            id: m.id,
+            senderName: m.sender?.name || m.senderName || 'Team Member',
+            senderAvatar: m.sender?.avatar || m.senderAvatar,
+            content: m.content,
+            timestamp: new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            rawCreatedAt: m.createdAt || m.rawCreatedAt || new Date().toISOString(),
+            isCurrentUser: (m.sender?.id || m.senderId) === user?.id,
+            pinned: !!m.pinned,
+            attachments: m.attachments,
+            replyToContent: m.replyToContent || m.replyTo?.content,
+            replyToAuthor: m.replyToAuthor || m.replyTo?.author,
+        }),
+        [user?.id]
+    );
+
+    const { socket, activeUsers, setTyping } = useSocket({
+        projectId,
+        onMessage: useCallback(
+            (m: any) => {
+                const formatted = formatMessage(m);
+                setMessages((prev) => {
+                    if (prev.some((item) => item.id === formatted.id)) {
+                        return prev;
+                    }
+                    return [...prev, formatted];
+                });
+            },
+            [formatMessage]
+        ),
+        onMessageEdited: useCallback((data: { messageId: string; content: string }) => {
+            setMessages((prev) =>
+                prev.map((item) => (item.id === data.messageId ? { ...item, content: data.content } : item))
+            );
+        }, []),
+        onMessageDeleted: useCallback((data: { messageId: string }) => {
+            setMessages((prev) => prev.filter((item) => item.id !== data.messageId));
+        }, []),
+        onMessagePinned: useCallback((data: { messageId: string; pinned: boolean }) => {
+            setMessages((prev) =>
+                prev.map((item) => (item.id === data.messageId ? { ...item, pinned: data.pinned } : item))
+            );
+        }, []),
+        onUserTyping: useCallback((data: { userId: string; isTyping: boolean }) => {
+            setTypingUserIds((prev) => {
+                const next = new Set(prev);
+                if (data.isTyping && data.userId !== user?.id) {
+                    next.add(data.userId);
+                } else {
+                    next.delete(data.userId);
+                }
+                return next;
+            });
+        }, [user?.id]),
+    });
 
     const [messages, setMessages] = useState<ChatMessageItem[]>([]);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
@@ -52,18 +142,7 @@ export default function ProjectChatRoomPage() {
         try {
             const res = await axios.get(`/api/projects/${projectId}/messages`);
             if (res.data?.success && Array.isArray(res.data.data.messages)) {
-                const apiMsgs: ChatMessageItem[] = res.data.data.messages.map((m: any) => ({
-                    id: m.id,
-                    senderName: m.sender?.name || 'Team Member',
-                    senderAvatar: m.sender?.avatar,
-                    content: m.content,
-                    timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isCurrentUser: (m.sender?.id || m.senderId) === user?.id,
-                    pinned: !!m.pinned,
-                    attachments: m.attachments,
-                    replyToContent: m.replyToContent || m.replyTo?.content,
-                    replyToAuthor: m.replyToAuthor || m.replyTo?.author,
-                }));
+                const apiMsgs: ChatMessageItem[] = res.data.data.messages.map((m: any) => formatMessage(m));
                 setMessages(apiMsgs);
             }
         } catch (err) {
@@ -72,41 +151,6 @@ export default function ProjectChatRoomPage() {
             setIsLoadingMessages(false);
         }
     };
-
-    // Socket real-time message listener
-    useEffect(() => {
-        if (!socket) return;
-        const handleNewMessage = (newMsg: any) => {
-            const currentUserId = user?.id;
-            const senderId = newMsg.sender?.id || newMsg.senderId;
-            const newMsgId = newMsg.id || Date.now().toString();
-
-            const formatted: ChatMessageItem = {
-                id: newMsgId,
-                senderName: newMsg.sender?.name || newMsg.senderName || 'Team Member',
-                senderAvatar: newMsg.sender?.avatar || newMsg.senderAvatar,
-                content: newMsg.content,
-                timestamp: new Date(newMsg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isCurrentUser: senderId === currentUserId,
-                pinned: !!newMsg.pinned,
-                attachments: newMsg.attachments,
-                replyToContent: newMsg.replyToContent,
-                replyToAuthor: newMsg.replyToAuthor,
-            };
-
-            setMessages((prev) => {
-                if (senderId === currentUserId && prev.some((m) => m.id === newMsgId)) {
-                    return prev;
-                }
-                return [...prev.filter((m) => m.id !== formatted.id), formatted];
-            });
-        };
-
-        socket.on('chat:message', handleNewMessage);
-        return () => {
-            socket.off('chat:message', handleNewMessage);
-        };
-    }, [socket, user]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -124,29 +168,12 @@ export default function ProjectChatRoomPage() {
             const res = await axios.post(`/api/projects/${projectId}/messages`, payload);
             if (res.data?.success && res.data.data.message) {
                 const m = res.data.data.message;
-                const formatted: ChatMessageItem = {
-                    id: m.id,
-                    senderName: user?.name || 'You',
-                    senderAvatar: user?.avatar || undefined,
-                    content: m.content,
-                    timestamp: new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isCurrentUser: true,
-                    pinned: false,
-                    attachments: m.attachments,
-                    replyToContent: replyingTo?.content,
-                    replyToAuthor: replyingTo?.senderName,
-                };
-                setMessages((prev) => [...prev, formatted]);
+                const formatted = formatMessage(m);
+                setMessages((prev) => {
+                    if (prev.some((item) => item.id === formatted.id)) return prev;
+                    return [...prev, formatted];
+                });
                 setReplyingTo(null);
-
-                if (socket) {
-                    socket.emit('chat:message', {
-                        ...m,
-                        sender: { id: user?.id, name: user?.name, avatar: user?.avatar },
-                        replyToContent: replyingTo?.content,
-                        replyToAuthor: replyingTo?.senderName,
-                    });
-                }
             }
         } catch (err: any) {
             console.error('Send message failure:', err);
@@ -237,23 +264,47 @@ export default function ProjectChatRoomPage() {
 
     const project = projects.find((p) => p.id === projectId);
 
-    const projectMembers: MemberItem[] = (project?.members || []).map((m: any) => ({
-        id: m.user?.id || m.userId || m.id,
-        name: m.user?.name || 'Team Member',
-        role: m.role || 'Member',
-        avatar: m.user?.avatar,
-        isOnline: true,
-    }));
+    const projectMembers: MemberItem[] = (project?.members || []).map((m: any) => {
+        const memberId = m.user?.id || m.userId || m.id;
+        return {
+            id: memberId,
+            name: m.user?.name || 'Team Member',
+            role: m.role || 'Member',
+            avatar: m.user?.avatar,
+            isOnline: activeUsers.includes(memberId) || user?.id === memberId,
+        };
+    });
+
+    const typingUserNames = Array.from(typingUserIds)
+        .map((userId) => {
+            const member = projectMembers.find((m) => m.id === userId);
+            return member?.name || 'Someone';
+        })
+        .filter(Boolean);
+
+    const groupedMessages = useMemo(() => {
+        const groups: { dateLabel: string; msgs: ChatMessageItem[] }[] = [];
+        messages.forEach((msg) => {
+            const label = getMessageDateLabel(msg.rawCreatedAt);
+            const lastGroup = groups[groups.length - 1];
+            if (lastGroup && lastGroup.dateLabel === label) {
+                lastGroup.msgs.push(msg);
+            } else {
+                groups.push({ dateLabel: label, msgs: [msg] });
+            }
+        });
+        return groups;
+    }, [messages]);
 
     const sharedFilesList: SharedFileItem[] = messages
         .filter((m) => m.attachments && m.attachments.length > 0)
         .flatMap((m) =>
             m.attachments!.map((att: any, idx) => ({
                 id: `${m.id}-att-${idx}`,
-                name: att.filename,
+                name: att.filename || 'Attachment',
                 url: att.url,
                 size: (att.size || att.fileSize) ? `${Math.round((att.size || att.fileSize) / 1024)} KB` : undefined,
-                type: (att.mimetype || att.fileType)?.startsWith('image/') ? 'image' : 'file',
+                type: isImageAttachment(att.filename, att.mimetype || att.fileType, att.url) ? 'image' : 'file',
                 date: m.timestamp,
             }))
         );
@@ -263,7 +314,10 @@ export default function ProjectChatRoomPage() {
         .map((m) => ({
             id: m.id,
             author: m.senderName,
-            text: m.content,
+            avatar: m.senderAvatar,
+            text: m.content || (m.attachments?.length ? '📎 Shared Attachment(s)' : 'Pinned Message'),
+            timestamp: m.timestamp,
+            hasAttachments: !!(m.attachments && m.attachments.length > 0),
         }));
 
     if (authLoading) {
@@ -275,12 +329,12 @@ export default function ProjectChatRoomPage() {
     }
 
     return (
-        <div className="h-screen w-screen bg-[#F8FAFC] overflow-hidden flex flex-col text-[#1b1b24] relative">
+        <div className="h-screen w-full max-w-full bg-[#F8FAFC] overflow-hidden flex flex-col text-[#1b1b24] relative">
             {/* Standard Single Header with Go Back Button */}
             <Header user={user} />
 
             {/* Chat Room Workspace Body */}
-            <div className="flex-1 flex overflow-hidden w-full relative">
+            <div className="flex-1 flex overflow-hidden w-full max-w-full relative">
                 {/* Left Sidebar (Compact Size w-56/w-64 with Non-Changeable Project Initials PFP) */}
                 <ChatSidebarLeft
                     projectId={projectId}
@@ -290,12 +344,12 @@ export default function ProjectChatRoomPage() {
                 />
 
                 {/* Main Chat Canvas */}
-                <main className="flex-1 flex flex-col min-w-0 bg-[#fcf8ff] relative z-0">
+                <main className="flex-1 flex flex-col min-w-0 max-w-full bg-linear-to-b from-[#f8fafc] via-[#f1f5f9]/60 to-[#f8fafc] relative z-0 overflow-x-hidden">
                     {/* Channel Header with Dropdown Options & Group Call Button */}
                     <ChatAreaHeader
                         projectName={project?.name || 'Authentication Service'}
                         projectId={projectId}
-                        onlineCount={projectMembers.length > 0 ? projectMembers.length : 3}
+                        onlineCount={projectMembers.filter((m) => m.isOnline).length || 1}
                         onExportTranscript={handleExportTranscript}
                         onMuteNotifications={handleMuteNotifications}
                         onSummarizeAI={handleSummarizeAI}
@@ -304,7 +358,7 @@ export default function ProjectChatRoomPage() {
                     />
 
                     {/* Chat Messages Feed / Empty State */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#fcf8ff]">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 w-full max-w-full">
                         {isLoadingMessages ? (
                             <div className="h-full flex items-center justify-center">
                                 <Spinner />
@@ -320,17 +374,44 @@ export default function ProjectChatRoomPage() {
                                 </p>
                             </div>
                         ) : (
-                            <div className="max-w-4xl mx-auto space-y-2">
-                                {messages.map((m) => (
-                                    <ChatMessageBubble
-                                        key={m.id}
-                                        message={m}
-                                        onPinMessage={handlePinMessage}
-                                        onReplyMessage={handleReplyMessage}
-                                        onEditMessage={handleEditMessage}
-                                        onDeleteMessage={handleDeleteMessage}
-                                    />
+                            <div className="w-full space-y-4 px-2 sm:px-4">
+                                {groupedMessages.map((group) => (
+                                    <div key={group.dateLabel} className="space-y-2">
+                                        {/* Inline Date Divider Badge (Non-floating) */}
+                                        <div className="flex items-center justify-center my-4 relative">
+                                            <div className="bg-white text-[#475569] text-xs font-semibold px-3.5 py-1 rounded-full border border-[#E2E8F0] shadow-2xs">
+                                                {group.dateLabel}
+                                            </div>
+                                        </div>
+
+                                        {/* Messages under this date */}
+                                        {group.msgs.map((m) => (
+                                            <ChatMessageBubble
+                                                key={m.id}
+                                                message={m}
+                                                onPinMessage={handlePinMessage}
+                                                onReplyMessage={handleReplyMessage}
+                                                onEditMessage={handleEditMessage}
+                                                onDeleteMessage={handleDeleteMessage}
+                                            />
+                                        ))}
+                                    </div>
                                 ))}
+
+                                {/* Animated User Typing Indicator */}
+                                {typingUserNames.length > 0 && (
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs max-w-xs text-xs text-[#64748b]">
+                                        <div className="flex gap-1 items-center">
+                                            <span className="w-1.5 h-1.5 bg-[#4F46E5] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                            <span className="w-1.5 h-1.5 bg-[#4F46E5] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                            <span className="w-1.5 h-1.5 bg-[#4F46E5] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                        </div>
+                                        <span className="font-semibold text-[#1e293b]">
+                                            {typingUserNames.join(', ')} {typingUserNames.length === 1 ? 'is' : 'are'} typing...
+                                        </span>
+                                    </div>
+                                )}
+
                                 <div ref={messagesEndRef} />
                             </div>
                         )}
@@ -339,9 +420,12 @@ export default function ProjectChatRoomPage() {
                     {/* Message Composer Input */}
                     <ChatComposer
                         projectId={projectId}
+                        members={projectMembers}
+                        isViewer={project?.userRole === 'VIEWER'}
                         onSendMessage={handleSendMessage}
                         replyingTo={replyingTo}
                         onCancelReply={() => setReplyingTo(null)}
+                        onTyping={setTyping}
                     />
                 </main>
 

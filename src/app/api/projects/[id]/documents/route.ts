@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/services/db/prisma';
 import { getAuthUser } from '@/lib/auth';
 import { verifyWorkspaceAccess } from '@/services/workspaceService';
+import { verifyProjectWriteAccess } from '@/services/projectService';
 
 // GET /api/projects/[id]/documents — Get all documents in a project
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }
 
         await verifyWorkspaceAccess(authUser.userId, project.workspaceId);
+        await verifyProjectWriteAccess(projectId, authUser.userId);
 
         const newDoc = await prisma.document.create({
             data: {

@@ -10,7 +10,7 @@ export interface TeamMemberData {
     initials: string;
     role: 'Owner' | 'Admin' | 'Manager' | 'Developer' | 'Designer' | string;
     department: string;
-    projectsCount: number;
+    projectsCount?: number;
     status: 'online' | 'away' | 'offline' | 'leave';
     lastActive: string;
 }
@@ -18,38 +18,37 @@ export interface TeamMemberData {
 interface TeamMemberListProps {
     members: TeamMemberData[];
     viewMode: 'list' | 'grid';
-    onMemberAction?: (id: string, action: string) => void;
 }
 
-export function TeamMemberList({ members, viewMode, onMemberAction }: TeamMemberListProps) {
+export function TeamMemberList({ members, viewMode }: TeamMemberListProps) {
     const getRoleBadge = (role: string) => {
         const lower = role.toLowerCase();
-        if (lower.includes('owner')) return 'bg-[#4f46e5]/10 text-[#4f46e5]';
-        if (lower.includes('admin')) return 'bg-slate-500/10 text-slate-700';
-        if (lower.includes('manager')) return 'bg-emerald-500/10 text-emerald-600';
-        if (lower.includes('designer')) return 'bg-purple-500/10 text-purple-600';
-        return 'bg-blue-500/10 text-blue-600';
+        if (lower.includes('owner')) return 'bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60';
+        if (lower.includes('admin')) return 'bg-amber-50 text-amber-700 border border-amber-200';
+        if (lower.includes('manager')) return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+        if (lower.includes('designer')) return 'bg-purple-50 text-purple-700 border border-purple-200';
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
     };
 
     const getStatusIndicator = (status: TeamMemberData['status']) => {
         switch (status) {
             case 'online':
-                return { dotClass: 'bg-emerald-500 shadow-[0_0_0_2px_rgba(16,185,129,0.2)]', text: 'Online', textColor: 'text-[#1b1b24]' };
+                return { dotClass: 'bg-emerald-500 ring-2 ring-white', text: 'Online', textColor: 'text-emerald-700' };
             case 'away':
-                return { dotClass: 'bg-amber-500', text: 'Away', textColor: 'text-[#1b1b24]' };
+                return { dotClass: 'bg-amber-500 ring-2 ring-white', text: 'Away', textColor: 'text-amber-700' };
             case 'leave':
-                return { dotClass: 'bg-orange-500', text: 'On Leave', textColor: 'text-orange-600' };
+                return { dotClass: 'bg-rose-500 ring-2 ring-white', text: 'On Leave', textColor: 'text-rose-700' };
             default:
-                return { dotClass: 'bg-slate-400', text: 'Offline', textColor: 'text-[#464555]' };
+                return { dotClass: 'bg-slate-300 ring-2 ring-white', text: 'Offline', textColor: 'text-[#64748b]' };
         }
     };
 
     if (members.length === 0) {
         return (
-            <div className="bg-white rounded-2xl p-12 text-center border border-[#E2E8F0] shadow-xs">
-                <span className="material-symbols-outlined text-[#777587] text-[48px] mb-2">group_off</span>
-                <h3 className="text-lg font-semibold text-[#1b1b24] mb-1">No Team Members Found</h3>
-                <p className="text-sm text-[#464555]">Try adjusting your search query or filter options.</p>
+            <div className="bg-white rounded-2xl p-12 text-center border border-[#E2E8F0] shadow-2xs">
+                <span className="material-symbols-outlined text-[#94a3b8] text-[48px] mb-2">group_off</span>
+                <h3 className="text-base font-bold text-[#0f172a] mb-1">No Team Members Found</h3>
+                <p className="text-xs text-[#64748b]">Try adjusting your search query or filter options.</p>
             </div>
         );
     }
@@ -59,42 +58,46 @@ export function TeamMemberList({ members, viewMode, onMemberAction }: TeamMember
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {members.map((m) => {
                     const statusInfo = getStatusIndicator(m.status);
+
                     return (
-                        <div key={m.id} className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all flex flex-col justify-between">
+                        <div
+                            key={m.id}
+                            className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs hover:shadow-md hover:border-[#CBD5E1] transition-all flex flex-col justify-between relative group"
+                        >
                             <div>
-                                <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-start justify-between mb-3.5">
                                     <div className="relative">
                                         {m.avatar ? (
-                                            <img src={m.avatar} alt={m.name} className="w-14 h-14 rounded-full object-cover border border-[#E2E8F0]" />
+                                            <img src={m.avatar} alt={m.name} className="w-12 h-12 rounded-full object-cover border border-[#E2E8F0]" />
                                         ) : (
-                                            <div className="w-14 h-14 rounded-full bg-[#4f46e5]/10 text-[#4f46e5] font-bold text-lg flex items-center justify-center border border-[#E2E8F0]">
+                                            <div className="w-12 h-12 rounded-full bg-[#EEF2FF] text-[#4F46E5] font-bold text-sm flex items-center justify-center border border-[#C7D2FE]/60 shadow-2xs">
                                                 {m.initials}
                                             </div>
                                         )}
-                                        <span className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${statusInfo.dotClass}`} />
+                                        <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ${statusInfo.dotClass}`} />
                                     </div>
 
-                                    <span className={`px-2.5 py-1 rounded-full text-[12px] font-semibold ${getRoleBadge(m.role)}`}>
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getRoleBadge(m.role)}`}>
                                         {m.role}
                                     </span>
                                 </div>
 
-                                <h4 className="text-[16px] font-semibold text-[#1b1b24] truncate mb-0.5">{m.name}</h4>
-                                <p className="text-sm text-[#464555] truncate mb-3">{m.email}</p>
+                                <h4 className="text-sm font-bold text-[#0f172a] truncate mb-0.5">{m.name}</h4>
+                                <p className="text-xs text-[#64748b] truncate mb-3">{m.email}</p>
 
-                                <div className="flex items-center gap-2 text-xs text-[#464555] mb-4">
-                                    <span className="bg-[#f5f2ff] px-2 py-1 rounded-md font-medium">{m.department}</span>
-                                    <span>•</span>
-                                    <span>{m.projectsCount} Projects</span>
+                                <div className="flex items-center gap-2 text-xs text-[#64748b] mb-4">
+                                    <span className="bg-[#F8FAFC] border border-[#E2E8F0] px-2 py-0.5 rounded-md text-[11px] font-medium text-[#475569]">
+                                        {m.department || 'General'}
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#464555]">
-                                <div className="flex items-center gap-1.5">
+                            <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#64748b]">
+                                <div className="flex items-center gap-1.5 font-medium">
                                     <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
                                     <span className={statusInfo.textColor}>{statusInfo.text}</span>
                                 </div>
-                                <span>{m.lastActive}</span>
+                                <span className="text-[11px] text-[#94a3b8]">{m.lastActive}</span>
                             </div>
                         </div>
                     );
@@ -104,79 +107,71 @@ export function TeamMemberList({ members, viewMode, onMemberAction }: TeamMember
     }
 
     return (
-        <div className="flex flex-col gap-2">
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
             {/* Table Header Row */}
-            <div className="hidden md:grid grid-cols-[minmax(250px,2fr)_1fr_1fr_120px_100px_40px] gap-4 px-6 py-2 text-[12px] font-semibold text-[#464555] border-b border-[#E2E8F0]">
-                <div>Member</div>
-                <div>Role & Dept</div>
-                <div>Projects</div>
-                <div>Status</div>
-                <div>Last Active</div>
-                <div />
+            <div className="hidden md:grid grid-cols-[minmax(240px,2fr)_130px_140px_120px_120px] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#E2E8F0] text-[11px] font-semibold text-[#64748b] uppercase tracking-wider items-center">
+                <div className="text-left">Member</div>
+                <div className="text-center">Role</div>
+                <div className="text-center">Department</div>
+                <div className="text-center">Status</div>
+                <div className="text-center">Last Active</div>
             </div>
 
             {/* List Rows */}
-            {members.map((m) => {
-                const statusInfo = getStatusIndicator(m.status);
-                return (
-                    <div
-                        key={m.id}
-                        className="bg-white shadow-xs border border-[#E2E8F0] rounded-xl p-4 md:px-6 md:py-3.5 flex flex-col md:grid md:grid-cols-[minmax(250px,2fr)_1fr_1fr_120px_100px_40px] items-start md:items-center gap-3 hover:bg-[#fcf8ff] transition-all group relative"
-                    >
-                        {/* Member Info */}
-                        <div className="flex items-center gap-3.5 w-full">
-                            <div className="relative shrink-0">
-                                {m.avatar ? (
-                                    <img src={m.avatar} alt={m.name} className="w-11 h-11 rounded-full object-cover border border-[#E2E8F0]" />
-                                ) : (
-                                    <div className="w-11 h-11 rounded-full bg-[#4f46e5]/10 text-[#4f46e5] font-bold text-sm flex items-center justify-center border border-[#E2E8F0]">
-                                        {m.initials}
-                                    </div>
-                                )}
-                                <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${statusInfo.dotClass}`} />
+            <div className="divide-y divide-[#E2E8F0]">
+                {members.map((m) => {
+                    const statusInfo = getStatusIndicator(m.status);
+
+                    return (
+                        <div
+                            key={m.id}
+                            className="p-4 md:px-6 md:py-3.5 flex flex-col md:grid md:grid-cols-[minmax(240px,2fr)_130px_140px_120px_120px] items-start md:items-center gap-4 hover:bg-[#F8FAFC]/70 transition-colors group"
+                        >
+                            {/* 1. Member Info (Left aligned) */}
+                            <div className="flex items-center gap-3.5 w-full min-w-0">
+                                <div className="relative shrink-0">
+                                    {m.avatar ? (
+                                        <img src={m.avatar} alt={m.name} className="w-10 h-10 rounded-full object-cover border border-[#E2E8F0]" />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-[#EEF2FF] text-[#4F46E5] font-bold text-xs flex items-center justify-center border border-[#C7D2FE]/60 shadow-2xs">
+                                            {m.initials}
+                                        </div>
+                                    )}
+                                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ${statusInfo.dotClass}`} />
+                                </div>
+
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-xs font-bold text-[#0f172a] truncate">{m.name}</span>
+                                    <span className="text-[11px] text-[#64748b] truncate">{m.email}</span>
+                                </div>
                             </div>
 
-                            <div className="flex flex-col min-w-0">
-                                <span className="text-[14px] font-semibold text-[#1b1b24] truncate">{m.name}</span>
-                                <span className="text-[13px] text-[#464555] truncate">{m.email}</span>
+                            {/* 2. Role (Center aligned) */}
+                            <div className="w-full flex justify-start md:justify-center items-center">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-bold uppercase ${getRoleBadge(m.role)}`}>
+                                    {m.role}
+                                </span>
+                            </div>
+
+                            {/* 3. Department (Center aligned) */}
+                            <div className="w-full text-xs font-medium text-[#475569] text-left md:text-center">
+                                {m.department || 'General'}
+                            </div>
+
+                            {/* 4. Status (Center aligned) */}
+                            <div className="flex items-center justify-start md:justify-center gap-1.5 w-full font-medium text-xs">
+                                <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
+                                <span className={statusInfo.textColor}>{statusInfo.text}</span>
+                            </div>
+
+                            {/* 5. Last Active (Center aligned) */}
+                            <div className="text-xs text-[#64748b] w-full text-left md:text-center">
+                                {m.lastActive}
                             </div>
                         </div>
-
-                        {/* Role & Dept */}
-                        <div className="flex flex-wrap md:flex-col gap-1 md:gap-0 items-start w-full">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${getRoleBadge(m.role)}`}>
-                                {m.role}
-                            </span>
-                            <span className="text-[12px] text-[#464555] mt-1 hidden md:block">{m.department}</span>
-                        </div>
-
-                        {/* Projects */}
-                        <div className="flex items-center gap-2 w-full">
-                            <span className="text-sm font-semibold text-[#1b1b24]">{m.projectsCount}</span>
-                            <span className="text-xs text-[#464555]">Active</span>
-                        </div>
-
-                        {/* Status */}
-                        <div className="flex items-center gap-1.5 w-full">
-                            <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
-                            <span className={`text-sm ${statusInfo.textColor}`}>{statusInfo.text}</span>
-                        </div>
-
-                        {/* Last Active */}
-                        <div className="text-[13px] text-[#464555] w-full">{m.lastActive}</div>
-
-                        {/* Actions Menu */}
-                        <div className="absolute right-3 top-3 md:relative md:right-auto md:top-auto flex justify-end w-full md:w-auto">
-                            <button
-                                onClick={() => onMemberAction?.(m.id, 'more')}
-                                className="p-1 text-[#464555] hover:bg-[#f5f2ff] rounded-md hover:text-[#3525cd] transition-colors cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-[20px]">more_vert</span>
-                            </button>
-                        </div>
-                    </div>
-                );
-            })}
+                    );
+                })}
+            </div>
         </div>
     );
 }

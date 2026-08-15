@@ -59,12 +59,12 @@ export default function ProjectCallPage() {
                 if (!isMounted) return;
                 setIsConfigReady(ready);
                 if (!ready) {
-                    setCallError('LiveKit service is not configured properly.');
+                    setCallError('Group video and voice calls are currently unavailable. Please try again later!');
                 }
             } catch (error: any) {
                 if (!isMounted) return;
                 setIsConfigReady(false);
-                setCallError(error?.response?.data?.message || 'LiveKit server health check failed.');
+                setCallError('Group video and voice calls are currently unavailable. Please try again later!');
             } finally {
                 if (isMounted) setIsCheckingConfig(false);
             }
@@ -76,7 +76,7 @@ export default function ProjectCallPage() {
 
     const handleJoinCall = useCallback(async () => {
         if (!isConfigReady) {
-            setCallError('LiveKit configuration is not ready. Please check server credentials.');
+            setCallError('Group video and voice calls are currently unavailable. Please try again later!');
             return;
         }
 

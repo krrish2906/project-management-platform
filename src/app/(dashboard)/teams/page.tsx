@@ -205,6 +205,7 @@ export default function TeamPage() {
                         {/* Summary Bento Grid */}
                         <WorkspaceSummaryBento
                             totalMembers={teamMembers.length}
+                            adminsCount={teamMembers.filter((m) => m.role.toLowerCase().includes('owner') || m.role.toLowerCase().includes('admin')).length}
                             onlineCount={globalActiveUsers.length}
                             pendingInvitesCount={invites.length}
                         />

@@ -17,52 +17,55 @@ export function DashboardHero({ user, onOpenCreateProject }: DashboardHeroProps)
 
     const workspaceName = currentWorkspace?.name || (user?.name ? `${user.name}'s Workspace` : 'Workspace');
     const planName = currentWorkspace?.plan || 'FREE';
-    const memberCount = currentWorkspace?._count?.members || 1;
 
     return (
-        <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-                <p className="text-[18px] leading-7 text-[#464555] mb-1 font-normal">
-                    👋 Welcome back, {userName}!
+        <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[#E2E8F0]/70">
+            <div className="space-y-1.5">
+                {/* 1st Line: Greeting (Enlarged to text-base/text-lg) */}
+                <p className="text-base sm:text-lg text-[#475569] font-normal">
+                    👋 Welcome back, <span className="font-bold text-[#0f172a]">{userName}</span>
                 </p>
-                <div className="flex flex-wrap gap-2 mt-2 mb-3">
-                    <span className="text-[10px] font-medium px-2 py-0.5 bg-[#eae6f4] text-[#464555] rounded-full border border-[#c7c4d8]/30">
-                        {workspaceName}
+
+                {/* 2nd Line: Headline (Enlarged to text-[28px]/text-[34px]) */}
+                <h1 className="text-[28px] sm:text-[34px] font-bold text-[#0f172a] tracking-tight leading-tight">
+                    Ready to manage your projects today?
+                </h1>
+
+                {/* 3rd Line: Standalone Rounded Purple Compact Tiles */}
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#EEF2FF] text-[#4F46E5] text-[11px] font-semibold rounded-full border border-[#818CF8]">
+                        <span className="material-symbols-outlined text-[11px] leading-none shrink-0 text-[#4F46E5]">domain</span>
+                        <span>{workspaceName}</span>
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-[#4f46e5]/10 text-[#4f46e5] rounded-full border border-[#4f46e5]/20">
-                        {planName} Plan
-                    </span>
-                    <span className="text-[10px] font-medium px-2 py-0.5 bg-[#eae6f4] text-[#464555] rounded-full border border-[#c7c4d8]/30">
-                        {memberCount} {memberCount === 1 ? 'Member' : 'Members'}
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#EEF2FF] text-[#4F46E5] text-[11px] font-bold rounded-full border border-[#818CF8] uppercase tracking-wider">
+                        <span className="material-symbols-outlined text-[11px] leading-none shrink-0 text-[#4F46E5]">verified</span>
+                        <span>{planName} Plan</span>
                     </span>
                 </div>
-                <h2 className="text-[28px] sm:text-[36px] md:text-[48px] leading-tight font-bold text-[#1b1b24] tracking-tight">
-                    Ready to manage your projects today?
-                </h2>
             </div>
 
-            {/* Quick Action Buttons */}
-            <div className="flex flex-wrap gap-2">
+            {/* Quick Action Single Row Buttons */}
+            <div className="flex items-center gap-2 shrink-0 sm:self-center">
                 <button
                     onClick={onOpenCreateProject}
-                    className="py-2 px-4 bg-[#4f46e5] hover:bg-[#4338CA] text-white rounded-lg text-[14px] leading-5 font-semibold transition-all duration-200 shadow-xs flex items-center gap-2 cursor-pointer"
+                    className="h-9 px-3.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-semibold transition-all shadow-2xs hover:shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                    <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                    New Project
+                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <span>New Project</span>
                 </button>
                 <button
                     onClick={() => router.push('/tasks')}
-                    className="py-2 px-4 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#4f46e5] rounded-lg text-[14px] leading-5 font-medium transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                    className="h-9 px-3.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#334155] hover:text-[#4F46E5] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 >
-                    <span className="material-symbols-outlined text-[18px]">task_alt</span>
-                    Create Task
+                    <span className="material-symbols-outlined text-[16px] text-[#64748b]">add_task</span>
+                    <span>Create Task</span>
                 </button>
                 <button
                     onClick={() => router.push('/teams')}
-                    className="py-2 px-4 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#4f46e5] rounded-lg text-[14px] leading-5 font-medium transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                    className="h-9 px-3.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#334155] hover:text-[#4F46E5] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 >
-                    <span className="material-symbols-outlined text-[18px]">person_add</span>
-                    Invite Member
+                    <span className="material-symbols-outlined text-[16px] text-[#64748b]">person_add</span>
+                    <span>Invite Member</span>
                 </button>
             </div>
         </section>

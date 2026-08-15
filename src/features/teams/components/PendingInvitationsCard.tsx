@@ -40,20 +40,20 @@ export function PendingInvitationsCard({
     if (!invites || invites.length === 0) return null;
 
     return (
-        <section className="bg-white rounded-3xl shadow-xs border border-[#E2E8F0] overflow-hidden mb-6">
+        <div className="bg-white rounded-2xl shadow-2xs border border-[#E2E8F0] overflow-hidden">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex justify-between items-center p-6 cursor-pointer hover:bg-[#fcf8ff] transition-colors text-left"
+                className="w-full flex justify-between items-center p-4 cursor-pointer hover:bg-[#F8FAFC]/70 transition-colors text-left"
             >
                 <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#464555]">pending_actions</span>
-                    <h3 className="text-[20px] leading-7 font-semibold text-[#1b1b24]">Pending Invitations</h3>
-                    <span className="bg-[#e4e1ee] text-[#464555] text-[11px] font-semibold px-2 py-0.5 rounded-full ml-1">
+                    <span className="material-symbols-outlined text-[#4F46E5] text-[20px]">pending_actions</span>
+                    <h3 className="text-sm font-bold text-[#0f172a]">Pending Invitations</h3>
+                    <span className="bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60 text-[11px] font-bold px-2 py-0.5 rounded-full ml-1">
                         {invites.length}
                     </span>
                 </div>
                 <span
-                    className={`material-symbols-outlined text-[#464555] transition-transform duration-300 ${
+                    className={`material-symbols-outlined text-[#94a3b8] transition-transform duration-300 ${
                         isOpen ? 'rotate-180' : ''
                     }`}
                 >
@@ -65,35 +65,35 @@ export function PendingInvitationsCard({
                 <div className="border-t border-[#E2E8F0] overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-[#E2E8F0] bg-[#f5f2ff]/40">
-                                <th className="py-3 px-6 text-[12px] font-semibold text-[#464555]">Email</th>
-                                <th className="py-3 px-6 text-[12px] font-semibold text-[#464555]">Invited By</th>
-                                <th className="py-3 px-6 text-[12px] font-semibold text-[#464555]">Role</th>
-                                <th className="py-3 px-6 text-[12px] font-semibold text-[#464555]">Sent Date</th>
-                                <th className="py-3 px-6 text-[12px] font-semibold text-[#464555] text-right">Actions</th>
+                            <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
+                                <th className="py-2.5 px-6 text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Email</th>
+                                <th className="py-2.5 px-6 text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Invited By</th>
+                                <th className="py-2.5 px-6 text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Role</th>
+                                <th className="py-2.5 px-6 text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Sent Date</th>
+                                <th className="py-2.5 px-6 text-[11px] font-semibold text-[#64748b] uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="text-sm text-[#1b1b24]">
+                        <tbody className="text-xs text-[#0f172a] divide-y divide-[#E2E8F0]">
                             {invites.map((invite) => (
-                                <tr key={invite.id} className="border-b border-[#E2E8F0] last:border-0 hover:bg-[#fcf8ff] transition-colors">
-                                    <td className="py-4 px-6 font-medium">{invite.email}</td>
-                                    <td className="py-4 px-6 text-[#464555]">{invite.invitedBy}</td>
-                                    <td className="py-4 px-6">
-                                        <span className={`px-2.5 py-1 rounded-full text-[12px] font-semibold ${getRoleBadge(invite.role)}`}>
+                                <tr key={invite.id} className="hover:bg-[#F8FAFC]/70 transition-colors">
+                                    <td className="py-3.5 px-6 font-semibold">{invite.email}</td>
+                                    <td className="py-3.5 px-6 text-[#64748b]">{invite.invitedBy}</td>
+                                    <td className="py-3.5 px-6">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getRoleBadge(invite.role)}`}>
                                             {invite.role}
                                         </span>
                                     </td>
-                                    <td className="py-4 px-6 text-[#464555]">{invite.sentDate}</td>
-                                    <td className="py-4 px-6 text-right whitespace-nowrap">
+                                    <td className="py-3.5 px-6 text-[#64748b]">{invite.sentDate}</td>
+                                    <td className="py-3.5 px-6 text-right whitespace-nowrap">
                                         <button
                                             onClick={() => onResend?.(invite.id)}
-                                            className="text-[#3525cd] hover:text-[#4f46e5] font-semibold text-[12px] mr-4 cursor-pointer"
+                                            className="text-[#4F46E5] hover:text-[#4338CA] font-semibold text-xs mr-4 cursor-pointer"
                                         >
                                             Resend
                                         </button>
                                         <button
                                             onClick={() => onCancel?.(invite.id)}
-                                            className="text-[#ba1a1a] hover:text-[#93000a] font-semibold text-[12px] cursor-pointer"
+                                            className="text-rose-600 hover:text-rose-700 font-semibold text-xs cursor-pointer"
                                         >
                                             Cancel
                                         </button>
@@ -104,6 +104,6 @@ export function PendingInvitationsCard({
                     </table>
                 </div>
             )}
-        </section>
+        </div>
     );
 }

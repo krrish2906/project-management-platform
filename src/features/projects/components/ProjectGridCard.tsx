@@ -29,111 +29,132 @@ export function ProjectGridCard({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const totalTasks = project.totalTasksCount ?? project._count?.tasks ?? (project.tasks ? project.tasks.length : 0);
+    const completedTasks = project.completedTasksCount ?? (project.tasks ? project.tasks.filter(t => t.status === 'DONE').length : 0);
+    const progressPercent = typeof project.progress === 'number'
+        ? project.progress
+        : totalTasks > 0
+        ? Math.round((completedTasks / totalTasks) * 100)
+        : 0;
+
+    const hasEndDate = Boolean(project.endDate);
+    const hasStartDate = Boolean(project.startDate);
+    const formattedDate = hasEndDate && hasStartDate
+        ? `${new Date(project.startDate!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(project.endDate!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        : hasEndDate
+        ? `Due ${new Date(project.endDate!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        : `Created ${new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
     const statusBadgeStyle =
         project.status === 'ACTIVE'
-            ? 'bg-[#4f46e5]/10 text-[#4f46e5]'
-            : project.status === 'ARCHIVED'
-            ? 'bg-[#e4e1ee] text-[#464555]'
-            : 'bg-emerald-100 text-emerald-700';
+            ? 'bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60'
+            : 'bg-emerald-50 text-emerald-700 border border-emerald-200';
 
     return (
         <div
             onClick={() => router.push(`/projects/${project.id}`)}
-            className="bg-white rounded-[20px] border border-[#e4e1ee] p-6 shadow-level-1 relative group hover:shadow-level-2 transition-all cursor-pointer"
+            className="bg-white rounded-2xl border border-[#E2E8F0] p-5 shadow-2xs relative group hover:shadow-md hover:border-[#CBD5E1] transition-all cursor-pointer flex flex-col justify-between"
         >
-            {/* Top Right Controls */}
-            <div className="absolute top-6 right-6 flex items-center gap-1 z-10">
-                <button
-                    onClick={(e) => onToggleStar(project.id, e)}
-                    className="p-1 text-gray-400 hover:text-amber-400 transition-colors cursor-pointer"
-                >
-                    <span
-                        className="material-symbols-outlined text-[22px]"
-                        style={project.isStarred ? { fontVariationSettings: "'FILL' 1", color: '#F59E0B' } : {}}
-                    >
-                        star
-                    </span>
-                </button>
-
-                {/* More Dropdown */}
-                <div className="relative" ref={menuRef}>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsMenuOpen(!isMenuOpen);
-                        }}
-                        className="text-[#777587] hover:text-[#1b1b24] p-1 rounded-md hover:bg-[#eae6f4] transition-colors cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">more_horiz</span>
-                    </button>
-
-                    {isMenuOpen && (
-                        <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-level-2 border border-[#e4e1ee] py-1 z-20">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsMenuOpen(false);
-                                    onDeleteProject(project.id);
-                                }}
-                                className="w-full text-left px-4 py-2 text-xs font-semibold text-[#ba1a1a] hover:bg-[#ffdad6]/30 flex items-center gap-2 cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-[16px]">delete</span>
-                                Delete Project
-                            </button>
+            <div>
+                {/* Top Header: Icon & Controls */}
+                <div className="flex items-start justify-between gap-3 mb-3.5">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 font-bold text-sm shadow-2xs"
+                            style={{ backgroundColor: project.color || '#4F46E5' }}
+                        >
+                            <span className="material-symbols-outlined text-[20px]">
+                                {project.icon || 'folder'}
+                            </span>
                         </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Header Icon & Title */}
-            <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-[#4f46e5]/10 flex items-center justify-center text-[#4f46e5] shrink-0 font-bold text-lg">
-                    <span className="material-symbols-outlined text-[24px]">folder</span>
-                </div>
-                <div className="pr-12">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-[11px] font-mono font-bold text-[#777587] uppercase tracking-wider">
-                            {project.key}
-                        </span>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${statusBadgeStyle}`}>
-                            {project.status}
-                        </span>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className="text-[10px] font-mono font-bold text-[#64748b] uppercase tracking-wider">
+                                    {project.key}
+                                </span>
+                                <span className={`inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${statusBadgeStyle}`}>
+                                    {project.status}
+                                </span>
+                            </div>
+                            <h3 className="text-base font-bold text-[#0f172a] truncate" title={project.name}>
+                                {project.name}
+                            </h3>
+                        </div>
                     </div>
-                    <h3 className="text-[18px] leading-6 font-bold text-[#1b1b24] truncate">
-                        {project.name}
-                    </h3>
+
+                    {/* Star & Actions */}
+                    <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={(e) => onToggleStar(project.id, e)}
+                            className="p-1 text-gray-300 hover:text-amber-400 transition-colors cursor-pointer"
+                        >
+                            <span
+                                className="material-symbols-outlined text-[20px]"
+                                style={project.isStarred ? { fontVariationSettings: "'FILL' 1", color: '#F59E0B' } : {}}
+                            >
+                                star
+                            </span>
+                        </button>
+
+                        <div className="relative" ref={menuRef}>
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="text-[#94a3b8] hover:text-[#0f172a] p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+                            </button>
+
+                            {isMenuOpen && (
+                                <div className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-xl border border-[#E2E8F0] py-1 z-20 animate-in fade-in zoom-in-95 duration-150">
+                                    <button
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            onDeleteProject(project.id);
+                                        }}
+                                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
+                                    >
+                                        <span className="material-symbols-outlined text-[15px]">delete</span>
+                                        Delete Project
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Description */}
+                <p className="text-xs text-[#64748b] line-clamp-2 min-h-8 mb-4">
+                    {project.description || 'No description provided for this project.'}
+                </p>
+
+                {/* Progress Bar */}
+                <div className="mb-4">
+                    <div className="flex justify-between text-xs font-medium mb-1.5">
+                        <span className="text-[#64748b]">Progress</span>
+                        <span className="text-[#0f172a] font-semibold">{progressPercent}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-linear-to-r from-[#4F46E5] to-[#7C3AED] rounded-full transition-all duration-300"
+                            style={{ width: `${progressPercent}%` }}
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Description */}
-            <p className="text-[13px] text-[#464555] mb-6 line-clamp-2 min-h-10">
-                {project.description || 'No description provided for this project.'}
-            </p>
-
-            {/* Progress Bar */}
-            <div className="mb-6">
-                <div className="flex justify-between text-[12px] font-medium mb-1.5">
-                    <span className="text-[#464555]">Progress</span>
-                    <span className="text-[#1b1b24] font-semibold">68%</span>
-                </div>
-                <div className="h-2 w-full bg-[#e4e1ee] rounded-full overflow-hidden">
-                    <div className="h-full bg-[#4f46e5] rounded-full w-[68%]"></div>
-                </div>
-            </div>
-
-            {/* Footer / Members & Info */}
-            <div className="flex items-center justify-between pt-4 border-t border-[#e4e1ee]">
+            {/* Footer: Members & Info */}
+            <div className="flex items-center justify-between pt-3 border-t border-[#E2E8F0]">
                 {/* Member Avatars */}
-                <div className="flex -space-x-2">
+                <div className="flex -space-x-1.5">
                     {project.members && project.members.slice(0, 3).map((member, idx) => {
                         const memberUser = typeof member.user === 'object' ? member.user : null;
                         const initials = memberUser?.name
-                            ? memberUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                            ? memberUser.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
                             : 'M';
                         return (
                             <div
                                 key={idx}
-                                className="w-8 h-8 rounded-full bg-[#3525cd] text-white border-2 border-white flex items-center justify-center text-[10px] font-bold overflow-hidden shadow-xs"
+                                className="w-7 h-7 rounded-full bg-[#4F46E5] text-white border-2 border-white flex items-center justify-center text-[9px] font-bold overflow-hidden shadow-2xs"
                                 title={memberUser?.name || 'Team member'}
                             >
                                 {memberUser?.avatar ? (
@@ -145,21 +166,21 @@ export function ProjectGridCard({
                         );
                     })}
                     {project.members && project.members.length > 3 && (
-                        <div className="w-8 h-8 rounded-full bg-[#e4e1ee] text-[#464555] border-2 border-white flex items-center justify-center text-[10px] font-semibold">
+                        <div className="w-7 h-7 rounded-full bg-[#F1F5F9] text-[#64748b] border-2 border-white flex items-center justify-center text-[9px] font-semibold">
                             +{project.members.length - 3}
                         </div>
                     )}
                 </div>
 
-                {/* Metadata Icons */}
-                <div className="flex items-center gap-4 text-[12px] font-medium text-[#777587]">
+                {/* Metadata */}
+                <div className="flex items-center gap-3 text-xs font-medium text-[#64748b]">
                     <div className="flex items-center gap-1" title="Tasks">
-                        <span className="material-symbols-outlined text-[16px]">check_box</span>
-                        12
+                        <span className="material-symbols-outlined text-[15px]">check_box</span>
+                        <span>{totalTasks}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-[#ba1a1a]" title="Due Date">
-                        <span className="material-symbols-outlined text-[16px]">event</span>
-                        {project.endDate ? new Date(project.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Oct 15'}
+                    <div className="flex items-center gap-1 text-[#475569]" title="Date">
+                        <span className="material-symbols-outlined text-[15px]">event</span>
+                        <span className="text-[11px]">{formattedDate}</span>
                     </div>
                 </div>
             </div>

@@ -37,6 +37,9 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
     const [name, setName] = useState('');
     const [key, setKey] = useState('');
     const [description, setDescription] = useState('');
+    const todayStr = new Date().toISOString().split('T')[0];
+    const [startDate, setStartDate] = useState(todayStr);
+    const [endDate, setEndDate] = useState('');
     const [selectedColor, setSelectedColor] = useState(HEX_COLORS[0].hex);
     const [selectedIcon, setSelectedIcon] = useState(ICONS[0].name);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,6 +68,11 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         setError('');
         if (!name.trim()) return;
 
+        if (endDate && startDate && new Date(endDate) < new Date(startDate)) {
+            setError('End date must be on or after start date');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -77,6 +85,8 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                 description: description.trim() || undefined,
                 color: selectedColor,
                 icon: selectedIcon,
+                startDate: startDate || todayStr,
+                endDate: endDate || null,
             }, {
                 headers: activeWorkspaceId ? { 'x-workspace-id': activeWorkspaceId } : undefined,
             });
@@ -98,6 +108,8 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
             setName('');
             setKey('');
             setDescription('');
+            setStartDate(todayStr);
+            setEndDate('');
             onClose();
         } catch (err: any) {
             const msg = err.response?.data?.message || err.message;
@@ -171,12 +183,42 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                     <div>
                         <label className="block text-xs font-bold text-[#1b1b24] mb-1.5">Description (Optional)</label>
                         <textarea
-                            rows={3}
+                            rows={2}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Brief description of the project goals..."
                             className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#E2E8F0] rounded-xl text-xs text-[#1b1b24] focus:border-[#4F46E5] outline-none resize-none"
                         />
+                    </div>
+
+                    {/* Project Dates */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-[#1b1b24] mb-1.5">Start Date *</label>
+                            <input
+                                type="date"
+                                required
+                                min={todayStr}
+                                value={startDate}
+                                onChange={(e) => {
+                                    setStartDate(e.target.value);
+                                    if (endDate && new Date(endDate) < new Date(e.target.value)) {
+                                        setEndDate('');
+                                    }
+                                }}
+                                className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#E2E8F0] rounded-xl text-xs text-[#1b1b24] focus:border-[#4F46E5] outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-[#1b1b24] mb-1.5">Target End Date (Optional)</label>
+                            <input
+                                type="date"
+                                min={startDate || todayStr}
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#E2E8F0] rounded-xl text-xs text-[#1b1b24] focus:border-[#4F46E5] outline-none"
+                            />
+                        </div>
                     </div>
 
                     {/* Color Theme Selector */}
