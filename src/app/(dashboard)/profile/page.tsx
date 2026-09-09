@@ -36,7 +36,7 @@ export default function ProfilePage() {
                 <Header user={user} />
 
                 {/* Scrollable Canvas */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-white">
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#F8FAFC]">
                     <div className="max-w-7xl mx-auto space-y-6 pb-24">
                         
                         {/* Page Header */}
@@ -55,8 +55,8 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        {/* Full-width Active Sessions Section */}
-                        <ActiveSessionsCard />
+                        {/* Current Device & Live Session Security */}
+                        <ActiveSessionsCard user={user} />
 
                     </div>
                 </div>

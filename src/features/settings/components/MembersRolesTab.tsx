@@ -126,10 +126,10 @@ export function MembersRolesTab({ currentUser, onInviteMember, onMemberCountChan
                 </div>
                 <button
                     onClick={onInviteMember}
-                    className="px-4 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                    className="px-4 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                    <span className="material-symbols-outlined text-[17px]">person_add</span>
-                    <span>+ Invite Member</span>
+                    <span className="material-symbols-outlined text-[16px]">person_add</span>
+                    <span>Invite Member</span>
                 </button>
             </div>
 

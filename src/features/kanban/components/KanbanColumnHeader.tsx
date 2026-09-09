@@ -5,9 +5,8 @@ import React from 'react';
 interface KanbanColumnHeaderProps {
     title: string;
     count: number;
-    color: 'blue' | 'orange' | 'purple' | 'green' | 'red';
+    color: 'blue' | 'orange' | 'purple' | 'green';
     onAddClick?: () => void;
-    onMoreOptions?: () => void;
 }
 
 export function KanbanColumnHeader({
@@ -15,50 +14,33 @@ export function KanbanColumnHeader({
     count,
     color,
     onAddClick,
-    onMoreOptions,
 }: KanbanColumnHeaderProps) {
-    const dotColorMap = {
+    const dotColorMap: Record<string, string> = {
         blue: 'bg-blue-500',
-        orange: 'bg-orange-500',
+        orange: 'bg-amber-500',
         purple: 'bg-purple-500',
         green: 'bg-emerald-500',
-        red: 'bg-rose-500',
-    };
-
-    const topBorderMap = {
-        blue: 'border-t-blue-500',
-        orange: 'border-t-orange-500',
-        purple: 'border-t-purple-500',
-        green: 'border-t-emerald-500',
-        red: 'border-t-rose-500',
     };
 
     return (
-        <div className={`px-4 py-3 border-b border-slate-300 border-t-4 ${topBorderMap[color] || 'border-t-blue-500'} flex items-center justify-between bg-white/80 backdrop-blur-xs z-10 shrink-0`}>
+        <div className="px-3.5 py-3 flex items-center justify-between border-b border-[#CBD5E1]/80 bg-white rounded-t-2xl z-10 shrink-0">
             <div className="flex items-center gap-2">
-                <div className={`w-2.5 h-2.5 rounded-full ${dotColorMap[color] || 'bg-blue-500'}`} />
-                <h2 className="text-sm font-bold text-[#1b1b24]">{title}</h2>
-                <span className="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-[11px] font-extrabold text-[#464555] shadow-xs">
+                <span className={`w-2 h-2 rounded-full ${dotColorMap[color] || 'bg-blue-500'}`} />
+                <h2 className="text-xs font-bold text-[#0f172a]">{title}</h2>
+                <span className="px-2 py-0.5 rounded-full bg-[#F8FAFC] border border-[#CBD5E1]/70 text-[10px] font-bold text-[#64748b]">
                     {count}
                 </span>
             </div>
 
-            <div className="flex items-center gap-1">
+            {onAddClick && (
                 <button
                     onClick={onAddClick}
-                    className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-black/5 text-[#777587] hover:text-[#1b1b24] transition-colors cursor-pointer"
-                    title="Add task to column"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[#F1F5F9] text-[#64748b] hover:text-[#0f172a] transition-colors cursor-pointer"
+                    title={`Add task to ${title}`}
                 >
                     <span className="material-symbols-outlined text-[16px]">add</span>
                 </button>
-                <button
-                    onClick={onMoreOptions}
-                    className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-black/5 text-[#777587] hover:text-[#1b1b24] transition-colors cursor-pointer"
-                    title="Column options"
-                >
-                    <span className="material-symbols-outlined text-[16px]">more_horiz</span>
-                </button>
-            </div>
+            )}
         </div>
     );
 }

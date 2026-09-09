@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -25,11 +24,8 @@ export default function ProjectCalendarPage() {
     const { projects, fetchProjects } = useProjectStore();
 
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [searchQuery, setSearchQuery] = useState('');
-    const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
     const [extraEvents, setExtraEvents] = useState<CalendarEventItem[]>([]);
 
     useEffect(() => {
@@ -41,26 +37,35 @@ export default function ProjectCalendarPage() {
 
     const project = projects.find((p: any) => (p._id === projectId || p.id === projectId));
 
-    // Combine real tasks with due dates into calendar events
-    const realTaskEvents: CalendarEventItem[] = tasks
-        .filter((t: any) => {
-            const tProjId = t.project ? (typeof t.project === 'object' ? t.project?._id || t.project?.id : t.project) : t.projectId;
-            return (tProjId === projectId || t.projectId === projectId) && t.dueDate;
-        })
-        .map((t: any) => {
-            const d = new Date(t.dueDate!);
-            return {
-                id: t.id || t._id || Math.random().toString(),
-                title: t.title,
-                date: d.getDate(),
-                type: 'task',
-                color: t.priority === 'HIGH' || t.priority === 'URGENT' ? 'amber' : t.status === 'DONE' ? 'green' : 'blue',
-            };
-        });
+    // Combine real tasks with due dates into calendar events matching the current viewing month
+    const realTaskEvents = useMemo(() => {
+        const curMonth = currentDate.getMonth();
+        const curYear = currentDate.getFullYear();
 
-    const allEvents = [...realTaskEvents, ...extraEvents].filter((e) =>
-        e.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+        return tasks
+            .filter((t: any) => {
+                const tProjId = t.project ? (typeof t.project === 'object' ? t.project?._id || t.project?.id : t.project) : t.projectId;
+                if ((tProjId !== projectId && t.projectId !== projectId) || !t.dueDate) return false;
+
+                const d = new Date(t.dueDate);
+                return d.getMonth() === curMonth && d.getFullYear() === curYear;
+            })
+            .map((t: any) => {
+                const d = new Date(t.dueDate!);
+                const isHigh = t.priority === 'HIGH' || t.priority === 'URGENT' || (t as any).priority === 'CRITICAL';
+                const isDone = t.status === 'DONE' || t.status === 'completed';
+
+                return {
+                    id: t.id || t._id || Math.random().toString(),
+                    title: t.title,
+                    date: d.getDate(),
+                    type: 'task' as const,
+                    color: (isDone ? 'green' : isHigh ? 'rose' : t.priority === 'MEDIUM' ? 'amber' : 'blue') as CalendarEventItem['color'],
+                };
+            });
+    }, [tasks, projectId, currentDate]);
+
+    const allEvents = [...realTaskEvents, ...extraEvents];
 
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -78,7 +83,7 @@ export default function ProjectCalendarPage() {
         const colorMap = {
             task: 'blue',
             meeting: 'purple',
-            milestone: 'amber',
+            milestone: 'purple',
             release: 'green',
         } as const;
 
@@ -92,7 +97,7 @@ export default function ProjectCalendarPage() {
         setExtraEvents((prev) => [...prev, newEv]);
     };
 
-    if (authLoading || tasksLoading) {
+    if (authLoading || (tasksLoading && tasks.length === 0)) {
         return (
             <div className="flex h-screen bg-[#F8FAFC] items-center justify-center">
                 <Spinner />
@@ -101,36 +106,19 @@ export default function ProjectCalendarPage() {
     }
 
     return (
-        <div className="h-screen w-screen bg-[#F8FAFC] flex flex-col text-[#1b1b24] overflow-hidden relative">
-            {/* Standard Single Header */}
+        <div className="h-screen w-screen bg-[#F8FAFC] flex flex-col text-[#0f172a] overflow-hidden relative">
+            {/* Standard Single Global Header */}
             <Header user={user} />
 
             {/* Main Single-Screen Canvas */}
-            <main className="flex-1 min-h-0 flex flex-col p-4 md:px-6 md:pb-6 md:pt-3 bg-[#F8FAFC] overflow-hidden">
+            <main className="flex-1 min-h-0 flex flex-col p-4 md:p-6 bg-[#F8FAFC] overflow-hidden">
                 <div className="max-w-7xl mx-auto w-full h-full flex flex-col min-h-0 overflow-hidden">
                     
-                    {/* Breadcrumbs */}
-                    <nav className="flex items-center gap-2 text-xs text-[#464555] mb-2 shrink-0">
-                        <Link href="/projects" className="hover:text-[#3525cd] transition-colors">
-                            Workspace
-                        </Link>
-                        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                        <Link href="/projects" className="hover:text-[#3525cd] transition-colors">
-                            Projects
-                        </Link>
-                        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                        <Link href={`/projects/${projectId}`} className="hover:text-[#3525cd] transition-colors font-medium">
-                            {project?.name || 'Project'}
-                        </Link>
-                        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                        <span className="text-[#1b1b24] font-semibold">Calendar</span>
-                    </nav>
-
-                    {/* Toolbar Controls */}
+                    {/* Natural Breadcrumbs and Date Navigator */}
                     <CalendarToolbar
+                        projectName={project?.name || 'Project'}
+                        projectId={projectId}
                         monthYearTitle={monthYearTitle}
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
                         onToday={handleToday}
                         onPrevMonth={handlePrevMonth}
                         onNextMonth={handleNextMonth}
@@ -142,7 +130,11 @@ export default function ProjectCalendarPage() {
                         currentYear={currentDate.getFullYear()}
                         currentMonth={currentDate.getMonth()}
                         events={allEvents}
-                        onTaskClick={(id) => setSelectedTaskId(id)}
+                        onTaskClick={(id) => {
+                            if (/^[0-9a-fA-F]{24}$/.test(id) || id.length > 15) {
+                                setSelectedTaskId(id);
+                            }
+                        }}
                     />
 
                 </div>

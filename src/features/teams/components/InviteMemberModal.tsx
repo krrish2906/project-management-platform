@@ -5,13 +5,12 @@ import React, { useState } from 'react';
 interface InviteMemberModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onInvite: (email: string, role: string, department: string) => Promise<void> | void;
+    onInvite: (email: string, role: string) => Promise<void> | void;
 }
 
 export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberModalProps) {
     const [email, setEmail] = useState('');
     const [role, setRole] = useState('MEMBER');
-    const [department, setDepartment] = useState('Engineering');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (!isOpen) return null;
@@ -22,7 +21,7 @@ export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberMod
 
         setIsSubmitting(true);
         try {
-            await onInvite(email.trim(), role, department);
+            await onInvite(email.trim(), role);
             setEmail('');
             onClose();
         } finally {
@@ -32,65 +31,50 @@ export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberMod
 
     return (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-[#E2E8F0] animate-in fade-in zoom-in duration-200">
-                <div className="flex justify-between items-center mb-6">
+            <div className="bg-white rounded-2xl p-6 md:p-7 max-w-md w-full shadow-2xl border border-[#E2E8F0] animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#4f46e5]">person_add</span>
-                        <h3 className="text-[20px] font-bold text-[#1b1b24]">Invite Team Member</h3>
+                        <span className="material-symbols-outlined text-[#4F46E5] text-[22px]">person_add</span>
+                        <h3 className="text-base font-bold text-[#0f172a]">Invite Team Member</h3>
                     </div>
-                    <button onClick={onClose} className="text-[#777587] hover:text-[#1b1b24] cursor-pointer">
-                        <span className="material-symbols-outlined">close</span>
+                    <button onClick={onClose} className="text-[#94a3b8] hover:text-[#0f172a] p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer">
+                        <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-semibold text-[#1b1b24] mb-1.5">Email Address</label>
+                        <label className="block text-xs font-semibold text-[#0f172a] mb-1.5">Email Address</label>
                         <input
                             type="email"
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="colleague@company.com"
-                            className="w-full px-3.5 py-2.5 bg-[#fcf8ff] border border-[#c7c4d8] rounded-xl text-sm text-[#1b1b24] focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] outline-none"
+                            className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-xl text-xs text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#4F46E5] outline-none shadow-2xs transition-all"
                             disabled={isSubmitting}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-[#1b1b24] mb-1.5">Workspace Role</label>
+                        <label className="block text-xs font-semibold text-[#0f172a] mb-1.5">Workspace Role</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-white border border-[#c7c4d8] rounded-xl text-sm text-[#1b1b24] focus:border-[#4f46e5] outline-none cursor-pointer"
+                            className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#0f172a] focus:border-[#4F46E5] outline-none shadow-2xs cursor-pointer"
                             disabled={isSubmitting}
                         >
-                            <option value="MEMBER">Member</option>
-                            <option value="ADMIN">Admin</option>
-                            <option value="GUEST">Guest</option>
+                            <option value="MEMBER">Member (Standard access)</option>
+                            <option value="ADMIN">Admin (Manage members & projects)</option>
+                            <option value="GUEST">Guest (Restricted view access)</option>
                         </select>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-[#1b1b24] mb-1.5">Department</label>
-                        <select
-                            value={department}
-                            onChange={(e) => setDepartment(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-white border border-[#c7c4d8] rounded-xl text-sm text-[#1b1b24] focus:border-[#4f46e5] outline-none cursor-pointer"
-                            disabled={isSubmitting}
-                        >
-                            <option value="Engineering">Engineering</option>
-                            <option value="Design">Design</option>
-                            <option value="Product">Product</option>
-                            <option value="Executive">Executive</option>
-                        </select>
-                    </div>
-
-                    <div className="pt-4 flex justify-end gap-3">
+                    <div className="pt-3 flex justify-end gap-2.5 border-t border-[#E2E8F0]">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 bg-white border border-[#c7c4d8] text-[#464555] rounded-xl text-sm font-semibold hover:bg-[#f5f2ff] cursor-pointer"
+                            className="px-4 py-2 bg-white border border-[#E2E8F0] text-[#0f172a] rounded-xl text-xs font-semibold hover:bg-[#F8FAFC] shadow-2xs cursor-pointer transition-colors"
                             disabled={isSubmitting}
                         >
                             Cancel
@@ -98,9 +82,10 @@ export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberMod
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-5 py-2 bg-[#4f46e5] text-white rounded-xl text-sm font-semibold hover:bg-[#3730a3] shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                            className="px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-semibold shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5 transition-colors"
                         >
-                            {isSubmitting ? 'Sending Invite Email...' : 'Send Invitation'}
+                            <span className="material-symbols-outlined text-[15px]">send</span>
+                            <span>{isSubmitting ? 'Sending...' : 'Send Invitation'}</span>
                         </button>
                     </div>
                 </form>

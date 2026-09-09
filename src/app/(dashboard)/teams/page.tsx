@@ -25,8 +25,43 @@ type User = {
     email: string;
     avatar?: string | null;
     role?: string;
-    department?: string;
+    lastLoginAt?: string | null;
+    joinedAt?: string | null;
 };
+
+function formatLastActive(isOnline: boolean, lastLoginAt?: string | null, joinedAt?: string | null): string {
+    if (isOnline) return 'Just now';
+
+    if (lastLoginAt) {
+        const d = new Date(lastLoginAt);
+        if (!isNaN(d.getTime())) {
+            const now = new Date();
+            const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000);
+            if (diffSec < 60) return 'Just now';
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return `${diffMin}m ago`;
+            const diffHours = Math.floor(diffMin / 60);
+            if (diffHours < 24) return `${diffHours}h ago`;
+            const diffDays = Math.floor(diffHours / 24);
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return d.toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+            });
+        }
+    }
+
+    if (joinedAt) {
+        const j = new Date(joinedAt);
+        if (!isNaN(j.getTime())) {
+            return `Joined ${j.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        }
+    }
+
+    return 'Recently';
+}
 
 export default function TeamPage() {
     const { user, isLoading: authLoading } = useAuth(true);
@@ -37,7 +72,6 @@ export default function TeamPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
-    const [deptFilter, setDeptFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -65,7 +99,7 @@ export default function TeamPage() {
                 // Fetch real workspace members
                 const resMembers = await axios.get(`/api/workspaces/${activeWs.id}/members`);
                 if (resMembers.data?.success && Array.isArray(resMembers.data?.data?.members)) {
-                    const formatted: TeamMemberData[] = resMembers.data.data.members.map((u: User, idx: number) => {
+                    const formatted: TeamMemberData[] = resMembers.data.data.members.map((u: User) => {
                         const userId = u.id || u._id || '';
                         const initials = u.name
                             ? u.name
@@ -78,10 +112,7 @@ export default function TeamPage() {
                             : 'U';
 
                         const isUserOnline = globalActiveUsers.includes(userId);
-                        const rolesAllowed: TeamMemberData['role'][] = ['Owner', 'Admin', 'Manager', 'Developer', 'Designer'];
-                        const assignedRole: TeamMemberData['role'] = rolesAllowed.includes(u.role as any)
-                            ? (u.role as any)
-                            : (idx === 0 ? 'Owner' : 'Developer');
+                        const assignedRole = (u.role || 'MEMBER').toUpperCase();
 
                         return {
                             id: userId,
@@ -90,10 +121,8 @@ export default function TeamPage() {
                             avatar: u.avatar || null,
                             initials,
                             role: assignedRole,
-                            department: u.department || 'Engineering',
-                            projectsCount: 3,
                             status: isUserOnline ? 'online' : 'offline',
-                            lastActive: isUserOnline ? 'Just now' : 'Active today',
+                            lastActive: formatLastActive(isUserOnline, u.lastLoginAt, u.joinedAt),
                         };
                     });
                     setTeamMembers(formatted);
@@ -114,15 +143,14 @@ export default function TeamPage() {
         fetchMembersAndInvites();
     }, [activeWs, user, globalActiveUsers]);
 
-    // Filtering logic
+    // Filtering logic without Department
     const filteredMembers = teamMembers.filter((m) => {
         const matchesSearch =
             m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             m.email.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesRole = roleFilter === 'all' || m.role.toLowerCase() === roleFilter.toLowerCase();
-        const matchesDept = deptFilter === 'all' || m.department.toLowerCase() === deptFilter.toLowerCase();
         const matchesStatus = statusFilter === 'all' || m.status === statusFilter;
-        return matchesSearch && matchesRole && matchesDept && matchesStatus;
+        return matchesSearch && matchesRole && matchesStatus;
     });
 
     const handleCancelInvite = async (inviteId: string) => {
@@ -143,7 +171,6 @@ export default function TeamPage() {
             await axios.post(`/api/workspaces/${activeWs.id}/invites`, {
                 email: inv.email,
                 role: inv.role,
-                department: inv.department || 'Engineering',
             });
             toast.success(`Invitation resent to ${inv.email}`);
         } catch (err: any) {
@@ -151,13 +178,12 @@ export default function TeamPage() {
         }
     };
 
-    const handleSendInvite = async (email: string, role: string, department: string) => {
+    const handleSendInvite = async (email: string, role: string) => {
         if (!activeWs?.id) return;
         try {
             const res = await axios.post(`/api/workspaces/${activeWs.id}/invites`, {
                 email,
                 role,
-                department,
             });
             if (res.data?.success) {
                 toast.success(`Invitation email sent to ${email}`);
@@ -205,7 +231,7 @@ export default function TeamPage() {
                         {/* Summary Bento Grid */}
                         <WorkspaceSummaryBento
                             totalMembers={teamMembers.length}
-                            adminsCount={teamMembers.filter((m) => m.role.toLowerCase().includes('owner') || m.role.toLowerCase().includes('admin')).length}
+                            adminsCount={teamMembers.filter((m) => m.role.toUpperCase().includes('OWNER') || m.role.toUpperCase().includes('ADMIN')).length}
                             onlineCount={globalActiveUsers.length}
                             pendingInvitesCount={invites.length}
                         />
@@ -223,8 +249,6 @@ export default function TeamPage() {
                             onSearchChange={setSearchQuery}
                             roleFilter={roleFilter}
                             onRoleFilterChange={setRoleFilter}
-                            deptFilter={deptFilter}
-                            onDeptFilterChange={setDeptFilter}
                             statusFilter={statusFilter}
                             onStatusFilterChange={setStatusFilter}
                             viewMode={viewMode}

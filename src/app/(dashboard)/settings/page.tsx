@@ -24,13 +24,12 @@ export default function SettingsPage() {
     const [isCreateWorkspaceModalOpen, setIsCreateWorkspaceModalOpen] = useState(false);
     const [membersCount, setMembersCount] = useState<number | undefined>(undefined);
 
-    const handleInvite = async (email: string, role: string, department: string) => {
+    const handleInvite = async (email: string, role: string) => {
         if (!currentWorkspace?.id) return;
         try {
             const res = await axios.post(`/api/workspaces/${currentWorkspace.id}/invites`, {
                 email,
                 role,
-                department,
             });
             if (res.data?.success) {
                 toast.success(`Invitation sent to ${email}`);

@@ -25,15 +25,16 @@ export function PendingInvitationsCard({
     const [isOpen, setIsOpen] = useState(true);
 
     const getRoleBadge = (role: PendingInvite['role']) => {
-        switch (role) {
-            case 'Developer':
-                return 'bg-blue-500/10 text-blue-600';
-            case 'Designer':
-                return 'bg-purple-500/10 text-purple-600';
-            case 'Manager':
-                return 'bg-emerald-500/10 text-emerald-600';
+        const upper = (role || '').toUpperCase();
+        switch (upper) {
+            case 'OWNER':
+                return 'bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60';
+            case 'ADMIN':
+                return 'bg-amber-50 text-amber-700 border border-amber-200';
+            case 'MEMBER':
+                return 'bg-blue-50 text-blue-700 border border-blue-200';
             default:
-                return 'bg-slate-500/10 text-slate-700';
+                return 'bg-slate-50 text-slate-700 border border-slate-200';
         }
     };
 

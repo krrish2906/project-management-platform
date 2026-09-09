@@ -85,10 +85,10 @@ export function DangerZoneTab({ user, onOpenCreateWorkspace }: DangerZoneTabProp
                                 <button
                                     type="button"
                                     onClick={onOpenCreateWorkspace}
-                                    className="mt-3 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                    className="mt-3 px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                                 >
                                     <span className="material-symbols-outlined text-[16px]">add</span>
-                                    <span>+ Create New Workspace</span>
+                                    <span>Create New Workspace</span>
                                 </button>
                             )}
                         </div>

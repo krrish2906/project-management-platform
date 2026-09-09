@@ -24,12 +24,12 @@ export async function PUT(
         const body = await request.json();
         const { currentPassword, newPassword } = body;
 
-        if (!currentPassword || !newPassword) {
+        if (!newPassword) {
             return NextResponse.json({
                 success: false,
                 data: null,
-                message: 'Please provide current and new password',
-                error: 'Missing fields',
+                message: 'Please provide a new password',
+                error: 'Missing new password',
             }, { status: 400 });
         }
 
@@ -46,7 +46,7 @@ export async function PUT(
             where: { id },
         });
 
-        if (!user || !user.password) {
+        if (!user) {
             return NextResponse.json({
                 success: false,
                 data: null,
@@ -55,14 +55,26 @@ export async function PUT(
             }, { status: 404 });
         }
 
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
-        if (!isMatch) {
-            return NextResponse.json({
-                success: false,
-                data: null,
-                message: 'Incorrect current password',
-                error: 'Incorrect current password',
-            }, { status: 401 });
+        // If user already has a local password, require and verify currentPassword
+        if (user.password) {
+            if (!currentPassword) {
+                return NextResponse.json({
+                    success: false,
+                    data: null,
+                    message: 'Please provide your current password',
+                    error: 'Missing current password',
+                }, { status: 400 });
+            }
+
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return NextResponse.json({
+                    success: false,
+                    data: null,
+                    message: 'Incorrect current password',
+                    error: 'Incorrect current password',
+                }, { status: 401 });
+            }
         }
 
         const salt = await bcrypt.genSalt(10);

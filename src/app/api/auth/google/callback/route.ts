@@ -47,28 +47,36 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        let user = await prisma.user.findUnique({
+        let user: any = await prisma.user.findUnique({
             where: { email: googleUser.email.toLowerCase().trim() },
         });
 
         if (!user) {
-            user = await prisma.user.create({
+            user = await (prisma.user as any).create({
                 data: {
                     name: googleUser.name || 'Google User',
                     email: googleUser.email.toLowerCase().trim(),
                     avatar: googleUser.picture || null,
                     googleId: googleUser.sub || null,
                     authProvider: 'GOOGLE' as any,
+                    lastLoginAt: new Date(),
                 },
             });
-            await createDefaultWorkspace(user.id, user.name);
-        } else {
-            if (!user.avatar && googleUser.picture) {
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: { avatar: googleUser.picture },
-                });
+            if (user) {
+                await createDefaultWorkspace(user.id, user.name);
             }
+        } else {
+            user = await (prisma.user as any).update({
+                where: { id: user.id },
+                data: {
+                    lastLoginAt: new Date(),
+                    ...(user.avatar ? {} : { avatar: googleUser.picture || null }),
+                },
+            });
+        }
+
+        if (!user) {
+            throw new Error('Failed to create or update Google user');
         }
 
         const userWorkspaces = await getUserWorkspaces(user.id);

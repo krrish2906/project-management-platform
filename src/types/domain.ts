@@ -63,6 +63,7 @@ export interface User {
     phoneNumber?: string | null;
     googleId?: string | null;
     authProvider?: AuthProvider | null;
+    lastLoginAt?: Date | string | null;
     isSuperAdmin?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;

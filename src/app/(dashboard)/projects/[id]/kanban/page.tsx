@@ -29,10 +29,7 @@ const statusToColumnMap: Record<string, string> = {
     IN_PROGRESS: 'inprogress',
     IN_REVIEW: 'review',
     DONE: 'completed',
-    todo: 'todo',
-    inprogress: 'inprogress',
-    review: 'review',
-    completed: 'completed',
+    BACKLOG: 'todo',
 };
 
 export default function KanbanPage() {
@@ -46,7 +43,6 @@ export default function KanbanPage() {
     const { socket } = useSocket({ projectId });
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [viewMode, setViewMode] = useState<'board' | 'list' | 'timeline'>('board');
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [targetColumnForNewTask, setTargetColumnForNewTask] = useState('todo');
@@ -62,12 +58,10 @@ export default function KanbanPage() {
     useEffect(() => {
         if (!socket || !projectId) return;
 
-        // Join project socket room
         socket.emit('kanban:join', { projectId });
 
         const handleTaskMoved = (data: { taskId: string; newStatus: string; userId: string }) => {
             if (data.userId === user?.id) return;
-            // Update local Zustand store directly for instant live animation
             useTaskStore.getState().moveTask(data.taskId, data.newStatus);
         };
 
@@ -94,6 +88,7 @@ export default function KanbanPage() {
     }, [socket, user?.id, projectId, fetchTasks]);
 
     const project = projects.find((p: any) => p.id === projectId);
+    const projectKeyPrefix = project?.key || (project?.name ? project.name.slice(0, 3).toUpperCase() : 'PRJ');
 
     const columns: { id: string; title: string; color: 'blue' | 'orange' | 'purple' | 'green' }[] = [
         { id: 'todo', title: 'To Do', color: 'blue' },
@@ -105,20 +100,20 @@ export default function KanbanPage() {
     // Filter store tasks for this project
     const realProjectTasks = tasks.filter((t: any) => (t.projectId || t.project) === projectId);
 
-    const mappedTasks: KanbanTaskData[] = realProjectTasks.map((t: any) => ({
+    const mappedTasks: KanbanTaskData[] = realProjectTasks.map((t: any, idx: number) => ({
         id: t.id,
-        keyNumber: `#${t.number || 'TASK'}`,
+        keyNumber: `${projectKeyPrefix}-${t.number || idx + 1}`,
         title: t.title,
-        priority: t.priority?.toUpperCase() as any || 'MEDIUM',
-        category: 'Task',
+        priority: t.priority?.toUpperCase() || 'MEDIUM',
+        type: t.type?.toUpperCase() || 'TASK',
         status: statusToColumnMap[t.status] || 'todo',
-        assigneeName: typeof t.assignee === 'object' ? (t.assignee as any)?.name : undefined,
-        assigneeAvatar: typeof t.assignee === 'object' ? (t.assignee as any)?.avatar : undefined,
+        assigneeName: typeof t.assignee === 'object' ? t.assignee?.name : undefined,
+        assigneeAvatar: typeof t.assignee === 'object' ? t.assignee?.avatar : undefined,
+        commentsCount: t.comments?.length || (t as any)._count?.comments || 0,
+        attachmentsCount: t.attachments?.length || (t as any)._count?.attachments || 0,
     }));
 
-    const displayTasks = mappedTasks;
-
-    const filteredTasks = displayTasks.filter((t) =>
+    const filteredTasks = mappedTasks.filter((t) =>
         t.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -147,7 +142,7 @@ export default function KanbanPage() {
         title: string;
         description: string;
         priority: string;
-        category: string;
+        type: string;
         status: string;
     }) => {
         const backendStatus = columnToStatusMap[taskData.status] || 'TODO';
@@ -155,6 +150,7 @@ export default function KanbanPage() {
             title: taskData.title,
             description: taskData.description,
             priority: taskData.priority.toUpperCase() as any,
+            type: taskData.type.toUpperCase() as any,
             status: backendStatus,
             project: projectId,
         });
@@ -178,115 +174,84 @@ export default function KanbanPage() {
     }
 
     return (
-        <div className="h-screen w-screen bg-[#F8FAFC] overflow-hidden flex flex-col text-[#1b1b24] relative">
-            {/* Standard Single Header with Go Back Button */}
+        <div className="h-screen w-screen bg-[#F8FAFC] overflow-hidden flex flex-col text-[#0f172a] relative">
+            {/* Standard Global Header */}
             <Header user={user} />
 
-            {/* Sub-header Toolbar */}
-            <KanbanToolbar
-                projectName={project?.name || 'Project Desk'}
-                projectId={projectId}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                onAddIssue={() => {
-                    setTargetColumnForNewTask('todo');
-                    setIsCreateModalOpen(true);
-                }}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-            />
-
             {/* Main Board Canvas */}
-            <main className="flex-1 overflow-hidden relative w-full h-full p-4 lg:p-6 pb-4">
-                <DragDropContext onDragEnd={onDragEnd}>
-                    <div className="flex w-full h-full gap-4 lg:gap-6 overflow-x-auto">
-                        {columns.map((col) => {
-                            const colTasks = filteredTasks.filter((t) => t.status === col.id);
-                            const columnStylesMap: Record<string, string> = {
-                                todo: 'bg-[#EFF6FF]/80 border-[#93C5FD]',       // Darker Blue Border
-                                inprogress: 'bg-[#FFF7ED]/80 border-[#FDBA74]', // Darker Orange Border
-                                review: 'bg-[#F5F3FF]/80 border-[#C4B5FD]',     // Darker Purple Border
-                                completed: 'bg-[#ECFDF5]/80 border-[#6EE7B7]',  // Darker Emerald Border
-                            };
+            <main className="flex-1 overflow-hidden relative w-full h-full p-4 lg:p-6 pb-4 flex flex-col">
+                {/* Natural Breadcrumbs and Toolbar in Page Flow */}
+                <KanbanToolbar
+                    projectName={project?.name || 'Project Board'}
+                    projectId={projectId}
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    onAddTask={() => {
+                        setTargetColumnForNewTask('todo');
+                        setIsCreateModalOpen(true);
+                    }}
+                />
 
-                            return (
-                                <div
-                                    key={col.id}
-                                    className={`flex-1 flex flex-col min-w-70 max-w-[320px] lg:max-w-[25%] ${columnStylesMap[col.id] || 'bg-slate-100 border-slate-300'} rounded-2xl border-2 relative overflow-hidden shadow-xs`}
-                                >
-                                    {/* Column Header */}
-                                    <KanbanColumnHeader
-                                        title={col.title}
-                                        count={colTasks.length}
-                                        color={col.color}
-                                        onAddClick={() => {
-                                            setTargetColumnForNewTask(col.id);
-                                            setIsCreateModalOpen(true);
-                                        }}
-                                    />
+                {/* Columns Container */}
+                <div className="flex-1 overflow-hidden">
+                    <DragDropContext onDragEnd={onDragEnd}>
+                        <div className="flex w-full h-full gap-4 lg:gap-5 overflow-x-auto pb-2">
+                            {columns.map((col) => {
+                                const colTasks = filteredTasks.filter((t) => t.status === col.id);
 
-                                    {/* Column Task Drop Zone */}
-                                    <Droppable droppableId={col.id}>
-                                        {(provided, snapshot) => (
-                                            <div
-                                                ref={provided.innerRef}
-                                                {...provided.droppableProps}
-                                                className={`flex-1 overflow-y-auto p-3 space-y-3 transition-colors ${
-                                                    snapshot.isDraggingOver ? 'bg-[#4F46E5]/5' : ''
-                                                }`}
-                                            >
-                                                {colTasks.map((t, index) => (
-                                                    <Draggable key={t.id} draggableId={t.id} index={index}>
-                                                        {(draggableProvided) => (
-                                                            <div
-                                                                ref={draggableProvided.innerRef}
-                                                                {...draggableProvided.draggableProps}
-                                                                {...draggableProvided.dragHandleProps}
-                                                            >
-                                                                <KanbanTaskCard
-                                                                    task={t}
-                                                                    onClick={() => {
-                                                                        if (/^[0-9a-fA-F]{24}$/.test(t.id)) {
-                                                                            setSelectedTaskId(t.id);
-                                                                        }
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
-
-                                                {provided.placeholder}
-
-                                                {/* Drop Target Placeholder if empty */}
-                                                {colTasks.length === 0 && (
-                                                    <div className="h-24 rounded-xl border-2 border-dashed border-[#c7c4d8]/50 bg-[#F8FAFC]/50 flex flex-col items-center justify-center gap-1 text-[#777587]">
-                                                        <span className="material-symbols-outlined text-[20px]">add</span>
-                                                        <span className="text-xs font-medium">Drop tasks here</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </Droppable>
-
-                                    {/* Column Footer CTA */}
-                                    <div className="p-3 bg-[#fcf8ff] border-t border-[#E2E8F0]/80 shrink-0">
-                                        <button
-                                            onClick={() => {
+                                return (
+                                    <div
+                                        key={col.id}
+                                        className="flex-1 flex flex-col min-w-72 max-w-xs lg:max-w-none bg-[#F1F5F9]/80 border border-[#CBD5E1]/80 rounded-2xl shadow-2xs overflow-hidden"
+                                    >
+                                        {/* Column Header */}
+                                        <KanbanColumnHeader
+                                            title={col.title}
+                                            count={colTasks.length}
+                                            color={col.color}
+                                            onAddClick={() => {
                                                 setTargetColumnForNewTask(col.id);
                                                 setIsCreateModalOpen(true);
                                             }}
-                                            className="w-full py-2 border border-dashed border-[#c7c4d8] rounded-xl text-[#464555] text-xs font-semibold hover:bg-[#e4e1ee]/40 hover:text-[#4F46E5] hover:border-[#4F46E5]/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                                        >
-                                            <span className="material-symbols-outlined text-[16px]">add</span>
-                                            Add Issue
-                                        </button>
+                                        />
+
+                                        {/* Column Task Drop Zone */}
+                                        <Droppable droppableId={col.id}>
+                                            {(provided, snapshot) => (
+                                                <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.droppableProps}
+                                                    className={`flex-1 overflow-y-auto p-3 space-y-2.5 transition-colors ${
+                                                        snapshot.isDraggingOver ? 'bg-[#EEF2FF]/60' : ''
+                                                    }`}
+                                                >
+                                                    {colTasks.map((t, index) => (
+                                                        <Draggable key={t.id} draggableId={t.id} index={index}>
+                                                            {(draggableProvided) => (
+                                                                <div
+                                                                    ref={draggableProvided.innerRef}
+                                                                    {...draggableProvided.draggableProps}
+                                                                    {...draggableProvided.dragHandleProps}
+                                                                >
+                                                                    <KanbanTaskCard
+                                                                        task={t}
+                                                                        onClick={() => setSelectedTaskId(t.id)}
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </Draggable>
+                                                    ))}
+
+                                                    {provided.placeholder}
+                                                </div>
+                                            )}
+                                        </Droppable>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </DragDropContext>
+                                );
+                            })}
+                        </div>
+                    </DragDropContext>
+                </div>
             </main>
 
             {/* Task Details Slideout */}

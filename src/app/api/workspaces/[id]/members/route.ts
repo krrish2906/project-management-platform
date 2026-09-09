@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // Verify user is a member of this workspace
         await verifyWorkspaceAccess(userId, workspaceId);
 
-        const members = await prisma.workspaceMember.findMany({
+        const members = await (prisma.workspaceMember as any).findMany({
             where: { workspaceId },
             include: {
                 user: {
@@ -26,13 +26,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                         name: true,
                         email: true,
                         avatar: true,
+                        lastLoginAt: true,
+                        createdAt: true,
                     },
                 },
             },
             orderBy: { joinedAt: 'asc' },
         });
 
-        const formattedMembers = members.map((m) => ({
+        const formattedMembers = members.map((m: any) => ({
             id: m.user.id,
             memberId: m.id,
             name: m.user.name,
@@ -40,6 +42,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             avatar: m.user.avatar,
             role: m.role || 'MEMBER',
             joinedAt: m.joinedAt,
+            lastLoginAt: m.user.lastLoginAt || null,
         }));
 
         return NextResponse.json({

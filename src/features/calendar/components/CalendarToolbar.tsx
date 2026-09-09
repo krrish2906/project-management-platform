@@ -1,11 +1,12 @@
 'use client'
 
 import React from 'react';
+import Link from 'next/link';
 
 interface CalendarToolbarProps {
+    projectName?: string;
+    projectId: string;
     monthYearTitle: string;
-    viewMode: 'month' | 'week' | 'day';
-    onViewModeChange: (mode: 'month' | 'week' | 'day') => void;
     onToday: () => void;
     onPrevMonth: () => void;
     onNextMonth: () => void;
@@ -13,90 +14,72 @@ interface CalendarToolbarProps {
 }
 
 export function CalendarToolbar({
+    projectName = 'Project',
+    projectId,
     monthYearTitle,
-    viewMode,
-    onViewModeChange,
     onToday,
     onPrevMonth,
     onNextMonth,
     onCreateEvent,
 }: CalendarToolbarProps) {
     return (
-        <div className="w-full py-1.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
-            <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3.5 shrink-0">
+            {/* Left: Compact Breadcrumbs & Month Navigation */}
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                {/* Compact Breadcrumb Navigation */}
+                <nav className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#64748b]">
+                    <Link href="/dashboard" className="hover:text-[#4F46E5] transition-colors">
+                        Workspace
+                    </Link>
+                    <span className="material-symbols-outlined text-[13px] text-[#94a3b8]">chevron_right</span>
+                    <Link href="/projects" className="hover:text-[#4F46E5] transition-colors">
+                        Projects
+                    </Link>
+                    <span className="material-symbols-outlined text-[13px] text-[#94a3b8]">chevron_right</span>
+                    <Link href={`/projects/${projectId}`} className="hover:text-[#4F46E5] transition-colors">
+                        {projectName}
+                    </Link>
+                    <span className="material-symbols-outlined text-[13px] text-[#94a3b8]">chevron_right</span>
+                    <span className="font-semibold text-[#0f172a]">Calendar</span>
+                </nav>
+            </div>
+
+            {/* Right: Date Navigator and Create Action */}
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
                 <button
                     onClick={onToday}
-                    className="px-3.5 py-1.5 bg-white border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#1b1b24] hover:bg-[#f5f2ff] transition-colors shadow-xs cursor-pointer"
+                    className="h-8.5 px-3 bg-white border border-[#CBD5E1]/80 hover:bg-[#F8FAFC] rounded-xl text-xs font-semibold text-[#0f172a] transition-colors shadow-2xs cursor-pointer"
                 >
                     Today
                 </button>
-                <div className="flex items-center bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-xs">
+
+                <div className="flex items-center bg-white border border-[#CBD5E1]/80 rounded-xl overflow-hidden shadow-2xs h-8.5">
                     <button
                         onClick={onPrevMonth}
-                        className="p-1 hover:bg-[#f5f2ff] border-r border-[#E2E8F0] text-[#464555] transition-colors cursor-pointer"
+                        className="h-full px-2 hover:bg-[#F8FAFC] border-r border-[#CBD5E1]/80 text-[#64748b] hover:text-[#0f172a] transition-colors cursor-pointer flex items-center justify-center"
                         title="Previous Month"
                     >
-                        <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                        <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                     </button>
+                    <span className="px-3 text-xs font-bold text-[#0f172a] whitespace-nowrap select-none">
+                        {monthYearTitle}
+                    </span>
                     <button
                         onClick={onNextMonth}
-                        className="p-1 hover:bg-[#f5f2ff] text-[#464555] transition-colors cursor-pointer"
+                        className="h-full px-2 hover:bg-[#F8FAFC] border-l border-[#CBD5E1]/80 text-[#64748b] hover:text-[#0f172a] transition-colors cursor-pointer flex items-center justify-center"
                         title="Next Month"
                     >
-                        <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                     </button>
                 </div>
-                <h2 className="text-xl font-bold text-[#1b1b24] ml-1">
-                    {monthYearTitle}
-                </h2>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-                <div className="flex bg-[#eae6f4] p-0.5 rounded-xl">
-                    <button
-                        onClick={() => onViewModeChange('month')}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            viewMode === 'month'
-                                ? 'bg-white text-[#3525cd] shadow-xs'
-                                : 'text-[#464555] hover:text-[#1b1b24]'
-                        }`}
-                    >
-                        Month
-                    </button>
-                    <button
-                        onClick={() => onViewModeChange('week')}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            viewMode === 'week'
-                                ? 'bg-white text-[#3525cd] shadow-xs'
-                                : 'text-[#464555] hover:text-[#1b1b24]'
-                        }`}
-                    >
-                        Week
-                    </button>
-                    <button
-                        onClick={() => onViewModeChange('day')}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            viewMode === 'day'
-                                ? 'bg-white text-[#3525cd] shadow-xs'
-                                : 'text-[#464555] hover:text-[#1b1b24]'
-                        }`}
-                    >
-                        Day
-                    </button>
-                </div>
-
-                <button className="flex items-center gap-1 px-3 py-1.5 bg-white border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#464555] hover:bg-[#f5f2ff] transition-colors cursor-pointer">
-                    <span className="material-symbols-outlined text-[18px]">filter_list</span>
-                    Filters
-                </button>
 
                 {onCreateEvent && (
                     <button
                         onClick={onCreateEvent}
-                        className="bg-[#4f46e5] text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 hover:bg-[#3525cd] transition-all shadow-xs cursor-pointer"
+                        className="h-8.5 px-3.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[18px]">add</span>
-                        Create Event
+                        <span className="material-symbols-outlined text-[15px]">add</span>
+                        <span>Create Event</span>
                     </button>
                 )}
             </div>

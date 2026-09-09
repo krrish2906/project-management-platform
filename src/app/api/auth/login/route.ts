@@ -45,6 +45,12 @@ export async function POST(request: NextRequest) {
             }, { status: 401 });
         }
 
+        // Record user's last login timestamp
+        await (prisma.user as any).update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+        });
+
         // Fetch user's workspaces or auto-create if missing
         let userWorkspaces = await getUserWorkspaces(user.id);
         if (userWorkspaces.length === 0) {

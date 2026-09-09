@@ -29,6 +29,15 @@ export async function GET(request: NextRequest) {
             }, { status: 404 });
         }
 
+        // Initialize lastLoginAt if missing
+        if (!(user as any).lastLoginAt) {
+            await (prisma.user as any).update({
+                where: { id: user.id },
+                data: { lastLoginAt: new Date() },
+            });
+            (user as any).lastLoginAt = new Date();
+        }
+
         let userWorkspaces = await getUserWorkspaces(user.id);
         if (userWorkspaces.length === 0) {
             await createDefaultWorkspace(user.id, user.name);

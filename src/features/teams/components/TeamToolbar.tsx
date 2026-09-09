@@ -7,8 +7,6 @@ interface TeamToolbarProps {
     onSearchChange: (q: string) => void;
     roleFilter: string;
     onRoleFilterChange: (r: string) => void;
-    deptFilter: string;
-    onDeptFilterChange: (d: string) => void;
     statusFilter: string;
     onStatusFilterChange: (s: string) => void;
     viewMode: 'list' | 'grid';
@@ -20,8 +18,6 @@ export function TeamToolbar({
     onSearchChange,
     roleFilter,
     onRoleFilterChange,
-    deptFilter,
-    onDeptFilterChange,
     statusFilter,
     onStatusFilterChange,
     viewMode,
@@ -45,7 +41,7 @@ export function TeamToolbar({
 
             {/* 2. Filter Dropdowns & 3. View Switcher */}
             <div className="flex flex-wrap items-center gap-2.5 shrink-0 justify-between lg:justify-end">
-                {/* Role Filter - Matching WorkspaceRole */}
+                {/* Role Filter - Matching Real WorkspaceRole */}
                 <select
                     value={roleFilter}
                     onChange={(e) => onRoleFilterChange(e.target.value)}
@@ -56,19 +52,6 @@ export function TeamToolbar({
                     <option value="admin">Admin</option>
                     <option value="member">Member</option>
                     <option value="guest">Guest</option>
-                </select>
-
-                {/* Dept Filter */}
-                <select
-                    value={deptFilter}
-                    onChange={(e) => onDeptFilterChange(e.target.value)}
-                    className="h-9 px-3 bg-white border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#64748b] hover:text-[#0f172a] hover:border-[#CBD5E1] shadow-2xs focus:outline-none focus:border-[#4F46E5] cursor-pointer"
-                >
-                    <option value="all">Dept: All</option>
-                    <option value="engineering">Engineering</option>
-                    <option value="design">Design</option>
-                    <option value="product">Product</option>
-                    <option value="marketing">Marketing</option>
                 </select>
 
                 {/* Status Filter */}

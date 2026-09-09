@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         }
 
         const { searchParams } = new URL(request.url);
-        const projectId = searchParams.get('project');
+        const projectId = searchParams.get('project') || searchParams.get('projectId');
         if (!projectId) {
             return NextResponse.json({
                 success: false,
@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { name, project: projectId, goal, startDate, endDate } = body;
+        const { name, goal, startDate, endDate } = body;
+        const projectId = body.project || body.projectId;
 
         if (!name || !projectId) {
             return NextResponse.json({

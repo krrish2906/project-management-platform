@@ -6,8 +6,8 @@ export interface KanbanTaskData {
     id: string;
     keyNumber?: string;
     title: string;
-    priority?: 'HIGH' | 'MEDIUM' | 'LOW' | 'high' | 'medium' | 'low';
-    category?: string;
+    priority?: string;
+    type?: string;
     assigneeName?: string;
     assigneeAvatar?: string | null;
     commentsCount?: number;
@@ -18,104 +18,108 @@ export interface KanbanTaskData {
 interface KanbanTaskCardProps {
     task: KanbanTaskData;
     onClick?: () => void;
-    onEdit?: () => void;
 }
 
-export function KanbanTaskCard({ task, onClick, onEdit }: KanbanTaskCardProps) {
+export function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
     const isCompleted = task.status === 'completed' || task.status === 'DONE';
+    const normalizedPriority = (task.priority || 'MEDIUM').toUpperCase();
+    const normalizedType = (task.type || 'TASK').toUpperCase();
 
-    const normalizedPriority = task.priority?.toUpperCase() || 'MEDIUM';
-
-    const priorityBadgeMap = {
-        HIGH: 'bg-red-50 text-red-600 border-red-100',
-        MEDIUM: 'bg-yellow-50 text-yellow-700 border-yellow-100',
-        LOW: 'bg-green-50 text-green-700 border-green-100',
+    const priorityBadgeStyle: Record<string, string> = {
+        URGENT: 'bg-rose-50 text-rose-700 border-rose-200',
+        HIGH: 'bg-rose-50 text-rose-700 border-rose-200',
+        MEDIUM: 'bg-amber-50 text-amber-700 border-amber-200',
+        LOW: 'bg-blue-50 text-blue-700 border-blue-200',
     };
 
-    const categoryBadgeMap: Record<string, string> = {
-        Frontend: 'bg-blue-50 text-blue-600 border-blue-100',
-        Backend: 'bg-purple-50 text-purple-600 border-purple-100',
-        Design: 'bg-pink-50 text-pink-600 border-pink-100',
-        DevOps: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    const typeBadgeStyle: Record<string, string> = {
+        FEATURE: 'bg-purple-50 text-purple-700 border-purple-200',
+        BUG: 'bg-rose-50 text-rose-700 border-rose-200',
+        TASK: 'bg-slate-50 text-slate-700 border-slate-200',
+        STORY: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        EPIC: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     };
-
-    const displayCategory = task.category || (task.keyNumber?.endsWith('2') ? 'Backend' : 'Frontend');
 
     return (
         <div
             onClick={onClick}
-            className={`bg-white border border-[#E2E8F0] rounded-xl p-3.5 shadow-xs hover:shadow-md hover:border-[#4F46E5]/40 cursor-pointer transition-all group ${
+            className={`bg-white border border-[#E2E8F0] rounded-xl p-3.5 shadow-2xs hover:shadow-xs hover:border-[#4F46E5]/40 cursor-pointer transition-all flex flex-col gap-2.5 group select-none ${
                 isCompleted ? 'bg-white/95' : ''
             }`}
         >
-            {/* Header row: Key & Edit trigger */}
-            <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold text-[#777587] group-hover:text-[#4F46E5] transition-colors">
-                    {task.keyNumber || `WR-${task.id.slice(-2)}`}
+            {/* Header row: Key & Completion indicator */}
+            <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-[#64748b] group-hover:text-[#4F46E5] transition-colors">
+                    {task.keyNumber || `#${task.id.slice(-3)}`}
                 </span>
-                {isCompleted ? (
-                    <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span>
-                ) : (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit?.();
-                        }}
-                        className="text-[#777587] opacity-0 group-hover:opacity-100 hover:text-[#4F46E5] transition-all cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-[16px]">edit</span>
-                    </button>
+                {isCompleted && (
+                    <span className="material-symbols-outlined text-emerald-600 text-[16px]">
+                        check_circle
+                    </span>
                 )}
             </div>
 
-            {/* Title */}
-            <h3 className="text-sm font-medium text-[#1b1b24] mb-3 leading-snug">
+            {/* Task Title */}
+            <h3 className="text-xs font-semibold text-[#0f172a] leading-snug group-hover:text-[#4F46E5] transition-colors line-clamp-2">
                 {task.title}
             </h3>
 
-            {/* Badges */}
-            <div className="flex flex-wrap gap-1.5 mb-4">
+            {/* Priority & Type Badges */}
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
                 <span
-                    className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                        priorityBadgeMap[normalizedPriority as keyof typeof priorityBadgeMap] || priorityBadgeMap.MEDIUM
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                        priorityBadgeStyle[normalizedPriority] || priorityBadgeStyle.MEDIUM
                     }`}
                 >
-                    {normalizedPriority === 'HIGH' ? 'High' : normalizedPriority === 'LOW' ? 'Low' : 'Medium'}
+                    {normalizedPriority.charAt(0) + normalizedPriority.slice(1).toLowerCase()}
                 </span>
                 <span
-                    className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                        categoryBadgeMap[displayCategory] || 'bg-slate-50 text-slate-600 border-slate-200'
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                        typeBadgeStyle[normalizedType] || typeBadgeStyle.TASK
                     }`}
                 >
-                    {displayCategory}
+                    {normalizedType.charAt(0) + normalizedType.slice(1).toLowerCase()}
                 </span>
             </div>
 
             {/* Footer row: Assignee Avatar & Indicators */}
-            <div className="flex items-center justify-between mt-auto">
-                <div className="flex items-center -space-x-1">
-                    {task.assigneeAvatar ? (
-                        <img
-                            src={task.assigneeAvatar}
-                            alt={task.assigneeName || 'User'}
-                            className="w-6 h-6 rounded-full object-cover border-2 border-white"
-                        />
-                    ) : (
-                        <div className="w-6 h-6 rounded-full bg-[#4F46E5]/10 text-[#4F46E5] text-[10px] font-bold flex items-center justify-center border-2 border-white">
-                            {task.assigneeName ? task.assigneeName.slice(0, 2).toUpperCase() : 'KB'}
+            <div className="flex items-center justify-between pt-1 border-t border-[#E2E8F0]/60 mt-auto">
+                <div>
+                    {task.assigneeName ? (
+                        <div className="flex items-center gap-1.5" title={task.assigneeName}>
+                            {task.assigneeAvatar ? (
+                                <img
+                                    src={task.assigneeAvatar}
+                                    alt={task.assigneeName}
+                                    className="w-5 h-5 rounded-full object-cover border border-[#E2E8F0]"
+                                />
+                            ) : (
+                                <div className="w-5 h-5 rounded-full bg-[#EEF2FF] text-[#4F46E5] text-[9px] font-bold flex items-center justify-center border border-[#C7D2FE]/60">
+                                    {task.assigneeName.slice(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                            <span className="text-[11px] text-[#64748b] truncate max-w-20 hidden sm:inline">
+                                {task.assigneeName.split(' ')[0]}
+                            </span>
                         </div>
+                    ) : (
+                        <span className="text-[10px] text-[#94a3b8] italic">Unassigned</span>
                     )}
                 </div>
 
-                <div className="flex items-center gap-2.5 text-[#777587] text-[12px] font-medium">
-                    <div className="flex items-center gap-1 hover:text-[#1b1b24] transition-colors">
-                        <span className="material-symbols-outlined text-[14px]">chat_bubble_outline</span>
-                        {task.commentsCount ?? 2}
-                    </div>
-                    <div className="flex items-center gap-1 hover:text-[#1b1b24] transition-colors">
-                        <span className="material-symbols-outlined text-[14px]">attach_file</span>
-                        {task.attachmentsCount ?? 5}
-                    </div>
+                <div className="flex items-center gap-2 text-[#94a3b8] text-[11px] font-medium">
+                    {(task.commentsCount ?? 0) > 0 && (
+                        <div className="flex items-center gap-0.5 text-[#64748b]">
+                            <span className="material-symbols-outlined text-[13px]">chat_bubble_outline</span>
+                            <span>{task.commentsCount}</span>
+                        </div>
+                    )}
+                    {(task.attachmentsCount ?? 0) > 0 && (
+                        <div className="flex items-center gap-0.5 text-[#64748b]">
+                            <span className="material-symbols-outlined text-[13px]">attach_file</span>
+                            <span>{task.attachmentsCount}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

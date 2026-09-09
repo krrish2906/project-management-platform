@@ -9,7 +9,7 @@ export async function GET(
     try {
         const { id } = await params;
 
-        const user = await prisma.user.findUnique({
+        const user = await (prisma.user as any).findUnique({
             where: { id },
             select: {
                 id: true,
@@ -17,7 +17,11 @@ export async function GET(
                 email: true,
                 avatar: true,
                 jobTitle: true,
-                department: true,
+                bio: true,
+                location: true,
+                phoneNumber: true,
+                authProvider: true,
+                lastLoginAt: true,
                 createdAt: true,
             },
         });
@@ -55,7 +59,7 @@ export async function PUT(
     try {
         const { id } = await params;
         const body = await request.json();
-        const { name, email, avatar, jobTitle, department } = body;
+        const { name, email, avatar, jobTitle, bio, location, phoneNumber } = body;
 
         if (email) {
             const existingUser = await prisma.user.findFirst({
@@ -71,14 +75,16 @@ export async function PUT(
             }
         }
 
-        const user = await prisma.user.update({
+        const user = await (prisma.user as any).update({
             where: { id },
             data: {
                 name: name ? name.trim() : undefined,
                 email: email ? email.toLowerCase().trim() : undefined,
                 avatar: avatar !== undefined ? avatar : undefined,
                 jobTitle: jobTitle !== undefined ? jobTitle : undefined,
-                department: department !== undefined ? department : undefined,
+                bio: bio !== undefined ? bio : undefined,
+                location: location !== undefined ? location : undefined,
+                phoneNumber: phoneNumber !== undefined ? phoneNumber : undefined,
             },
             select: {
                 id: true,
@@ -86,7 +92,11 @@ export async function PUT(
                 email: true,
                 avatar: true,
                 jobTitle: true,
-                department: true,
+                bio: true,
+                location: true,
+                phoneNumber: true,
+                authProvider: true,
+                lastLoginAt: true,
                 createdAt: true,
             },
         });

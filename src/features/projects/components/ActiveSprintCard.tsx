@@ -22,60 +22,72 @@ export function ActiveSprintCard({
 }: ActiveSprintCardProps) {
     if (!sprintName) {
         return (
-            <section className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 flex flex-col gap-3">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-sm font-bold text-[#1b1b24] flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#777587] text-[20px]">sprint</span>
-                        Active Sprint
-                    </h3>
-                    <span className="bg-[#e4e1ee] text-[#464555] text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
-                        None
-                    </span>
+            <section className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-5 flex flex-col justify-between">
+                <div>
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-sm font-bold text-[#0f172a] flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[#4F46E5] text-[18px]">sprint</span>
+                            <span>Active Sprint</span>
+                        </h3>
+                        <span className="bg-[#F1F5F9] text-[#64748b] text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-[#E2E8F0]">
+                            None
+                        </span>
+                    </div>
+                    <p className="text-xs text-[#64748b] leading-relaxed">
+                        There is no active sprint running in this project right now.
+                    </p>
                 </div>
-                <p className="text-xs text-[#777587] py-2">No active sprint running in this project.</p>
-                <Link
-                    href={`/projects/${projectId}/backlog`}
-                    className="text-xs text-[#4f46e5] font-semibold hover:underline flex items-center gap-1 mt-1"
-                >
-                    Plan new sprint in Backlog <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </Link>
+                <div className="pt-4 border-t border-[#E2E8F0] mt-4">
+                    <Link
+                        href={`/projects/${projectId}/backlog`}
+                        className="text-xs text-[#4F46E5] hover:text-[#4338CA] font-semibold flex items-center gap-1 group"
+                    >
+                        <span className="group-hover:underline">Plan new sprint in Backlog</span>
+                        <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                    </Link>
+                </div>
             </section>
         );
     }
 
     return (
-        <section className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-                <h3 className="text-sm font-bold text-[#1b1b24] flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#4f46e5] text-[20px]">sprint</span>
-                    Active Sprint
-                </h3>
-                <span className="bg-[#10B981]/10 text-[#047857] text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
-                    Active
-                </span>
-            </div>
-
+        <section className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-5 flex flex-col justify-between">
             <div>
-                <h4 className="text-[16px] font-semibold text-[#1b1b24] mb-1">{sprintName}</h4>
-                {goal && <p className="text-sm text-[#464555] line-clamp-2">{goal}</p>}
+                <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-bold text-[#0f172a] flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#4F46E5] text-[18px]">sprint</span>
+                        <span>Active Sprint</span>
+                    </h3>
+                    <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-emerald-200">
+                        Active
+                    </span>
+                </div>
+
+                <h4 className="text-sm font-bold text-[#0f172a] mb-1">{sprintName}</h4>
+                {goal && <p className="text-xs text-[#64748b] line-clamp-2 leading-relaxed">{goal}</p>}
             </div>
 
-            <div className="flex items-center gap-3 bg-[#fcf8ff] p-3 rounded-xl border border-[#E2E8F0]/60 mt-auto">
-                <div className="w-10 h-10 rounded-full bg-[#4f46e5]/10 flex items-center justify-center text-[#4f46e5]">
-                    <span className="material-symbols-outlined text-[20px]">timer</span>
+            <div className="space-y-3 mt-3">
+                <div className="flex items-center gap-3 bg-[#F8FAFC] p-2.5 rounded-xl border border-[#E2E8F0]">
+                    <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] border border-[#C7D2FE]/60 flex items-center justify-center text-[#4F46E5] shrink-0">
+                        <span className="material-symbols-outlined text-[18px]">timer</span>
+                    </div>
+                    <div>
+                        <div className="text-xs font-bold text-[#0f172a]">{daysRemaining} Days Remaining</div>
+                        <div className="text-[11px] text-[#64748b]">{completedTasksCount}/{totalTasksCount} Tasks Completed</div>
+                    </div>
                 </div>
-                <div>
-                    <div className="text-xs font-bold text-[#1b1b24]">{daysRemaining} Days Remaining</div>
-                    <div className="text-xs text-[#464555]">{completedTasksCount}/{totalTasksCount} Tasks Completed</div>
+
+                <div className="border-t border-[#E2E8F0] pt-2">
+                    <Link
+                        href={`/projects/${projectId}/backlog`}
+                        className="text-xs text-[#4F46E5] hover:text-[#4338CA] font-semibold flex items-center gap-1 group"
+                    >
+                        <span className="group-hover:underline">View Sprint & Backlog</span>
+                        <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                    </Link>
                 </div>
             </div>
-
-            <Link
-                href={`/projects/${projectId}/backlog`}
-                className="text-sm text-[#4f46e5] font-semibold hover:underline flex items-center gap-1 mt-1"
-            >
-                View Sprint & Backlog <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-            </Link>
         </section>
     );
 }

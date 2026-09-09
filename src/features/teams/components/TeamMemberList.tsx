@@ -8,8 +8,7 @@ export interface TeamMemberData {
     email: string;
     avatar?: string | null;
     initials: string;
-    role: 'Owner' | 'Admin' | 'Manager' | 'Developer' | 'Designer' | string;
-    department: string;
+    role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST' | string;
     projectsCount?: number;
     status: 'online' | 'away' | 'offline' | 'leave';
     lastActive: string;
@@ -22,11 +21,11 @@ interface TeamMemberListProps {
 
 export function TeamMemberList({ members, viewMode }: TeamMemberListProps) {
     const getRoleBadge = (role: string) => {
-        const lower = role.toLowerCase();
-        if (lower.includes('owner')) return 'bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60';
-        if (lower.includes('admin')) return 'bg-amber-50 text-amber-700 border border-amber-200';
-        if (lower.includes('manager')) return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-        if (lower.includes('designer')) return 'bg-purple-50 text-purple-700 border border-purple-200';
+        const upper = (role || '').toUpperCase();
+        if (upper === 'OWNER') return 'bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60';
+        if (upper === 'ADMIN') return 'bg-amber-50 text-amber-700 border border-amber-200';
+        if (upper === 'MEMBER') return 'bg-blue-50 text-blue-700 border border-blue-200';
+        if (upper === 'GUEST') return 'bg-slate-50 text-slate-700 border border-slate-200';
         return 'bg-blue-50 text-blue-700 border border-blue-200';
     };
 
@@ -84,12 +83,6 @@ export function TeamMemberList({ members, viewMode }: TeamMemberListProps) {
 
                                 <h4 className="text-sm font-bold text-[#0f172a] truncate mb-0.5">{m.name}</h4>
                                 <p className="text-xs text-[#64748b] truncate mb-3">{m.email}</p>
-
-                                <div className="flex items-center gap-2 text-xs text-[#64748b] mb-4">
-                                    <span className="bg-[#F8FAFC] border border-[#E2E8F0] px-2 py-0.5 rounded-md text-[11px] font-medium text-[#475569]">
-                                        {m.department || 'General'}
-                                    </span>
-                                </div>
                             </div>
 
                             <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#64748b]">
@@ -108,11 +101,10 @@ export function TeamMemberList({ members, viewMode }: TeamMemberListProps) {
 
     return (
         <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
-            {/* Table Header Row */}
-            <div className="hidden md:grid grid-cols-[minmax(240px,2fr)_130px_140px_120px_120px] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#E2E8F0] text-[11px] font-semibold text-[#64748b] uppercase tracking-wider items-center">
+            {/* Table Header Row (4 Columns: Member, Role, Status, Last Active) */}
+            <div className="hidden md:grid grid-cols-[minmax(240px,2fr)_140px_140px_140px] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#E2E8F0] text-[11px] font-semibold text-[#64748b] uppercase tracking-wider items-center">
                 <div className="text-left">Member</div>
                 <div className="text-center">Role</div>
-                <div className="text-center">Department</div>
                 <div className="text-center">Status</div>
                 <div className="text-center">Last Active</div>
             </div>
@@ -125,7 +117,7 @@ export function TeamMemberList({ members, viewMode }: TeamMemberListProps) {
                     return (
                         <div
                             key={m.id}
-                            className="p-4 md:px-6 md:py-3.5 flex flex-col md:grid md:grid-cols-[minmax(240px,2fr)_130px_140px_120px_120px] items-start md:items-center gap-4 hover:bg-[#F8FAFC]/70 transition-colors group"
+                            className="p-4 md:px-6 md:py-3.5 flex flex-col md:grid md:grid-cols-[minmax(240px,2fr)_140px_140px_140px] items-start md:items-center gap-4 hover:bg-[#F8FAFC]/70 transition-colors group"
                         >
                             {/* 1. Member Info (Left aligned) */}
                             <div className="flex items-center gap-3.5 w-full min-w-0">
@@ -153,18 +145,13 @@ export function TeamMemberList({ members, viewMode }: TeamMemberListProps) {
                                 </span>
                             </div>
 
-                            {/* 3. Department (Center aligned) */}
-                            <div className="w-full text-xs font-medium text-[#475569] text-left md:text-center">
-                                {m.department || 'General'}
-                            </div>
-
-                            {/* 4. Status (Center aligned) */}
+                            {/* 3. Status (Center aligned) */}
                             <div className="flex items-center justify-start md:justify-center gap-1.5 w-full font-medium text-xs">
                                 <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
                                 <span className={statusInfo.textColor}>{statusInfo.text}</span>
                             </div>
 
-                            {/* 5. Last Active (Center aligned) */}
+                            {/* 4. Last Active (Center aligned) */}
                             <div className="text-xs text-[#64748b] w-full text-left md:text-center">
                                 {m.lastActive}
                             </div>

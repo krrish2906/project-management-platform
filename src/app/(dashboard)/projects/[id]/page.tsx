@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
 import { useTaskStore } from '@/features/tasks/store/useTaskStore';
 import { useActivityStore } from '@/features/activity/store/useActivityStore';
-import InviteMemberModal from '@/features/projects/components/InviteMemberModal';
+import { AddProjectMemberModal } from '@/features/projects/components/AddProjectMemberModal';
 
 // Modular Project Overview Components
 import { ProjectOverviewHeaderCard } from '@/features/projects/components/ProjectOverviewHeaderCard';
@@ -20,6 +20,15 @@ import { WorkDistributionCard } from '@/features/projects/components/WorkDistrib
 import { ProjectTeamTableCard, ProjectTeamMember } from '@/features/projects/components/ProjectTeamTableCard';
 import { ProjectSnapshotSidebar, ActivityLogItem } from '@/features/projects/components/ProjectSnapshotSidebar';
 import { ProjectQuickAccessDock } from '@/features/projects/components/ProjectQuickAccessDock';
+
+interface SprintItem {
+    id: string;
+    name: string;
+    goal?: string;
+    status: 'PLANNED' | 'ACTIVE' | 'COMPLETED';
+    startDate?: string;
+    endDate?: string;
+}
 
 export default function ProjectOverviewPage() {
     const { id } = useParams();
@@ -32,8 +41,9 @@ export default function ProjectOverviewPage() {
     const fetchTasks = useTaskStore((state) => state.fetchTasks);
     const { events, fetchActivity } = useActivityStore();
 
-    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [fetchedMembers, setFetchedMembers] = useState<ProjectTeamMember[]>([]);
+    const [activeSprint, setActiveSprint] = useState<SprintItem | null>(null);
 
     const fetchProjectMembers = useCallback(async () => {
         if (!id) return;
@@ -55,14 +65,28 @@ export default function ProjectOverviewPage() {
         }
     }, [id]);
 
+    const fetchSprints = useCallback(async () => {
+        if (!id) return;
+        try {
+            const res = await axios.get(`/api/sprints?project=${id}`);
+            if (res.data?.success && Array.isArray(res.data?.data?.sprints)) {
+                const active = res.data.data.sprints.find((s: any) => s.status === 'ACTIVE');
+                setActiveSprint(active || null);
+            }
+        } catch (err) {
+            console.error('Failed to fetch project sprints:', err);
+        }
+    }, [id]);
+
     useEffect(() => {
         if (id) {
             fetchProjects();
             fetchTasks({ project: id as string });
             fetchActivity(id as string);
             fetchProjectMembers();
+            fetchSprints();
         }
-    }, [id, fetchProjects, fetchTasks, fetchActivity, fetchProjectMembers]);
+    }, [id, fetchProjects, fetchTasks, fetchActivity, fetchProjectMembers, fetchSprints]);
 
     const project = allProjects.find((p) => p.id === id);
 
@@ -85,26 +109,21 @@ export default function ProjectOverviewPage() {
         }
     };
 
-    const handleInviteMembers = async (invitees: { user: string; role: string }[]) => {
-        if (!project) return;
+    const handleAddMembers = async (membersToAdd: { user: string; role: string }[]) => {
+        if (!id) return;
         try {
-            const currentMembers = (project.members || []).map((m: any) => ({
-                user: typeof m.user === 'object' ? m.user.id : m.user,
-                role: m.role,
-            }));
-            const updatedMembers = [...currentMembers, ...invitees];
-
-            const response = await axios.put(`/api/projects/${id}`, { members: updatedMembers });
-            const data = response.data;
-            if (data.success) {
-                toast.success('Members invited successfully');
+            const res = await axios.post(`/api/projects/${id}/members`, { members: membersToAdd });
+            if (res.data?.success) {
+                toast.success(res.data.message || 'Members added successfully');
                 fetchProjects();
                 fetchProjectMembers();
-                setIsInviteModalOpen(false);
+                setIsAddMemberModalOpen(false);
+            } else {
+                toast.error(res.data?.message || 'Failed to add members');
             }
-        } catch (error) {
-            console.error('Failed to invite members:', error);
-            toast.error('Failed to invite members');
+        } catch (error: any) {
+            console.error('Failed to add members:', error);
+            toast.error(error.response?.data?.message || 'Failed to add members');
         }
     };
 
@@ -116,14 +135,34 @@ export default function ProjectOverviewPage() {
         );
     }
 
-    // Calculated Task Stats
+    // Calculated Task Stats dynamically from DB tasks
     const projectTasks = allTasks.filter((t) => (t.projectId || (t as any).project) === id);
-    const totalTasks = projectTasks.length || 48;
-    const doneTasks = projectTasks.filter((t) => t.status === 'DONE').length || 32;
-    const inProgressTasks = projectTasks.filter((t) => t.status === 'IN_PROGRESS').length || 8;
-    const reviewTasks = projectTasks.filter((t) => t.status === 'IN_REVIEW').length || 2;
-    const todoTasks = projectTasks.filter((t) => t.status === 'TODO').length || 6;
-    const completionProgress = Math.round((doneTasks / totalTasks) * 100) || 68;
+    const totalTasks = projectTasks.length;
+    const doneTasks = projectTasks.filter((t) => t.status === 'DONE').length;
+    const inProgressTasks = projectTasks.filter((t) => t.status === 'IN_PROGRESS').length;
+    const reviewTasks = projectTasks.filter((t) => t.status === 'IN_REVIEW').length;
+    const todoTasks = projectTasks.filter((t) => t.status === 'TODO' || t.status === 'BACKLOG').length;
+    const completionProgress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+    // Priorities Breakdown
+    const highPriority = projectTasks.filter((t) => t.priority === 'HIGH' || t.priority === 'URGENT').length;
+    const medPriority = projectTasks.filter((t) => t.priority === 'MEDIUM').length;
+    const lowPriority = projectTasks.filter((t) => t.priority === 'LOW').length;
+
+    // Task Types Breakdown
+    const featuresCount = projectTasks.filter((t) => t.type === 'FEATURE').length;
+    const bugsCount = projectTasks.filter((t) => t.type === 'BUG').length;
+    const generalTasksCount = projectTasks.filter((t) => t.type === 'TASK' || t.type === 'STORY' || t.type === 'EPIC' || t.type === 'SUBTASK').length;
+
+    // Blocked & Upcoming Dues
+    const blockedCount = projectTasks.filter((t) => t.priority === 'URGENT').length;
+    const now = new Date();
+    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const upcomingDuesCount = projectTasks.filter((t) => {
+        if (!t.dueDate) return false;
+        const d = new Date(t.dueDate);
+        return d >= now && d <= sevenDaysLater && t.status !== 'DONE';
+    }).length;
 
     // Team Members
     const formattedTeamMembers: ProjectTeamMember[] = fetchedMembers.length > 0
@@ -139,7 +178,7 @@ export default function ProjectOverviewPage() {
               }))
             : []);
 
-    // Check if user has permissions to manage project roles
+    // Check if user has permissions to manage project members (Workspace Owner/Admin or Project Owner/Admin)
     const canManageRoles =
         user?.role === 'OWNER' ||
         user?.role === 'ADMIN' ||
@@ -147,47 +186,66 @@ export default function ProjectOverviewPage() {
         (project as any)?.userRole === 'OWNER' ||
         (project as any)?.userRole === 'ADMIN';
 
-    // Existing Member IDs for Invite Modal
+    // Existing Member IDs for Modal Filtering
     const existingMemberIds = (fetchedMembers.length > 0 ? fetchedMembers : (project.members || [])).map(
         (m: any) => m.id || (typeof m.user === 'object' ? m.user?.id : m.user)
     );
 
-    // Activity Log
+    // Activity Log from real events
     const formattedActivities: ActivityLogItem[] = events && events.length > 0
         ? events.map((ev: any, idx: number) => ({
-              id: ev._id || idx.toString(),
+              id: ev.id || ev._id || idx.toString(),
               userName: ev.user?.name || 'Team Member',
-              action: ev.type || 'updated task',
-              target: ev.details || 'Task',
+              action: ev.type?.toLowerCase().replace(/_/g, ' ') || 'updated project item',
+              target: ev.details || ev.title || '',
               timestamp: ev.createdAt ? new Date(ev.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
               type: idx === 0 ? 'done' : idx === 1 ? 'create' : 'start',
           }))
         : [];
 
+    // Formatted Dates
+    const startDateFormatted = project.startDate
+        ? new Date(project.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : (project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set');
+
+    const dueDateFormatted = project.endDate
+        ? new Date(project.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : 'No due date';
+
+    // Active sprint days remaining calculation
+    let sprintDaysRemaining = 0;
+    if (activeSprint?.endDate) {
+        const diffMs = new Date(activeSprint.endDate).getTime() - new Date().getTime();
+        sprintDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    }
+
+    const sprintTasks = activeSprint ? projectTasks.filter((t: any) => t.sprintId === activeSprint.id) : [];
+    const sprintCompletedTasks = sprintTasks.filter((t) => t.status === 'DONE').length;
+
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col text-[#1b1b24] relative">
-            {/* Full-width Standalone Header */}
+        <div className="min-h-screen bg-[#F8FAFC] flex flex-col text-[#0f172a] relative">
+            {/* Standalone Global Header */}
             <Header user={user} />
 
-            {/* Scrollable Main Canvas */}
-            <main className="flex-1 p-4 md:p-8 bg-[#F8FAFC]">
+            {/* Scrollable Main Canvas with Right Gutter for Floating Dock */}
+            <main className="flex-1 p-4 md:p-8 lg:pr-24 bg-[#F8FAFC]">
                 <div className="max-w-7xl mx-auto w-full pb-24">
                     
                     {/* Breadcrumbs */}
-                    <nav className="flex items-center gap-2 text-sm text-[#464555] mb-6">
-                        <Link href="/projects" className="hover:text-[#3525cd] transition-colors">
+                    <nav className="flex items-center gap-2 text-xs sm:text-sm text-[#64748b] mb-6">
+                        <Link href="/dashboard" className="hover:text-[#4F46E5] transition-colors">
                             Workspace
                         </Link>
-                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                        <Link href="/projects" className="hover:text-[#3525cd] transition-colors">
+                        <span className="material-symbols-outlined text-[15px] text-[#94a3b8]">chevron_right</span>
+                        <Link href="/projects" className="hover:text-[#4F46E5] transition-colors">
                             Projects
                         </Link>
-                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                        <span className="text-[#1b1b24] font-semibold">{project.name}</span>
+                        <span className="material-symbols-outlined text-[15px] text-[#94a3b8]">chevron_right</span>
+                        <span className="text-[#0f172a] font-bold">{project.name}</span>
                     </nav>
 
                     {/* Layout: Left Column (70%) + Right Snapshot Sidebar (30%) */}
-                    <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex flex-col lg:flex-row gap-6 items-start">
                         
                         {/* Left Column */}
                         <div className="w-full lg:w-[70%] flex flex-col gap-6">
@@ -195,29 +253,38 @@ export default function ProjectOverviewPage() {
                             <ProjectOverviewHeaderCard
                                 projectKey={project.name ? project.name.slice(0, 3).toUpperCase() + '-01' : 'PRJ-01'}
                                 title={project.name}
-                                description={project.description || 'Comprehensive project marketing push and development deliverables.'}
-                                status="Active"
-                                startDate="July 1"
-                                dueDate="Oct 15"
-                                membersCount={formattedTeamMembers.length}
+                                description={project.description || 'No description provided for this project.'}
+                                status={project.status || 'Active'}
+                                startDate={startDateFormatted}
+                                dueDate={dueDateFormatted}
+                                members={formattedTeamMembers}
                                 progress={completionProgress}
                                 totalTasks={totalTasks}
                                 doneTasks={doneTasks}
                                 inProgressTasks={inProgressTasks}
                                 reviewTasks={reviewTasks}
                                 todoTasks={todoTasks}
+                                canManageRoles={canManageRoles}
+                                onAddMember={() => setIsAddMemberModalOpen(true)}
                             />
 
                             {/* Bento Grid Row: Active Sprint & Work Distribution */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <ActiveSprintCard projectId={id as string} />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                                <ActiveSprintCard
+                                    projectId={id as string}
+                                    sprintName={activeSprint?.name}
+                                    goal={activeSprint?.goal}
+                                    daysRemaining={sprintDaysRemaining}
+                                    completedTasksCount={sprintCompletedTasks}
+                                    totalTasksCount={sprintTasks.length}
+                                />
                                 <WorkDistributionCard
-                                    highPriority={12}
-                                    medPriority={4}
-                                    lowPriority={32}
-                                    featuresCount={12}
-                                    bugsCount={4}
-                                    tasksCount={32}
+                                    highPriority={highPriority}
+                                    medPriority={medPriority}
+                                    lowPriority={lowPriority}
+                                    featuresCount={featuresCount}
+                                    bugsCount={bugsCount}
+                                    tasksCount={generalTasksCount}
                                 />
                             </div>
 
@@ -225,7 +292,7 @@ export default function ProjectOverviewPage() {
                             <ProjectTeamTableCard
                                 members={formattedTeamMembers}
                                 canManageRoles={canManageRoles}
-                                onAddMember={() => setIsInviteModalOpen(true)}
+                                onAddMember={() => setIsAddMemberModalOpen(true)}
                                 onUpdateMemberRole={handleUpdateMemberRole}
                             />
                         </div>
@@ -233,9 +300,9 @@ export default function ProjectOverviewPage() {
                         {/* Right Snapshot Sidebar */}
                         <ProjectSnapshotSidebar
                             completionPct={completionProgress}
-                            openTasksCount={inProgressTasks + todoTasks}
-                            upcomingDuesCount={3}
-                            blockedCount={1}
+                            openTasksCount={inProgressTasks + todoTasks + reviewTasks}
+                            upcomingDuesCount={upcomingDuesCount}
+                            blockedCount={blockedCount}
                             activities={formattedActivities}
                         />
                     </div>
@@ -246,12 +313,13 @@ export default function ProjectOverviewPage() {
             {/* Floating Quick Access Dock */}
             <ProjectQuickAccessDock projectId={id as string} />
 
-            {/* Invite Modal */}
-            <InviteMemberModal
-                isOpen={isInviteModalOpen}
-                onClose={() => setIsInviteModalOpen(false)}
-                onInvite={handleInviteMembers}
+            {/* Add Project Member Modal (Scoped Strictly to Workspace Members) */}
+            <AddProjectMemberModal
+                isOpen={isAddMemberModalOpen}
+                onClose={() => setIsAddMemberModalOpen(false)}
+                workspaceId={project.workspaceId}
                 existingMemberIds={existingMemberIds}
+                onAddMembers={handleAddMembers}
             />
         </div>
     );

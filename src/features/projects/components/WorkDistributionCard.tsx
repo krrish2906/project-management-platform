@@ -12,53 +12,90 @@ interface WorkDistributionCardProps {
 }
 
 export function WorkDistributionCard({
-    highPriority = 12,
-    medPriority = 4,
-    lowPriority = 32,
-    featuresCount = 12,
-    bugsCount = 4,
-    tasksCount = 32,
+    highPriority = 0,
+    medPriority = 0,
+    lowPriority = 0,
+    featuresCount = 0,
+    bugsCount = 0,
+    tasksCount = 0,
 }: WorkDistributionCardProps) {
-    const total = highPriority + medPriority + lowPriority || 1;
-    const highPct = (highPriority / total) * 100;
-    const medPct = (medPriority / total) * 100;
-    const lowPct = (lowPriority / total) * 100;
+    const total = highPriority + medPriority + lowPriority;
+    const highPct = total > 0 ? (highPriority / total) * 100 : 0;
+    const medPct = total > 0 ? (medPriority / total) * 100 : 0;
+    const lowPct = total > 0 ? (lowPriority / total) * 100 : 0;
 
     return (
-        <section className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-5 flex flex-col gap-4">
-            <h3 className="text-sm font-bold text-[#1b1b24] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#777587] text-[20px]">tune</span>
-                Work Distribution
-            </h3>
+        <section className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-5 flex flex-col justify-between">
+            <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-bold text-[#0f172a] flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#4F46E5] text-[18px]">tune</span>
+                        <span>Work Distribution</span>
+                    </h3>
+                    <span className="text-xs font-semibold text-[#64748b]">
+                        Total Tasks: {total}
+                    </span>
+                </div>
 
-            <div className="flex flex-col gap-2">
-                <div className="flex justify-between text-xs font-medium text-[#464555] mb-1">
-                    <span>Priority Breakdown</span>
-                    <span>Total: {total}</span>
-                </div>
-                <div className="w-full h-3 rounded-full flex overflow-hidden bg-[#e4e1ee]">
-                    <div className="h-full bg-[#EF4444]" style={{ width: `${highPct}%` }} title={`High: ${highPriority}`} />
-                    <div className="h-full bg-[#F59E0B]" style={{ width: `${medPct}%` }} title={`Medium: ${medPriority}`} />
-                    <div className="h-full bg-[#3B82F6]" style={{ width: `${lowPct}%` }} title={`Low: ${lowPriority}`} />
-                </div>
-                <div className="flex justify-between mt-1 text-xs font-semibold">
-                    <span className="text-[#EF4444]">High ({highPriority})</span>
-                    <span className="text-[#F59E0B]">Med ({medPriority})</span>
-                    <span className="text-[#3B82F6]">Low ({lowPriority})</span>
+                {/* Priority Breakdown Bar */}
+                <div className="space-y-2 mb-5">
+                    <div className="flex justify-between text-xs font-medium text-[#64748b]">
+                        <span>Priority Breakdown</span>
+                    </div>
+                    {total > 0 ? (
+                        <>
+                            <div className="w-full h-2.5 rounded-full flex overflow-hidden bg-[#F1F5F9] gap-0.5">
+                                {highPriority > 0 && (
+                                    <div
+                                        className="h-full bg-rose-500 rounded-l-full transition-all"
+                                        style={{ width: `${highPct}%` }}
+                                        title={`High/Critical: ${highPriority}`}
+                                    />
+                                )}
+                                {medPriority > 0 && (
+                                    <div
+                                        className="h-full bg-amber-500 transition-all"
+                                        style={{ width: `${medPct}%` }}
+                                        title={`Medium: ${medPriority}`}
+                                    />
+                                )}
+                                {lowPriority > 0 && (
+                                    <div
+                                        className="h-full bg-blue-500 rounded-r-full transition-all"
+                                        style={{ width: `${lowPct}%` }}
+                                        title={`Low: ${lowPriority}`}
+                                    />
+                                )}
+                            </div>
+                            <div className="flex justify-between text-[11px] font-semibold pt-0.5">
+                                <span className="text-rose-600">High: {highPriority}</span>
+                                <span className="text-amber-600">Med: {medPriority}</span>
+                                <span className="text-blue-600">Low: {lowPriority}</span>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="py-2 text-center text-xs text-[#94a3b8] bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+                            No priority data recorded yet.
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div className="mt-auto">
-                <span className="text-xs font-semibold text-[#464555] block mb-2">Task Types</span>
+            {/* Task Types Pills */}
+            <div className="border-t border-[#E2E8F0] pt-4">
+                <span className="text-xs font-semibold text-[#64748b] block mb-2">Task Types</span>
                 <div className="flex gap-2 flex-wrap">
-                    <span className="bg-[#8B5CF6]/10 text-[#6D28D9] text-xs px-2.5 py-1 rounded-lg border border-[#8B5CF6]/20 flex items-center gap-1 font-semibold">
-                        <span className="material-symbols-outlined text-[14px]">star</span> Feature ({featuresCount})
+                    <span className="bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-lg border border-purple-200 flex items-center gap-1 font-semibold">
+                        <span className="material-symbols-outlined text-[14px]">star</span>
+                        <span>Feature ({featuresCount})</span>
                     </span>
-                    <span className="bg-[#EF4444]/10 text-[#B91C1C] text-xs px-2.5 py-1 rounded-lg border border-[#EF4444]/20 flex items-center gap-1 font-semibold">
-                        <span className="material-symbols-outlined text-[14px]">bug_report</span> Bug ({bugsCount})
+                    <span className="bg-rose-50 text-rose-700 text-xs px-2.5 py-1 rounded-lg border border-rose-200 flex items-center gap-1 font-semibold">
+                        <span className="material-symbols-outlined text-[14px]">bug_report</span>
+                        <span>Bug ({bugsCount})</span>
                     </span>
-                    <span className="bg-[#3B82F6]/10 text-[#1D4ED8] text-xs px-2.5 py-1 rounded-lg border border-[#3B82F6]/20 flex items-center gap-1 font-semibold">
-                        <span className="material-symbols-outlined text-[14px]">task</span> Task ({tasksCount})
+                    <span className="bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1 font-semibold">
+                        <span className="material-symbols-outlined text-[14px]">task</span>
+                        <span>Task ({tasksCount})</span>
                     </span>
                 </div>
             </div>
