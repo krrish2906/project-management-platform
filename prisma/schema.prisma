@@ -121,6 +121,7 @@ model Workspace {
     plan        Plan              @default(FREE)
     storageUsed BigInt            @default(0)
     aiPromptsUsed Int            @default(0)
+    aiPromptsResetAt DateTime         @default(now())
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
 

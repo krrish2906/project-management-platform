@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { Smile, Hand, Heart, Laptop, Reply, X, Paperclip, Loader2, AtSign, Send } from 'lucide-react';
 
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
@@ -33,22 +34,22 @@ interface ChatComposerProps {
 const EMOJI_CATEGORIES = [
     {
         name: 'Smileys',
-        icon: 'sentiment_satisfied',
+        icon: Smile,
         emojis: ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕'],
     },
     {
         name: 'Gestures',
-        icon: 'front_hand',
+        icon: Hand,
         emojis: ['👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '🖐️', '✋', '🖖', '👋', '🤙', '💪', '🦾', '🖕', '✍️', '🙏', '🤝', '🙌', '👏', '🤲', '⚡', '🔥', '✨', '⭐', '🌟', '💥', '🎉', '🎊'],
     },
     {
         name: 'Hearts & Vibes',
-        icon: 'favorite',
+        icon: Heart,
         emojis: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '💯', '💢', '💬', '💭', '💬', '📢', '🎁', '🎈', '🏆', '🥇', '👑'],
     },
     {
         name: 'Objects & Tech',
-        icon: 'computer',
+        icon: Laptop,
         emojis: ['💻', '🖥️', '📱', '⌨️', '🖱️', '📷', '📹', '🎥', '📡', '⏰', '⌛', '💡', '🔍', '🔎', '📁', '📂', '📄', '📝', '📌', '📍', '📎', '🔑', '🔐', '🎯', '🚀', '🛠️', '⚙️', '📊', '📈', '📉'],
     },
 ];
@@ -239,7 +240,7 @@ export function ChatComposer({ projectId, members = [], isViewer = false, onSend
                 <div className="w-full mb-2.5 p-3 px-4 bg-indigo-50/90 border-l-4 border-[#4F46E5] rounded-2xl flex items-center justify-between text-xs shadow-2xs animate-in slide-in-from-bottom-2 duration-150 backdrop-blur-xs">
                     <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-6 h-6 rounded-full bg-[#4F46E5]/15 text-[#4F46E5] flex items-center justify-center shrink-0">
-                            <span className="material-symbols-outlined text-[16px]">reply</span>
+                            <Reply className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
                             <span className="font-bold text-[#4F46E5] block text-[11px]">Replying to {replyingTo.senderName}</span>
@@ -252,7 +253,7 @@ export function ChatComposer({ projectId, members = [], isViewer = false, onSend
                         className="text-[#64748b] hover:text-[#1e293b] cursor-pointer p-1 rounded-full hover:bg-black/5 transition-colors"
                         title="Cancel reply"
                     >
-                        <span className="material-symbols-outlined text-[18px]">close</span>
+                        <X className="w-4.5 h-4.5" />
                     </button>
                 </div>
             )}
@@ -262,14 +263,14 @@ export function ChatComposer({ projectId, members = [], isViewer = false, onSend
                 <div className="w-full mb-2.5 flex flex-wrap gap-2">
                     {attachments.map((att, index) => (
                         <div key={index} className="flex items-center gap-2 bg-[#f8fafc] border border-[#E2E8F0] px-3 py-1.5 rounded-xl text-xs shadow-2xs">
-                            <span className="material-symbols-outlined text-[18px] text-[#4F46E5]">attach_file</span>
+                            <Paperclip className="w-4.5 h-4.5 text-[#4F46E5]" />
                             <span className="font-semibold text-[#1e293b] truncate max-w-45">{att.filename}</span>
                             <button
                                 type="button"
                                 onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== index))}
                                 className="text-[#94a3b8] hover:text-rose-600 cursor-pointer p-0.5 rounded-full hover:bg-slate-200 transition-colors"
                             >
-                                <span className="material-symbols-outlined text-[16px]">close</span>
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
                     ))}
@@ -284,21 +285,24 @@ export function ChatComposer({ projectId, members = [], isViewer = false, onSend
                 >
                     {/* Category Tabs */}
                     <div className="flex items-center justify-between border-b border-[#E2E8F0] bg-[#f8fafc] px-2 py-1.5">
-                        {EMOJI_CATEGORIES.map((cat, idx) => (
-                            <button
-                                key={cat.name}
-                                type="button"
-                                onClick={() => setActiveCategory(idx)}
-                                className={`p-1.5 rounded-xl text-xs transition-colors flex items-center gap-1 cursor-pointer ${
-                                    activeCategory === idx
-                                        ? 'bg-white text-[#4F46E5] font-bold shadow-2xs'
-                                        : 'text-[#64748b] hover:text-[#1e293b]'
-                                }`}
-                                title={cat.name}
-                            >
-                                <span className="material-symbols-outlined text-[18px]">{cat.icon}</span>
-                            </button>
-                        ))}
+                        {EMOJI_CATEGORIES.map((cat, idx) => {
+                            const CategoryIcon = cat.icon;
+                            return (
+                                <button
+                                    key={cat.name}
+                                    type="button"
+                                    onClick={() => setActiveCategory(idx)}
+                                    className={`p-1.5 rounded-xl text-xs transition-colors flex items-center gap-1 cursor-pointer ${
+                                        activeCategory === idx
+                                            ? 'bg-white text-[#4F46E5] font-bold shadow-2xs'
+                                            : 'text-[#64748b] hover:text-[#1e293b]'
+                                    }`}
+                                    title={cat.name}
+                                >
+                                    <CategoryIcon className="w-4.5 h-4.5" />
+                                </button>
+                            );
+                        })}
                     </div>
 
                     {/* Emoji Grid */}
@@ -337,9 +341,11 @@ export function ChatComposer({ projectId, members = [], isViewer = false, onSend
                     className="w-9 h-9 flex items-center justify-center text-[#64748b] hover:text-[#4F46E5] hover:bg-[#f1f5f9] rounded-xl transition-colors shrink-0 cursor-pointer disabled:opacity-50"
                     title="Add attachment"
                 >
-                    <span className="material-symbols-outlined text-[20px]">
-                        {isUploading ? 'progress_activity' : 'attach_file'}
-                    </span>
+                    {isUploading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                        <Paperclip className="w-5 h-5" />
+                    )}
                 </button>
 
                 {/* Main Text Input */}
@@ -370,7 +376,7 @@ export function ChatComposer({ projectId, members = [], isViewer = false, onSend
                         }`}
                         title="Mention user"
                     >
-                        <span className="material-symbols-outlined text-[19px]">alternate_email</span>
+                        <AtSign className="w-4.75 h-4.75" />
                     </button>
 
                     {/* Emoji Picker Button */}
@@ -384,7 +390,7 @@ export function ChatComposer({ projectId, members = [], isViewer = false, onSend
                         }`}
                         title="Choose Emoji"
                     >
-                        <span className="material-symbols-outlined text-[20px]">mood</span>
+                        <Smile className="w-5 h-5" />
                     </button>
 
                     {/* Send Button */}
@@ -393,7 +399,7 @@ export function ChatComposer({ projectId, members = [], isViewer = false, onSend
                         disabled={!messageText.trim() && attachments.length === 0}
                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-linear-to-r from-[#4F46E5] to-[#4338CA] text-white hover:opacity-95 disabled:opacity-40 transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer shrink-0 ml-1"
                     >
-                        <span className="material-symbols-outlined text-[18px]">send</span>
+                        <Send className="w-4.5 h-4.5" />
                     </button>
                 </div>
             </form>

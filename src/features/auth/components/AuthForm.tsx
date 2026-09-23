@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { toast } from 'react-hot-toast';
+import { Layers, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export function AuthForm() {
     const router = useRouter();
@@ -62,12 +63,10 @@ export function AuthForm() {
             {/* Mobile Only Header (Visible only on small screens) */}
             <div className="lg:hidden flex items-center gap-2 mb-8">
                 <div className="w-8 h-8 rounded-lg bg-[#4f46e5] flex items-center justify-center text-white">
-                    <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        layers
-                    </span>
+                    <Layers className="w-4.5 h-4.5" />
                 </div>
                 <span className="text-[24px] leading-8 tracking-[-0.01em] font-bold text-[#1b1b24]">
-                    ProjectHub
+                    OmniSync
                 </span>
             </div>
 
@@ -75,7 +74,7 @@ export function AuthForm() {
                 {/* Form Header */}
                 <div className="mb-6">
                     <h2 className="text-[24px] leading-8 tracking-[-0.01em] font-bold text-[#1b1b24] mb-1">
-                        Sign in to ProjectHub
+                        Sign in to OmniSync
                     </h2>
                     <p className="text-[15px] leading-6 font-normal text-[#464555]">
                         Continue where your team left off.
@@ -90,7 +89,7 @@ export function AuthForm() {
                         </label>
                         <div className="relative input-ring rounded-lg border border-[#e4e1ee] bg-white transition-all duration-200">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#777587]">
-                                <span className="material-symbols-outlined">mail</span>
+                                <Mail className="w-5 h-5" />
                             </div>
                             <input
                                 id="email"
@@ -113,7 +112,7 @@ export function AuthForm() {
                         </label>
                         <div className="relative input-ring rounded-lg border border-[#e4e1ee] bg-white transition-all duration-200">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#777587]">
-                                <span className="material-symbols-outlined">lock</span>
+                                <Lock className="w-5 h-5" />
                             </div>
                             <input
                                 id="password"
@@ -130,9 +129,7 @@ export function AuthForm() {
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#777587] cursor-pointer hover:text-[#1b1b24] transition-colors"
                             >
-                                <span className="material-symbols-outlined">
-                                    {showPassword ? 'visibility' : 'visibility_off'}
-                                </span>
+                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </div>
                         </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { UserPlus, X, Send } from 'lucide-react';
 
 interface InviteMemberModalProps {
     isOpen: boolean;
@@ -34,11 +35,11 @@ export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberMod
             <div className="bg-white rounded-2xl p-6 md:p-7 max-w-md w-full shadow-2xl border border-[#E2E8F0] animate-in fade-in zoom-in-95 duration-150">
                 <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#4F46E5] text-[22px]">person_add</span>
+                        <UserPlus className="w-5.5 h-5.5 text-[#4F46E5]" />
                         <h3 className="text-base font-bold text-[#0f172a]">Invite Team Member</h3>
                     </div>
                     <button onClick={onClose} className="text-[#94a3b8] hover:text-[#0f172a] p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer">
-                        <span className="material-symbols-outlined text-[20px]">close</span>
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -84,7 +85,7 @@ export function InviteMemberModal({ isOpen, onClose, onInvite }: InviteMemberMod
                             disabled={isSubmitting}
                             className="px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-semibold shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5 transition-colors"
                         >
-                            <span className="material-symbols-outlined text-[15px]">send</span>
+                            <Send className="w-3.75 h-3.75" />
                             <span>{isSubmitting ? 'Sending...' : 'Send Invitation'}</span>
                         </button>
                     </div>

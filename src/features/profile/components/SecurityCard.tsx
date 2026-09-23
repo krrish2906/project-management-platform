@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import type { User } from '@/types';
 import { toast } from 'react-hot-toast';
+import { Lock, KeyRound, Key } from 'lucide-react';
 
 interface SecurityCardProps {
     user: User | null;
@@ -90,7 +91,7 @@ export function SecurityCard({ user }: SecurityCardProps) {
         <div id="security-card" className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-2xs scroll-mt-6">
             <div className="flex items-center gap-2 mb-5">
                 <div className="w-8 h-8 rounded-xl bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60 flex items-center justify-center font-bold shrink-0">
-                    <span className="material-symbols-outlined text-[18px]">lock</span>
+                    <Lock className="w-4.5 h-4.5" />
                 </div>
                 <div>
                     <h2 className="text-sm font-bold text-[#0f172a]">
@@ -128,7 +129,7 @@ export function SecurityCard({ user }: SecurityCardProps) {
                         onClick={() => setIsUnlocked(true)}
                         className="w-full h-10 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#0f172a] font-semibold text-xs rounded-xl shadow-2xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                        <span className="material-symbols-outlined text-[16px] text-[#4F46E5]">password</span>
+                        <KeyRound className="w-4 h-4 text-[#4F46E5]" />
                         <span>Set a Local Password</span>
                     </button>
                 </div>
@@ -155,7 +156,7 @@ export function SecurityCard({ user }: SecurityCardProps) {
                         onClick={() => setIsUnlocked(true)}
                         className="w-full h-10 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#0f172a] font-semibold text-xs rounded-xl shadow-2xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                        <span className="material-symbols-outlined text-[16px] text-[#4F46E5]">key</span>
+                        <Key className="w-4 h-4 text-[#4F46E5]" />
                         <span>Update Password</span>
                     </button>
                 </div>

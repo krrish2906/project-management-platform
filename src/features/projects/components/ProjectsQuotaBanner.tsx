@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
+import { Info } from 'lucide-react';
 
 interface ProjectsQuotaBannerProps {
     usedCount?: number;
@@ -25,7 +26,7 @@ export function ProjectsQuotaBanner({ usedCount, totalQuota }: ProjectsQuotaBann
         <div className="bg-[#f0ecf9] border border-[#4f46e5]/20 rounded-xl p-4 flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-[#4f46e5]/10 flex items-center justify-center text-[#4f46e5]">
-                    <span className="material-symbols-outlined text-[18px]">info</span>
+                    <Info className="w-4.5 h-4.5" />
                 </div>
                 <p className="text-[14px] leading-5 text-[#1b1b24]">
                     <span className="font-semibold">{count} / {planQuota === Infinity ? '∞' : planQuota} Projects Used.</span>{' '}

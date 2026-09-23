@@ -57,7 +57,7 @@ export async function sendEmail(options: EmailOptions) {
         });
 
         const mailOptions = {
-            from: from || process.env.EMAIL_FROM || 'ProjectHub <noreply@projecthub.com>',
+            from: from || process.env.EMAIL_FROM || 'OmniSync <noreply@omnisync.com>',
             to: Array.isArray(to) ? to.join(', ') : to,
             subject,
             html: emailHtml,

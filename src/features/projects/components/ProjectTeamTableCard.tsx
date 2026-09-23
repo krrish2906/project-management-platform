@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
+import { Users, UserPlus } from 'lucide-react';
 
 export interface ProjectTeamMember {
     id: string;
@@ -50,7 +51,7 @@ export function ProjectTeamTableCard({
         <section className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs overflow-hidden flex flex-col">
             <div className="p-4 sm:p-5 border-b border-[#E2E8F0] flex justify-between items-center bg-white">
                 <h3 className="text-sm font-bold text-[#0f172a] flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#4F46E5] text-[18px]">groups</span>
+                    <Users className="text-[#4F46E5] w-4.5 h-4.5" />
                     <span>Project Team ({members.length})</span>
                 </h3>
                 {canManageRoles && (
@@ -58,7 +59,7 @@ export function ProjectTeamTableCard({
                         onClick={onAddMember}
                         className="px-3.5 py-1.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[16px]">person_add</span>
+                        <UserPlus className="w-4 h-4" />
                         <span>Add Member</span>
                     </button>
                 )}

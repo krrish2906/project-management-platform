@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Flag } from 'lucide-react';
 
 export interface CalendarEventItem {
     id: string;
@@ -70,7 +71,7 @@ export function CalendarGrid({
                 title={ev.title}
             >
                 {ev.type === 'milestone' ? (
-                    <span className="material-symbols-outlined text-[13px] text-purple-600 shrink-0">flag</span>
+                    <Flag className="w-3.25 h-3.25 text-purple-600 shrink-0" />
                 ) : (
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColors[ev.color] || dotColors.blue}`} />
                 )}

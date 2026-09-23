@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { User } from '@/types';
+import { BadgeCheck } from 'lucide-react';
 
 interface AccountOverviewCardProps {
     user: User | null;
@@ -34,7 +35,7 @@ export function AccountOverviewCard({ user }: AccountOverviewCardProps) {
         <div className="bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-2xs">
             <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-xl bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60 flex items-center justify-center font-bold shrink-0">
-                    <span className="material-symbols-outlined text-[18px]">badge</span>
+                    <BadgeCheck className="w-4.5 h-4.5" />
                 </div>
                 <div>
                     <h2 className="text-sm font-bold text-[#0f172a]">

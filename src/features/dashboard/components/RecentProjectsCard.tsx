@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
+import { FolderOpen } from 'lucide-react';
 
 export function RecentProjectsCard() {
     const router = useRouter();
@@ -34,7 +35,7 @@ export function RecentProjectsCard() {
             {recentProjects.length === 0 ? (
                 <div className="py-7 px-4 text-center border border-dashed border-[#E2E8F0] rounded-xl bg-[#F8FAFC]">
                     <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center mx-auto mb-1.5">
-                        <span className="material-symbols-outlined text-[18px]">folder_open</span>
+                        <FolderOpen className="w-4.5 h-4.5" />
                     </div>
                     <p className="text-xs font-semibold text-[#1e293b]">No projects yet</p>
                     <p className="text-[11px] text-[#64748b] mt-0.5">Create a project to start collaborating with your team.</p>

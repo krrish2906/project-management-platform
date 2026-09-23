@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { Zap, ArrowRight, Timer } from 'lucide-react';
 
 interface ActiveSprintCardProps {
     projectId: string;
@@ -26,7 +27,7 @@ export function ActiveSprintCard({
                 <div>
                     <div className="flex justify-between items-center mb-3">
                         <h3 className="text-sm font-bold text-[#0f172a] flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[#4F46E5] text-[18px]">sprint</span>
+                            <Zap className="text-[#4F46E5] w-4.5 h-4.5" />
                             <span>Active Sprint</span>
                         </h3>
                         <span className="bg-[#F1F5F9] text-[#64748b] text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-[#E2E8F0]">
@@ -43,7 +44,7 @@ export function ActiveSprintCard({
                         className="text-xs text-[#4F46E5] hover:text-[#4338CA] font-semibold flex items-center gap-1 group"
                     >
                         <span className="group-hover:underline">Plan new sprint in Backlog</span>
-                        <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </Link>
                 </div>
             </section>
@@ -55,7 +56,7 @@ export function ActiveSprintCard({
             <div>
                 <div className="flex justify-between items-center mb-3">
                     <h3 className="text-sm font-bold text-[#0f172a] flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#4F46E5] text-[18px]">sprint</span>
+                        <Zap className="text-[#4F46E5] w-4.5 h-4.5" />
                         <span>Active Sprint</span>
                     </h3>
                     <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-emerald-200">
@@ -70,7 +71,7 @@ export function ActiveSprintCard({
             <div className="space-y-3 mt-3">
                 <div className="flex items-center gap-3 bg-[#F8FAFC] p-2.5 rounded-xl border border-[#E2E8F0]">
                     <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] border border-[#C7D2FE]/60 flex items-center justify-center text-[#4F46E5] shrink-0">
-                        <span className="material-symbols-outlined text-[18px]">timer</span>
+                        <Timer className="w-4.5 h-4.5" />
                     </div>
                     <div>
                         <div className="text-xs font-bold text-[#0f172a]">{daysRemaining} Days Remaining</div>
@@ -84,7 +85,7 @@ export function ActiveSprintCard({
                         className="text-xs text-[#4F46E5] hover:text-[#4338CA] font-semibold flex items-center gap-1 group"
                     >
                         <span className="group-hover:underline">View Sprint & Backlog</span>
-                        <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </Link>
                 </div>
             </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Plus } from 'lucide-react';
 
 interface TasksHeaderProps {
     onOpenCreateTask?: () => void;
@@ -22,7 +23,7 @@ export function TasksHeader({ onOpenCreateTask }: TasksHeaderProps) {
                     onClick={onOpenCreateTask}
                     className="flex items-center gap-2 px-4 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold text-xs rounded-xl transition-all shadow-xs cursor-pointer whitespace-nowrap"
                 >
-                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <Plus className="w-4 h-4" />
                     Create Task
                 </button>
             </div>

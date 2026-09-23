@@ -22,7 +22,7 @@ interface ChatSidebarLeftProps {
 export function ChatSidebarLeft({
     projectId,
     projectName,
-    projectDescription = 'Core project workspace chat',
+    projectDescription,
     members = [],
     onMemberClick,
 }: ChatSidebarLeftProps) {
@@ -32,42 +32,33 @@ export function ChatSidebarLeft({
         <aside className="w-64 lg:w-72 shrink-0 flex flex-col bg-white border-r border-[#E2E8F0] h-full z-10 shadow-xs">
             {/* Project Header Info */}
             <div className="p-5 flex flex-col items-center text-center border-b border-[#E2E8F0] bg-white shrink-0">
-                {/* Project PFP Avatar Circle */}
-                <div className="w-16 h-16 rounded-2xl bg-[#4F46E5] text-white font-extrabold text-2xl flex items-center justify-center shadow-md mb-2.5 ring-4 ring-[#4F46E5]/10">
+                {/* Project PFP Avatar Box */}
+                <div className="w-14 h-14 rounded-2xl bg-[#4F46E5] text-white font-extrabold text-xl flex items-center justify-center shadow-xs mb-2.5 ring-4 ring-[#4F46E5]/10">
                     {initial}
                 </div>
-                <h3 className="text-base font-bold text-[#1b1b24] truncate max-w-full">
+                <h3 className="text-sm font-bold text-[#0f172a] truncate max-w-full">
                     {projectName}
                 </h3>
-                <p className="text-xs text-[#777587] truncate max-w-full mt-0.5 font-medium">
-                    {projectDescription}
-                </p>
-            </div>
-
-            {/* Status Indicator */}
-            <div className="px-4 py-2.5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#fcf8ff]/60 shrink-0 text-xs">
-                <span className="text-[11px] font-bold text-[#777587] uppercase tracking-wider">
-                    Channel Status
-                </span>
-                <span className="text-emerald-600 font-semibold text-[11px] flex items-center gap-1.5 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    LIVE
-                </span>
+                {projectDescription && projectDescription.trim().length > 0 && (
+                    <p className="text-xs text-[#64748b] line-clamp-2 max-w-full mt-1 font-normal" title={projectDescription}>
+                        {projectDescription}
+                    </p>
+                )}
             </div>
 
             {/* Members List */}
             <div className="flex-1 overflow-y-auto p-4">
                 <div className="flex items-center justify-between mb-3 px-1">
-                    <span className="text-[11px] font-bold text-[#777587] uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
                         Team Members
                     </span>
-                    <span className="text-[11px] font-semibold text-[#4F46E5] bg-[#4F46E5]/10 px-2 py-0.5 rounded-full">
+                    <span className="text-[11px] font-semibold text-[#4F46E5] bg-[#EEF2FF] px-2 py-0.5 rounded-full border border-[#C7D2FE]/60">
                         {members.length}
                     </span>
                 </div>
 
                 {members.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-[#777587]">
+                    <div className="py-8 text-center text-xs text-[#94a3b8]">
                         No workspace members found.
                     </div>
                 ) : (
@@ -76,7 +67,7 @@ export function ChatSidebarLeft({
                             <button
                                 key={m.id}
                                 onClick={() => onMemberClick?.(m)}
-                                className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-[#f5f2ff] transition-colors cursor-pointer text-left group"
+                                className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-[#F8FAFC] transition-colors cursor-pointer text-left group"
                             >
                                 <div className="relative shrink-0">
                                     {m.avatar ? (
@@ -95,11 +86,11 @@ export function ChatSidebarLeft({
                                     )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-semibold text-[#1b1b24] truncate group-hover:text-[#4F46E5] transition-colors">
+                                    <p className="text-xs font-semibold text-[#0f172a] truncate group-hover:text-[#4F46E5] transition-colors">
                                         {m.name}
                                     </p>
-                                    <p className="text-[10px] text-[#777587] truncate">
-                                        {m.role || 'Member'}
+                                    <p className="text-[10px] text-[#64748b] truncate capitalize">
+                                        {m.role ? m.role.toLowerCase() : 'member'}
                                     </p>
                                 </div>
                             </button>

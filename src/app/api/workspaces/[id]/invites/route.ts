@@ -125,7 +125,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         try {
             await sendEmail({
                 to: cleanEmail,
-                subject: `Invitation to join ${workspace.name} on ProjectHub`,
+                subject: `Invitation to join ${workspace.name} on OmniSync`,
                 template: 'invite',
                 data: {
                     name: existingMemberUser?.name || 'Colleague',

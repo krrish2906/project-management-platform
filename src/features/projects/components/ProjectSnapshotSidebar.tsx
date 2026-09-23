@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { BarChart2 } from 'lucide-react';
 
 export interface ActivityLogItem {
     id: string;
@@ -30,7 +31,7 @@ export function ProjectSnapshotSidebar({
         <aside className="w-full lg:w-[30%] flex flex-col gap-6">
             <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-5 sticky top-24">
                 <h3 className="text-sm font-bold text-[#0f172a] border-b border-[#E2E8F0] pb-3 mb-4 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#4F46E5] text-[18px]">analytics</span>
+                    <BarChart2 className="text-[#4F46E5] w-4.5 h-4.5" />
                     <span>Project Snapshot</span>
                 </h3>
 

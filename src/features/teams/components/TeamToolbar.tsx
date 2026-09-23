@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Search, List, LayoutGrid } from 'lucide-react';
 
 interface TeamToolbarProps {
     searchQuery: string;
@@ -27,9 +28,7 @@ export function TeamToolbar({
         <div className="flex flex-col lg:flex-row gap-3.5 justify-between items-stretch lg:items-center">
             {/* 1. Search Input */}
             <div className="flex-1 w-full lg:max-w-md relative">
-                <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[18px]">
-                    search
-                </span>
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] w-4.5 h-4.5" />
                 <input
                     type="text"
                     value={searchQuery}
@@ -76,7 +75,7 @@ export function TeamToolbar({
                         }`}
                         title="List View"
                     >
-                        <span className="material-symbols-outlined text-[15px] leading-none">view_list</span>
+                        <List className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={() => onViewModeChange('grid')}
@@ -87,7 +86,7 @@ export function TeamToolbar({
                         }`}
                         title="Grid View"
                     >
-                        <span className="material-symbols-outlined text-[15px] leading-none">grid_view</span>
+                        <LayoutGrid className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>

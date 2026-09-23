@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ChevronRight, Search, Plus } from 'lucide-react';
 
 interface KanbanToolbarProps {
     projectName?: string;
@@ -25,15 +26,15 @@ export function KanbanToolbar({
                 <Link href="/dashboard" className="hover:text-[#4F46E5] transition-colors">
                     Workspace
                 </Link>
-                <span className="material-symbols-outlined text-[13px] text-[#94a3b8]">chevron_right</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                 <Link href="/projects" className="hover:text-[#4F46E5] transition-colors">
                     Projects
                 </Link>
-                <span className="material-symbols-outlined text-[13px] text-[#94a3b8]">chevron_right</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                 <Link href={`/projects/${projectId}`} className="hover:text-[#4F46E5] transition-colors">
                     {projectName}
                 </Link>
-                <span className="material-symbols-outlined text-[13px] text-[#94a3b8]">chevron_right</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                 <span className="font-semibold text-[#0f172a]">Kanban Board</span>
             </nav>
 
@@ -41,9 +42,7 @@ export function KanbanToolbar({
             <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
                 {/* Search */}
                 <div className="relative w-44 sm:w-60">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[16px]">
-                        search
-                    </span>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] w-4 h-4" />
                     <input
                         type="text"
                         value={searchQuery}
@@ -58,7 +57,7 @@ export function KanbanToolbar({
                     onClick={onAddTask}
                     className="h-8.5 px-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl flex items-center gap-1.5 transition-all shadow-xs text-xs font-semibold cursor-pointer"
                 >
-                    <span className="material-symbols-outlined text-[15px]">add</span>
+                    <Plus className="w-4 h-4" />
                     <span>Add Task</span>
                 </button>
             </div>

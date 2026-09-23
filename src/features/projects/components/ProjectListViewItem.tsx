@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Project } from '@/types';
+import { getProjectIcon } from '../utils/projectIconUtils';
+import { Star, MoreHorizontal, Trash2 } from 'lucide-react';
 
 interface ProjectListViewItemProps {
     project: Project;
@@ -50,6 +52,8 @@ export function ProjectListViewItem({
             ? 'bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60'
             : 'bg-emerald-50 text-emerald-700 border border-emerald-200';
 
+    const ProjectIcon = getProjectIcon(project.icon);
+
     return (
         <div
             onClick={() => router.push(`/projects/${project.id}`)}
@@ -61,21 +65,16 @@ export function ProjectListViewItem({
                     onClick={(e) => onToggleStar(project.id, e)}
                     className="text-gray-300 hover:text-amber-400 transition-colors cursor-pointer shrink-0"
                 >
-                    <span
-                        className="material-symbols-outlined text-[20px]"
-                        style={project.isStarred ? { fontVariationSettings: "'FILL' 1", color: '#F59E0B' } : {}}
-                    >
-                        star
-                    </span>
+                    <Star
+                        className={`w-5 h-5 ${project.isStarred ? 'fill-amber-400 text-amber-400' : ''}`}
+                    />
                 </button>
 
                 <div
                     className="w-10 h-10 rounded-xl text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs"
                     style={{ backgroundColor: project.color || '#4F46E5' }}
                 >
-                    <span className="material-symbols-outlined text-[20px]">
-                        {project.icon || 'folder'}
-                    </span>
+                    <ProjectIcon className="w-5 h-5" />
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -142,7 +141,7 @@ export function ProjectListViewItem({
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         className="text-[#94a3b8] hover:text-[#0f172a] p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+                        <MoreHorizontal className="w-4.5 h-4.5" />
                     </button>
 
                     {isMenuOpen && (
@@ -154,7 +153,7 @@ export function ProjectListViewItem({
                                 }}
                                 className="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
                             >
-                                <span className="material-symbols-outlined text-[15px]">delete</span>
+                                <Trash2 className="w-3.75 h-3.75" />
                                 Delete Project
                             </button>
                         </div>

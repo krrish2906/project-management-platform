@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { ShieldCheck, Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export function ForgotPassword() {
     const router = useRouter();
@@ -46,8 +48,15 @@ export function ForgotPassword() {
         <div className="w-full max-w-120 mx-auto py-4">
             {/* Brand / Header */}
             <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#4f46e5] text-white mb-3 shadow-sm">
-                    <span className="material-symbols-outlined text-[24px]">lock_reset</span>
+                <div className="flex justify-center mb-4">
+                    <Image
+                        src="/logo.png"
+                        alt="OmniSync"
+                        width={200}
+                        height={68}
+                        className="w-36 sm:w-40 h-auto object-contain"
+                        priority
+                    />
                 </div>
                 <h1 className="text-[24px] leading-8 font-bold text-[#1b1b24] mb-1">
                     Recover your account
@@ -91,9 +100,7 @@ export function ForgotPassword() {
 
                 {/* Security Notice */}
                 <div className="bg-[#f5f2ff] border border-[#e4e1ee] rounded-lg p-3.5 flex items-start gap-3 mb-6">
-                    <span className="material-symbols-outlined text-[#4f46e5] text-[20px] mt-0.5">
-                        shield_lock
-                    </span>
+                    <ShieldCheck className="w-5 h-5 text-[#4f46e5] mt-0.5 shrink-0" />
                     <div className="flex-1">
                         <p className="text-[13px] font-semibold text-[#4f46e5] mb-0.5">Secure account recovery</p>
                         <p className="text-[12px] leading-4 text-[#464555]">
@@ -110,7 +117,7 @@ export function ForgotPassword() {
                         </label>
                         <div className="relative input-ring rounded-lg border border-[#e4e1ee] bg-white transition-all duration-200">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#777587]">
-                                <span className="material-symbols-outlined text-[20px]">mail</span>
+                                <Mail className="w-5 h-5" />
                             </div>
                             <input
                                 id="email"
@@ -141,7 +148,7 @@ export function ForgotPassword() {
                             {loading ? 'Sending Code...' : (
                                 <>
                                     Send Verification Code
-                                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                                    <ArrowRight className="w-4.5 h-4.5" />
                                 </>
                             )}
                         </button>
@@ -150,7 +157,7 @@ export function ForgotPassword() {
                             href="/login"
                             className="w-full h-12.5 bg-transparent hover:bg-[#f5f2ff] text-[#4f46e5] rounded-lg text-[14px] leading-5 font-medium transition-colors duration-200 flex justify-center items-center gap-2"
                         >
-                            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                            <ArrowLeft className="w-4.5 h-4.5" />
                             Back to Sign In
                         </Link>
                     </div>

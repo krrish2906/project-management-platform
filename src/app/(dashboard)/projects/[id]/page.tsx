@@ -12,6 +12,7 @@ import { useProjectStore } from '@/features/projects/store/useProjectStore';
 import { useTaskStore } from '@/features/tasks/store/useTaskStore';
 import { useActivityStore } from '@/features/activity/store/useActivityStore';
 import { AddProjectMemberModal } from '@/features/projects/components/AddProjectMemberModal';
+import { ChevronRight } from 'lucide-react';
 
 // Modular Project Overview Components
 import { ProjectOverviewHeaderCard } from '@/features/projects/components/ProjectOverviewHeaderCard';
@@ -171,7 +172,7 @@ export default function ProjectOverviewPage() {
             ? project.members.map((m: any, idx: number) => ({
                   id: m.user?.id || m.userId || idx.toString(),
                   name: m.user?.name || `Member ${idx + 1}`,
-                  email: m.user?.email || `member${idx + 1}@projecthub.io`,
+                  email: m.user?.email || `member${idx + 1}@omnisync.io`,
                   avatar: m.user?.avatar || null,
                   role: m.role || 'DEVELOPER',
                   joinedDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently',
@@ -236,11 +237,11 @@ export default function ProjectOverviewPage() {
                         <Link href="/dashboard" className="hover:text-[#4F46E5] transition-colors">
                             Workspace
                         </Link>
-                        <span className="material-symbols-outlined text-[15px] text-[#94a3b8]">chevron_right</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                         <Link href="/projects" className="hover:text-[#4F46E5] transition-colors">
                             Projects
                         </Link>
-                        <span className="material-symbols-outlined text-[15px] text-[#94a3b8]">chevron_right</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                         <span className="text-[#0f172a] font-bold">{project.name}</span>
                     </nav>
 

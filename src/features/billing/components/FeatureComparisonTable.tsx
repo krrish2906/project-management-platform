@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Check } from 'lucide-react';
 
 interface FeatureRow {
     feature: string;
@@ -21,9 +22,7 @@ export function FeatureComparisonTable() {
     const renderCell = (val: string | boolean, isPro: boolean = false) => {
         if (typeof val === 'boolean') {
             return val ? (
-                <span className={`material-symbols-outlined text-[18px] ${isPro ? 'text-[#4F46E5]' : 'text-[#0f172a]'}`}>
-                    check
-                </span>
+                <Check className={`w-4.5 h-4.5 mx-auto ${isPro ? 'text-[#4F46E5]' : 'text-[#0f172a]'}`} />
             ) : (
                 <span className="text-[#94a3b8] font-bold">-</span>
             );

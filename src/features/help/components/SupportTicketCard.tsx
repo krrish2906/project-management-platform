@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import type { User } from '@/types';
 import toast from 'react-hot-toast';
+import { Headphones, UploadCloud, Paperclip, X } from 'lucide-react';
 
 interface SupportTicketCardProps {
     user: User | null;
@@ -65,7 +66,7 @@ export function SupportTicketCard({ user, initialCategory = 'Bug Report' }: Supp
             {/* Dedicated Header Banner */}
             <div className="px-6 py-4.5 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                 <h2 className="text-base font-bold text-[#0f172a] flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[20px] text-[#4F46E5]">support_agent</span>
+                    <Headphones className="w-5 h-5 text-[#4F46E5]" />
                     Contact Support
                 </h2>
                 <p className="text-xs text-[#64748b] mt-0.5">
@@ -164,9 +165,7 @@ export function SupportTicketCard({ user, initialCategory = 'Bug Report' }: Supp
                             className="hidden"
                             accept="image/*,.pdf,.txt,.json,.csv"
                         />
-                        <span className="material-symbols-outlined text-[#94a3b8] group-hover:text-[#4F46E5] text-[26px] mb-1 transition-colors">
-                            cloud_upload
-                        </span>
+                        <UploadCloud className="w-6.5 h-6.5 mb-1 text-[#94a3b8] group-hover:text-[#4F46E5] transition-colors" />
                         <span className="text-xs text-[#334155] font-semibold group-hover:text-[#4F46E5] transition-colors">
                             Click or drag files here to upload
                         </span>
@@ -183,14 +182,14 @@ export function SupportTicketCard({ user, initialCategory = 'Bug Report' }: Supp
                                     key={i}
                                     className="inline-flex items-center gap-1.5 bg-white border border-[#CBD5E1] text-[#334155] text-[11px] font-medium px-2.5 py-1 rounded-lg shadow-2xs"
                                 >
-                                    <span className="material-symbols-outlined text-[14px] text-[#64748b]">attachment</span>
+                                    <Paperclip className="w-3.5 h-3.5 text-[#64748b]" />
                                     <span className="truncate max-w-37.5">{file.name}</span>
                                     <button
                                         type="button"
                                         onClick={() => handleRemoveFile(i)}
                                         className="text-[#94a3b8] hover:text-rose-600 ml-0.5 cursor-pointer"
                                     >
-                                        <span className="material-symbols-outlined text-[14px]">close</span>
+                                        <X className="w-3.5 h-3.5" />
                                     </button>
                                 </span>
                             ))}

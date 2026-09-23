@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { UserCog, UserPlus } from 'lucide-react';
 
 interface TeamHeaderProps {
     workspaceName?: string;
@@ -34,7 +35,7 @@ export function TeamHeader({
                     href="/settings"
                     className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E2E8F0] text-[#334155] hover:text-[#4F46E5] hover:border-[#CBD5E1] font-semibold text-xs rounded-xl transition-all shadow-2xs whitespace-nowrap"
                 >
-                    <span className="material-symbols-outlined text-[16px]">manage_accounts</span>
+                    <UserCog className="w-4 h-4" />
                     Manage Roles
                 </Link>
 
@@ -42,7 +43,7 @@ export function TeamHeader({
                     onClick={handleInvite}
                     className="flex items-center gap-2 px-4 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold text-xs rounded-xl transition-all shadow-xs cursor-pointer whitespace-nowrap"
                 >
-                    <span className="material-symbols-outlined text-[16px]">person_add</span>
+                    <UserPlus className="w-4 h-4" />
                     Invite Member
                 </button>
             </div>

@@ -8,6 +8,7 @@ import CreateProjectModal from '@/features/projects/components/CreateProjectModa
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
 import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
+import { FolderOpen, Plus } from 'lucide-react';
 
 // Modular Projects Components
 import { ProjectsHeader } from '@/features/projects/components/ProjectsHeader';
@@ -168,7 +169,7 @@ export default function ProjectsPage() {
                         ) : filteredProjects.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-[#e4e1ee] rounded-2xl bg-[#f8fafc]/50 p-8">
                                 <div className="w-16 h-16 bg-[#4F46E5]/10 rounded-2xl flex items-center justify-center mb-4 text-[#4F46E5]">
-                                    <span className="material-symbols-outlined text-[32px]">folder_open</span>
+                                    <FolderOpen className="w-8 h-8" />
                                 </div>
                                 <h3 className="text-[20px] font-bold text-[#1b1b24] mb-1">No projects found</h3>
                                 <p className="text-[14px] text-[#464555] mb-6 max-w-md">
@@ -180,7 +181,7 @@ export default function ProjectsPage() {
                                     onClick={() => setIsModalOpen(true)}
                                     className="px-5 py-2.5 bg-[#4F46E5] hover:bg-[#3525cd] text-white rounded-lg font-semibold text-sm transition-all shadow-xs flex items-center gap-2 cursor-pointer"
                                 >
-                                    <span className="material-symbols-outlined text-[18px]">add</span>
+                                    <Plus className="w-4.5 h-4.5" />
                                     Create First Project
                                 </button>
                             </div>

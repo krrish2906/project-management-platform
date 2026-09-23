@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { SlidersHorizontal, Sparkles, Bug, CheckSquare } from 'lucide-react';
 
 interface WorkDistributionCardProps {
     highPriority?: number;
@@ -29,7 +30,7 @@ export function WorkDistributionCard({
             <div>
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-sm font-bold text-[#0f172a] flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#4F46E5] text-[18px]">tune</span>
+                        <SlidersHorizontal className="text-[#4F46E5] w-4.5 h-4.5" />
                         <span>Work Distribution</span>
                     </h3>
                     <span className="text-xs font-semibold text-[#64748b]">
@@ -86,15 +87,15 @@ export function WorkDistributionCard({
                 <span className="text-xs font-semibold text-[#64748b] block mb-2">Task Types</span>
                 <div className="flex gap-2 flex-wrap">
                     <span className="bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-lg border border-purple-200 flex items-center gap-1 font-semibold">
-                        <span className="material-symbols-outlined text-[14px]">star</span>
+                        <Sparkles className="w-3.5 h-3.5" />
                         <span>Feature ({featuresCount})</span>
                     </span>
                     <span className="bg-rose-50 text-rose-700 text-xs px-2.5 py-1 rounded-lg border border-rose-200 flex items-center gap-1 font-semibold">
-                        <span className="material-symbols-outlined text-[14px]">bug_report</span>
+                        <Bug className="w-3.5 h-3.5" />
                         <span>Bug ({bugsCount})</span>
                     </span>
                     <span className="bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1 font-semibold">
-                        <span className="material-symbols-outlined text-[14px]">task</span>
+                        <CheckSquare className="w-3.5 h-3.5" />
                         <span>Task ({tasksCount})</span>
                     </span>
                 </div>

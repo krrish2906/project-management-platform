@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { SlidersHorizontal, Users, AlertTriangle } from 'lucide-react';
 
 export type SettingsTabId = 'general' | 'members' | 'danger';
 
@@ -32,7 +33,7 @@ export function SettingsHeader({ activeTab, onTabChange, membersCount }: Setting
                             : 'text-[#64748b] border-transparent hover:text-[#0f172a]'
                     }`}
                 >
-                    <span className="material-symbols-outlined text-[16px]">tune</span>
+                    <SlidersHorizontal className="w-4 h-4" />
                     <span>General</span>
                 </button>
                 <button
@@ -43,7 +44,7 @@ export function SettingsHeader({ activeTab, onTabChange, membersCount }: Setting
                             : 'text-[#64748b] border-transparent hover:text-[#0f172a]'
                     }`}
                 >
-                    <span className="material-symbols-outlined text-[16px]">group</span>
+                    <Users className="w-4 h-4" />
                     <span>Members & Roles</span>
                     {typeof membersCount === 'number' && (
                         <span className="ml-1 px-1.5 py-0.2 bg-[#F1F5F9] text-[#64748b] rounded-full text-[10px] font-bold border border-[#E2E8F0]">
@@ -59,7 +60,7 @@ export function SettingsHeader({ activeTab, onTabChange, membersCount }: Setting
                             : 'text-[#64748b] border-transparent hover:text-rose-600'
                     }`}
                 >
-                    <span className="material-symbols-outlined text-[16px]">warning</span>
+                    <AlertTriangle className="w-4 h-4" />
                     <span>Danger Zone</span>
                 </button>
             </div>

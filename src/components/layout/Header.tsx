@@ -9,6 +9,17 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { formatDistanceToNow } from 'date-fns';
 import type { User } from '@/types';
 import { toast } from 'react-hot-toast';
+import { 
+    ArrowLeft, 
+    Search, 
+    Bell, 
+    ChevronDown, 
+    ChevronRight, 
+    User as UserIcon, 
+    Settings, 
+    CreditCard, 
+    LogOut 
+} from 'lucide-react';
 
 interface HeaderProps {
     user: User | null;
@@ -112,21 +123,19 @@ export default function Header({ user }: HeaderProps) {
                         className="p-2 rounded-xl text-[#475569] hover:text-[#4F46E5] hover:bg-[#EEF2FF] transition-colors mr-3 flex items-center justify-center cursor-pointer shrink-0 border border-[#E2E8F0]"
                         title="Go Back"
                     >
-                        <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                        <ArrowLeft className="w-4.5 h-4.5" />
                     </button>
                 )}
 
                 {/* Mobile Header Title */}
                 <div className="flex items-center md:hidden">
-                    <h1 className="text-[18px] font-bold text-[#1b1b24] tracking-tight">ProjectHub</h1>
+                    <h1 className="text-[18px] font-bold text-[#1b1b24] tracking-tight">OmniSync</h1>
                 </div>
 
                 {/* Desktop Search Bar */}
                 <div className="flex-1 hidden md:block">
                     <div className="relative group">
-                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] group-focus-within:text-[#4F46E5] transition-colors text-[18px]">
-                            search
-                        </span>
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] group-focus-within:text-[#4F46E5] transition-colors w-4.5 h-4.5" />
                         <input
                             className="w-full pl-10 pr-12 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#4F46E5]/10 focus:border-[#4F46E5] focus:bg-white transition-all text-[#1b1b24] placeholder:text-[#94a3b8] outline-none"
                             placeholder="Search projects, tasks, or members..."
@@ -147,7 +156,7 @@ export default function Header({ user }: HeaderProps) {
                         className="text-[#475569] hover:text-[#4F46E5] transition-colors p-2 rounded-xl hover:bg-[#EEF2FF] relative cursor-pointer flex items-center justify-center border border-transparent hover:border-[#E2E8F0]"
                         onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                     >
-                        <span className="material-symbols-outlined text-[20px]">notifications</span>
+                        <Bell className="w-5 h-5" />
                         {unreadCount > 0 && (
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
                         )}
@@ -175,9 +184,7 @@ export default function Header({ user }: HeaderProps) {
                                             }`}
                                         >
                                             <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center shrink-0">
-                                                <span className="material-symbols-outlined text-[16px]">
-                                                    notifications
-                                                </span>
+                                                <Bell className="w-4 h-4" />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-xs font-semibold text-[#1e293b] truncate">
@@ -212,9 +219,7 @@ export default function Header({ user }: HeaderProps) {
                                 userInitials
                             )}
                         </div>
-                        <span className="material-symbols-outlined text-[15px] text-[#64748b] group-hover:text-[#1e293b] transition-transform">
-                            {isUserMenuOpen ? 'expand_less' : 'expand_more'}
-                        </span>
+                        <ChevronDown className={`w-3.75 h-3.75 text-[#64748b] group-hover:text-[#1e293b] transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {/* User Menu Popover */}
@@ -253,10 +258,10 @@ export default function Header({ user }: HeaderProps) {
                                     className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#334155] hover:text-[#4F46E5] hover:bg-[#EEF2FF]/60 rounded-xl transition-all group"
                                 >
                                     <div className="w-6 h-6 rounded-lg bg-[#F1F5F9] text-[#64748b] group-hover:bg-[#EEF2FF] group-hover:text-[#4F46E5] flex items-center justify-center transition-colors">
-                                        <span className="material-symbols-outlined text-[15px]">account_circle</span>
+                                        <UserIcon className="w-3.75 h-3.75" />
                                     </div>
                                     <span className="flex-1">My Profile</span>
-                                    <span className="material-symbols-outlined text-[14px] text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                                    <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </Link>
 
                                 <Link
@@ -265,10 +270,10 @@ export default function Header({ user }: HeaderProps) {
                                     className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#334155] hover:text-[#4F46E5] hover:bg-[#EEF2FF]/60 rounded-xl transition-all group"
                                 >
                                     <div className="w-6 h-6 rounded-lg bg-[#F1F5F9] text-[#64748b] group-hover:bg-[#EEF2FF] group-hover:text-[#4F46E5] flex items-center justify-center transition-colors">
-                                        <span className="material-symbols-outlined text-[15px]">settings</span>
+                                        <Settings className="w-3.75 h-3.75" />
                                     </div>
                                     <span className="flex-1">Settings</span>
-                                    <span className="material-symbols-outlined text-[14px] text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                                    <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </Link>
 
                                 <Link
@@ -277,10 +282,10 @@ export default function Header({ user }: HeaderProps) {
                                     className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#334155] hover:text-[#4F46E5] hover:bg-[#EEF2FF]/60 rounded-xl transition-all group"
                                 >
                                     <div className="w-6 h-6 rounded-lg bg-[#F1F5F9] text-[#64748b] group-hover:bg-[#EEF2FF] group-hover:text-[#4F46E5] flex items-center justify-center transition-colors">
-                                        <span className="material-symbols-outlined text-[15px]">payments</span>
+                                        <CreditCard className="w-3.75 h-3.75" />
                                     </div>
                                     <span className="flex-1">Billing & Plans</span>
-                                    <span className="material-symbols-outlined text-[14px] text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                                    <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8] opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </Link>
                             </div>
 
@@ -291,7 +296,7 @@ export default function Header({ user }: HeaderProps) {
                                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer group"
                                 >
                                     <div className="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100 flex items-center justify-center transition-colors">
-                                        <span className="material-symbols-outlined text-[15px]">logout</span>
+                                        <LogOut className="w-3.75 h-3.75" />
                                     </div>
                                     <span>Log out</span>
                                 </button>

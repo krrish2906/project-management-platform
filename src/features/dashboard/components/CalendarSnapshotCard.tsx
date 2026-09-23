@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay } from 'date-fns';
 import { useTaskStore } from '@/features/tasks/store/useTaskStore';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function CalendarSnapshotCard() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -30,13 +31,13 @@ export function CalendarSnapshotCard() {
                         onClick={() => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
                         className="w-7 h-7 rounded-lg hover:bg-[#F1F5F9] transition-colors flex items-center justify-center cursor-pointer text-[#64748b]"
                     >
-                        <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                        <ChevronLeft className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
                         className="w-7 h-7 rounded-lg hover:bg-[#F1F5F9] transition-colors flex items-center justify-center cursor-pointer text-[#64748b]"
                     >
-                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                        <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
             </div>

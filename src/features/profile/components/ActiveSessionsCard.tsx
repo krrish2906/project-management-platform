@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import type { User } from '@/types';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import toast from 'react-hot-toast';
+import { Monitor, Laptop, Smartphone, Tablet, KeyRound, LogOut, LucideIcon } from 'lucide-react';
 
 interface ActiveSessionsCardProps {
     user?: User | null;
@@ -13,33 +14,33 @@ export function ActiveSessionsCard({ user }: ActiveSessionsCardProps) {
     const { logout } = useAuthStore();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [deviceSummary, setDeviceSummary] = useState('Current Device');
-    const [deviceIcon, setDeviceIcon] = useState('devices');
+    const [DeviceIcon, setDeviceIcon] = useState<LucideIcon>(Monitor);
 
     useEffect(() => {
         if (typeof navigator === 'undefined') return;
 
         const ua = navigator.userAgent;
         let device = 'Desktop PC';
-        let icon = 'desktop_windows';
+        let iconComponent: LucideIcon = Monitor;
 
         if (/Windows NT/i.test(ua)) {
             device = 'Windows PC';
-            icon = 'desktop_windows';
+            iconComponent = Monitor;
         } else if (/Macintosh|Mac OS X/i.test(ua)) {
             device = 'MacBook / Mac';
-            icon = 'laptop_mac';
+            iconComponent = Laptop;
         } else if (/iPhone/i.test(ua)) {
             device = 'Apple iPhone';
-            icon = 'phone_iphone';
+            iconComponent = Smartphone;
         } else if (/iPad/i.test(ua)) {
             device = 'Apple iPad';
-            icon = 'tablet_mac';
+            iconComponent = Tablet;
         } else if (/Android/i.test(ua)) {
             device = 'Android Phone';
-            icon = 'smartphone';
+            iconComponent = Smartphone;
         } else if (/Linux/i.test(ua)) {
             device = 'Linux Workstation';
-            icon = 'computer';
+            iconComponent = Monitor;
         }
 
         let browser = '';
@@ -62,7 +63,7 @@ export function ActiveSessionsCard({ user }: ActiveSessionsCardProps) {
         }
 
         setDeviceSummary(browser ? `${device} • ${browser}` : device);
-        setDeviceIcon(icon);
+        setDeviceIcon(iconComponent);
     }, []);
 
     // Format DB lastLoginAt timestamp
@@ -134,7 +135,7 @@ export function ActiveSessionsCard({ user }: ActiveSessionsCardProps) {
                         onClick={handleResetPassword}
                         className="px-3 py-1.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#0f172a] font-semibold text-xs rounded-xl shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[15px] text-[#4F46E5]">lock_reset</span>
+                        <KeyRound className="w-3.75 h-3.75 text-[#4F46E5]" />
                         <span>Reset Password</span>
                     </button>
 
@@ -144,7 +145,7 @@ export function ActiveSessionsCard({ user }: ActiveSessionsCardProps) {
                         disabled={isLoggingOut}
                         className="px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold text-xs rounded-xl shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
-                        <span className="material-symbols-outlined text-[15px]">logout</span>
+                        <LogOut className="w-3.75 h-3.75" />
                         <span>{isLoggingOut ? 'Logging out...' : 'Log Out'}</span>
                     </button>
                 </div>
@@ -155,7 +156,7 @@ export function ActiveSessionsCard({ user }: ActiveSessionsCardProps) {
                 {/* Device & Active State */}
                 <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-xl bg-white border border-[#E2E8F0] flex items-center justify-center text-[#4F46E5] shrink-0 shadow-2xs">
-                        <span className="material-symbols-outlined text-[20px]">{deviceIcon}</span>
+                        <DeviceIcon className="w-5 h-5" />
                     </div>
                     <div>
                         <p className="text-xs font-bold text-[#0f172a]">{deviceSummary}</p>

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { CheckSquare, X } from 'lucide-react';
 
 interface ProjectOption {
     id: string;
@@ -75,7 +76,7 @@ export function CreateTaskModal({
                 <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-xl bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60 flex items-center justify-center font-bold">
-                            <span className="material-symbols-outlined text-[20px]">add_task</span>
+                            <CheckSquare className="w-5 h-5" />
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-[#0f172a]">Create New Task</h3>
@@ -86,7 +87,7 @@ export function CreateTaskModal({
                         onClick={onClose}
                         className="w-8 h-8 flex items-center justify-center text-[#94a3b8] hover:text-[#0f172a] hover:bg-[#F8FAFC] rounded-lg cursor-pointer transition-colors"
                     >
-                        <span className="material-symbols-outlined text-[20px]">close</span>
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 

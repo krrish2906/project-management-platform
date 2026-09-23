@@ -5,6 +5,7 @@ import axios from 'axios';
 import type { User } from '@/types';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { toast } from 'react-hot-toast';
+import { Pencil, Camera, Loader2, BadgeCheck, Save } from 'lucide-react';
 
 interface PersonalDetailsCardProps {
     user: User | null;
@@ -149,7 +150,7 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
                         onClick={() => setIsEditing(true)}
                         className="px-3.5 py-1.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#0f172a] font-semibold text-xs rounded-xl shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[15px] text-[#4F46E5]">edit</span>
+                        <Pencil className="w-3.75 h-3.75 text-[#4F46E5]" />
                         <span>Edit Profile</span>
                     </button>
                 ) : (
@@ -194,9 +195,11 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
                     {/* Camera Overlay on Hover (Only when editing) */}
                     {isEditing && (
                         <div className="absolute inset-0 bg-[#0f172a]/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center z-20 transition-opacity duration-200 text-white">
-                            <span className="material-symbols-outlined text-[20px]">
-                                {isUploadingAvatar ? 'progress_activity' : 'photo_camera'}
-                            </span>
+                            {isUploadingAvatar ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <Camera className="w-5 h-5" />
+                            )}
                             <span className="text-[9px] font-bold mt-0.5 uppercase tracking-wider">
                                 {isUploadingAvatar ? 'Uploading' : 'Change'}
                             </span>
@@ -239,7 +242,7 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
                         </span>
                         <p className="text-xs font-semibold text-[#0f172a] flex items-center gap-1.5">
                             <span>{user?.email || '—'}</span>
-                            <span className="material-symbols-outlined text-[15px] text-emerald-600" title="Verified Account Email">verified</span>
+                            <BadgeCheck className="w-3.75 h-3.75 text-emerald-600" />
                         </p>
                     </div>
 
@@ -317,7 +320,7 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
                                     className="w-full h-10 pl-3.5 pr-10 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#64748b] outline-none cursor-not-allowed select-all"
                                 />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-emerald-600" title="Verified Account Email">
-                                    <span className="material-symbols-outlined text-[15px]">verified</span>
+                                    <BadgeCheck className="w-3.75 h-3.75" />
                                 </span>
                             </div>
                         </div>
@@ -408,7 +411,7 @@ export function PersonalDetailsCard({ user }: PersonalDetailsCardProps) {
                                 </>
                             ) : (
                                 <>
-                                    <span className="material-symbols-outlined text-[16px]">save</span>
+                                    <Save className="w-4 h-4" />
                                     <span>Save Changes</span>
                                 </>
                             )}

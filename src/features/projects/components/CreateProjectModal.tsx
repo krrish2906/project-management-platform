@@ -7,6 +7,8 @@ import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useProjectStore } from '../store/useProjectStore';
 import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
+import { getProjectIcon, PROJECT_ICONS_CONFIG } from '../utils/projectIconUtils';
+import { X, Check, Loader2 } from 'lucide-react';
 
 interface CreateProjectModalProps {
     isOpen: boolean;
@@ -23,15 +25,6 @@ const HEX_COLORS = [
     { label: 'Rose', hex: '#f43f5e' },
 ];
 
-const ICONS = [
-    { name: 'folder', label: 'Folder' },
-    { name: 'rocket_launch', label: 'Rocket' },
-    { name: 'code', label: 'Code' },
-    { name: 'palette', label: 'Design' },
-    { name: 'terminal', label: 'DevOps' },
-    { name: 'bolt', label: 'Sprint' },
-];
-
 export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }: CreateProjectModalProps) {
     const router = useRouter();
     const [name, setName] = useState('');
@@ -41,7 +34,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
     const [startDate, setStartDate] = useState(todayStr);
     const [endDate, setEndDate] = useState('');
     const [selectedColor, setSelectedColor] = useState(HEX_COLORS[0].hex);
-    const [selectedIcon, setSelectedIcon] = useState(ICONS[0].name);
+    const [selectedIcon, setSelectedIcon] = useState(PROJECT_ICONS_CONFIG[0].name);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [mounted, setMounted] = useState(false);
@@ -125,6 +118,8 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         }
     };
 
+    const SelectedProjectIcon = getProjectIcon(selectedIcon);
+
     const modalContent = (
         <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs w-screen h-screen">
             <div className="bg-white rounded-3xl shadow-2xl border border-[#E2E8F0] w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in duration-150 relative z-100000">
@@ -132,7 +127,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                 <div className="flex items-center justify-between p-6 border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-[#4F46E5]/10 text-[#4F46E5] flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[24px]">{selectedIcon}</span>
+                            <SelectedProjectIcon className="w-6 h-6" />
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-[#1b1b24]">Create New Project</h3>
@@ -143,7 +138,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                         onClick={onClose}
                         className="text-[#777587] hover:text-[#1b1b24] p-1.5 rounded-lg hover:bg-[#e4e1ee]/50 transition-colors cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[20px]">close</span>
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -237,7 +232,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                                     title={c.label}
                                 >
                                     {selectedColor === c.hex && (
-                                        <span className="material-symbols-outlined text-[14px] text-white">check</span>
+                                        <Check className="w-3.5 h-3.5 text-white" />
                                     )}
                                 </button>
                             ))}
@@ -248,20 +243,23 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                     <div>
                         <label className="block text-xs font-bold text-[#1b1b24] mb-2">Project Icon</label>
                         <div className="grid grid-cols-6 gap-2">
-                            {ICONS.map((ic) => (
-                                <button
-                                    key={ic.name}
-                                    type="button"
-                                    onClick={() => setSelectedIcon(ic.name)}
-                                    className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
-                                        selectedIcon === ic.name
-                                            ? 'border-[#4F46E5] bg-[#4F46E5]/10 text-[#4F46E5]'
-                                            : 'border-[#E2E8F0] bg-white text-[#777587] hover:bg-[#f5f2ff]'
-                                    }`}
-                                >
-                                    <span className="material-symbols-outlined text-[20px]">{ic.name}</span>
-                                </button>
-                            ))}
+                            {PROJECT_ICONS_CONFIG.slice(0, 6).map((ic) => {
+                                const IconComponent = ic.icon;
+                                return (
+                                    <button
+                                        key={ic.name}
+                                        type="button"
+                                        onClick={() => setSelectedIcon(ic.name)}
+                                        className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                                            selectedIcon === ic.name
+                                                ? 'border-[#4F46E5] bg-[#4F46E5]/10 text-[#4F46E5]'
+                                                : 'border-[#E2E8F0] bg-white text-[#777587] hover:bg-[#f5f2ff]'
+                                        }`}
+                                    >
+                                        <IconComponent className="w-5 h-5" />
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -279,7 +277,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                             disabled={isSubmitting}
                             className="px-5 py-2 bg-[#4F46E5] text-white text-xs font-semibold rounded-xl hover:bg-[#3525cd] transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-2"
                         >
-                            {isSubmitting && <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>}
+                            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                             Create Project
                         </button>
                     </div>

@@ -99,12 +99,12 @@ export async function POST(request: NextRequest) {
         try {
             await sendEmail({
                 to: user.email,
-                subject: 'Welcome to ProjectHub',
+                subject: 'Welcome to OmniSync',
                 template: 'welcome',
                 data: {
                     name: user.name,
-                    title: 'Welcome to ProjectHub',
-                    message: 'Thank you for signing up to ProjectHub. Your personal workspace is ready!',
+                    title: 'Welcome to OmniSync',
+                    message: 'Thank you for signing up to OmniSync. Your personal workspace is ready!',
                     buttonText: 'Login',
                     buttonUrl: '/login',
                 },

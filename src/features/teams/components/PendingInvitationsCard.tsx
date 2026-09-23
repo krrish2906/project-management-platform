@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
+import { Clock, ChevronDown } from 'lucide-react';
 
 export interface PendingInvite {
     id: string;
@@ -47,19 +48,17 @@ export function PendingInvitationsCard({
                 className="w-full flex justify-between items-center p-4 cursor-pointer hover:bg-[#F8FAFC]/70 transition-colors text-left"
             >
                 <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#4F46E5] text-[20px]">pending_actions</span>
+                    <Clock className="w-5 h-5 text-[#4F46E5]" />
                     <h3 className="text-sm font-bold text-[#0f172a]">Pending Invitations</h3>
                     <span className="bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60 text-[11px] font-bold px-2 py-0.5 rounded-full ml-1">
                         {invites.length}
                     </span>
                 </div>
-                <span
-                    className={`material-symbols-outlined text-[#94a3b8] transition-transform duration-300 ${
+                <ChevronDown
+                    className={`w-5 h-5 text-[#94a3b8] transition-transform duration-300 ${
                         isOpen ? 'rotate-180' : ''
                     }`}
-                >
-                    expand_more
-                </span>
+                />
             </button>
 
             {isOpen && (

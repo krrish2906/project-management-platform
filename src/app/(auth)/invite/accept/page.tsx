@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
+import { UserPlus, CheckCircle2, AlertCircle } from 'lucide-react';
 
 function AcceptInviteContent() {
     const searchParams = useSearchParams();
@@ -55,7 +56,7 @@ function AcceptInviteContent() {
         <div className="min-h-screen bg-[#fcf8ff] flex flex-col justify-center items-center p-6 text-[#1b1b24]">
             <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-[#e4e1ee] shadow-2xl text-center">
                 <div className="w-14 h-14 bg-[#4f46e5]/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#4f46e5]">
-                    <span className="material-symbols-outlined text-[32px]">group_add</span>
+                    <UserPlus className="w-8 h-8" />
                 </div>
 
                 <h1 className="text-2xl font-bold text-[#1b1b24] mb-2">Workspace Invitation</h1>
@@ -70,7 +71,7 @@ function AcceptInviteContent() {
                 {status === 'success' && (
                     <div className="py-6 space-y-4">
                         <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-                            <span className="material-symbols-outlined text-[28px]">check_circle</span>
+                            <CheckCircle2 className="w-7 h-7" />
                         </div>
                         <h2 className="text-lg font-bold text-[#1b1b24]">Welcome to {workspaceName}!</h2>
                         <p className="text-xs text-[#64748b]">{message}</p>
@@ -101,7 +102,7 @@ function AcceptInviteContent() {
                 {status === 'error' && (
                     <div className="py-6 space-y-4">
                         <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto">
-                            <span className="material-symbols-outlined text-[28px]">error</span>
+                            <AlertCircle className="w-7 h-7" />
                         </div>
                         <p className="text-xs text-rose-600 font-semibold">{message}</p>
                         <Link

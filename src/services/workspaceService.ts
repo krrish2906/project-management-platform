@@ -52,6 +52,63 @@ export async function createDefaultWorkspace(userId: string, userName: string) {
     return workspace;
 }
 
+// Helper to get UTC start of current calendar month (1st of month at 00:00:00 UTC)
+export function getStartOfCurrentMonth(): Date {
+    const now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
+}
+
+// Check if workspace monthly reset is due
+export function isQuotaResetNeeded(resetAt?: Date | string | null): boolean {
+    if (!resetAt) return true;
+    return new Date(resetAt).getTime() < getStartOfCurrentMonth().getTime();
+}
+
+// Just-in-time monthly quota reset check & update
+export async function checkAndResetWorkspaceAiQuota(workspace: any): Promise<{
+    aiPromptsUsed: number;
+    aiPromptsResetAt: Date;
+}> {
+    if (!workspace) {
+        return { aiPromptsUsed: 0, aiPromptsResetAt: new Date() };
+    }
+
+    try {
+        // Fetch current reset timestamp and usage directly from database
+        let resetAt = workspace.aiPromptsResetAt;
+        if (!resetAt) {
+            const rows: any = await prisma.$queryRawUnsafe(
+                'SELECT "aiPromptsResetAt", "aiPromptsUsed" FROM "public"."Workspace" WHERE "id" = $1 LIMIT 1;',
+                workspace.id
+            );
+            if (rows && rows.length > 0) {
+                resetAt = rows[0].aiPromptsResetAt;
+                workspace.aiPromptsUsed = rows[0].aiPromptsUsed;
+            }
+        }
+
+        if (isQuotaResetNeeded(resetAt)) {
+            const now = new Date();
+            await prisma.$executeRawUnsafe(
+                'UPDATE "public"."Workspace" SET "aiPromptsUsed" = 0, "aiPromptsResetAt" = $1 WHERE "id" = $2;',
+                now,
+                workspace.id
+            );
+            workspace.aiPromptsUsed = 0;
+            workspace.aiPromptsResetAt = now;
+        } else {
+            workspace.aiPromptsResetAt = resetAt ? new Date(resetAt) : new Date();
+        }
+    } catch (err) {
+        console.error(`Failed to check/reset AI quota for workspace ${workspace.id}:`, err);
+    }
+
+    return {
+        aiPromptsUsed: Number(workspace.aiPromptsUsed || 0),
+        aiPromptsResetAt: workspace.aiPromptsResetAt ? new Date(workspace.aiPromptsResetAt) : new Date(),
+    };
+}
+
 // Get all workspaces a user belongs to
 export async function getUserWorkspaces(userId: string) {
     const memberships = await prisma.workspaceMember.findMany({
@@ -68,12 +125,22 @@ export async function getUserWorkspaces(userId: string) {
         orderBy: { joinedAt: 'asc' },
     });
 
-    return memberships.map((m) => ({
-        ...m.workspace,
-        storageUsed: Number(m.workspace.storageUsed || 0),
-        role: m.role,
-        joinedAt: m.joinedAt,
-    }));
+    const results = [];
+    for (const m of memberships) {
+        const ws = m.workspace;
+        const resetStatus = await checkAndResetWorkspaceAiQuota(ws);
+
+        results.push({
+            ...ws,
+            storageUsed: Number(ws.storageUsed || 0),
+            aiPromptsUsed: resetStatus.aiPromptsUsed,
+            aiPromptsResetAt: resetStatus.aiPromptsResetAt,
+            role: m.role,
+            joinedAt: m.joinedAt,
+        });
+    }
+
+    return results;
 }
 
 // Verify user has access to a workspace and return their membership role

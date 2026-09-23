@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { FolderOpen, CheckSquare, Users, CheckCircle2 } from 'lucide-react';
 
 interface TeamMember {
     id: string;
@@ -37,7 +38,7 @@ export function DashboardKpiGrid({
                 <div className="flex justify-between items-center">
                     <p className="text-xs font-semibold text-[#64748b]">Active Projects</p>
                     <div className="w-8 h-8 rounded-xl bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[18px]">folder_open</span>
+                        <FolderOpen className="w-4.5 h-4.5" />
                     </div>
                 </div>
                 <div className="flex items-baseline justify-between">
@@ -57,7 +58,7 @@ export function DashboardKpiGrid({
                 <div className="flex justify-between items-center">
                     <p className="text-xs font-semibold text-[#64748b]">My Open Tasks</p>
                     <div className="w-8 h-8 rounded-xl bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[18px]">assignment</span>
+                        <CheckSquare className="w-4.5 h-4.5" />
                     </div>
                 </div>
                 <div className="flex items-baseline justify-between">
@@ -75,7 +76,7 @@ export function DashboardKpiGrid({
                 <div className="flex justify-between items-center">
                     <p className="text-xs font-semibold text-[#64748b]">Workspace Team</p>
                     <div className="w-8 h-8 rounded-xl bg-[#F0FDF4] text-emerald-600 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[18px]">group</span>
+                        <Users className="w-4.5 h-4.5" />
                     </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -107,7 +108,7 @@ export function DashboardKpiGrid({
                 <div className="flex justify-between items-center">
                     <p className="text-xs font-semibold text-[#64748b]">Completed Tasks</p>
                     <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[18px]">task_alt</span>
+                        <CheckCircle2 className="w-4.5 h-4.5" />
                     </div>
                 </div>
                 <div className="flex items-baseline justify-between">

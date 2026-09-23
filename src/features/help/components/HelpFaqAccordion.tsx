@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
+import { HelpCircle, ChevronDown } from 'lucide-react';
 
 interface FaqItem {
     id: string;
@@ -51,7 +52,7 @@ export function HelpFaqAccordion({ searchQuery }: HelpFaqAccordionProps) {
     return (
         <div className="flex flex-col h-full">
             <div className="flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-[20px] text-[#4F46E5]">quiz</span>
+                <HelpCircle className="w-5 h-5 text-[#4F46E5]" />
                 <h2 className="text-lg font-bold text-[#0f172a]">
                     Frequently Asked Questions
                 </h2>
@@ -81,13 +82,11 @@ export function HelpFaqAccordion({ searchQuery }: HelpFaqAccordionProps) {
                                     <span className={`text-xs sm:text-sm font-bold pr-2 transition-colors ${isOpen ? 'text-[#4F46E5]' : 'text-[#0f172a]'}`}>
                                         {faq.question}
                                     </span>
-                                    <span
-                                        className={`material-symbols-outlined text-[20px] transition-transform duration-200 shrink-0 ${
+                                    <ChevronDown
+                                        className={`w-5 h-5 transition-transform duration-200 shrink-0 ${
                                             isOpen ? 'rotate-180 text-[#4F46E5]' : 'text-[#94a3b8]'
                                         }`}
-                                    >
-                                        expand_more
-                                    </span>
+                                    />
                                 </button>
 
                                 {isOpen && (

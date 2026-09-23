@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Plus } from 'lucide-react';
 
 interface KanbanColumnHeaderProps {
     title: string;
@@ -38,7 +39,7 @@ export function KanbanColumnHeader({
                     className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[#F1F5F9] text-[#64748b] hover:text-[#0f172a] transition-colors cursor-pointer"
                     title={`Add task to ${title}`}
                 >
-                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <Plus className="w-4 h-4" />
                 </button>
             )}
         </div>

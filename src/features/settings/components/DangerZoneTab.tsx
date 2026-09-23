@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { User } from '@/types';
 import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 import { toast } from 'react-hot-toast';
+import { AlertTriangle, Lock, Plus, Trash2 } from 'lucide-react';
 
 interface DangerZoneTabProps {
     user: User | null;
@@ -57,7 +58,7 @@ export function DangerZoneTab({ user, onOpenCreateWorkspace }: DangerZoneTabProp
             {/* Header */}
             <div className="flex items-start gap-3.5 pb-4 mb-5 border-b border-rose-100">
                 <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 shrink-0">
-                    <span className="material-symbols-outlined text-[22px]">warning</span>
+                    <AlertTriangle className="w-5.5 h-5.5" />
                 </div>
                 <div>
                     <h2 className="text-base font-bold text-rose-700">Delete Workspace</h2>
@@ -71,9 +72,7 @@ export function DangerZoneTab({ user, onOpenCreateWorkspace }: DangerZoneTabProp
             {isSingleWorkspace ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
                     <div className="flex items-start gap-2.5">
-                        <span className="material-symbols-outlined text-amber-600 text-[20px] shrink-0 mt-0.5">
-                            lock
-                        </span>
+                        <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                         <div>
                             <h4 className="text-xs font-bold text-amber-900">
                                 Single Workspace Protection Active
@@ -87,7 +86,7 @@ export function DangerZoneTab({ user, onOpenCreateWorkspace }: DangerZoneTabProp
                                     onClick={onOpenCreateWorkspace}
                                     className="mt-3 px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                                 >
-                                    <span className="material-symbols-outlined text-[16px]">add</span>
+                                    <Plus className="w-4 h-4" />
                                     <span>Create New Workspace</span>
                                 </button>
                             )}
@@ -132,9 +131,7 @@ export function DangerZoneTab({ user, onOpenCreateWorkspace }: DangerZoneTabProp
                                     : 'bg-[#F1F5F9] text-[#94a3b8] border border-[#E2E8F0] cursor-not-allowed'
                             }`}
                         >
-                            <span className="material-symbols-outlined text-[16px]">
-                                delete_forever
-                            </span>
+                            <Trash2 className="w-4 h-4" />
                             <span>{isDeleting ? 'Deleting Workspace...' : 'Delete Workspace'}</span>
                         </button>
                     </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Search, List, Kanban, Calendar } from 'lucide-react';
 
 interface ProjectOption {
     id: string;
@@ -43,9 +44,7 @@ export function TasksToolbar({
         <div className="flex flex-col lg:flex-row gap-3.5 justify-between items-stretch lg:items-center">
             {/* 1. Search Input */}
             <div className="flex-1 w-full lg:max-w-xs relative">
-                <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[18px]">
-                    search
-                </span>
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] w-4.5 h-4.5" />
                 <input
                     type="text"
                     value={searchQuery}
@@ -132,7 +131,7 @@ export function TasksToolbar({
                         }`}
                         title="List View"
                     >
-                        <span className="material-symbols-outlined text-[15px] leading-none">view_list</span>
+                        <List className="w-3.75 h-3.75" />
                     </button>
                     <button
                         onClick={() => onViewModeChange('kanban')}
@@ -143,7 +142,7 @@ export function TasksToolbar({
                         }`}
                         title="Kanban Board View"
                     >
-                        <span className="material-symbols-outlined text-[15px] leading-none">view_kanban</span>
+                        <Kanban className="w-3.75 h-3.75" />
                     </button>
                     <button
                         onClick={() => onViewModeChange('calendar')}
@@ -154,7 +153,7 @@ export function TasksToolbar({
                         }`}
                         title="Calendar View"
                     >
-                        <span className="material-symbols-outlined text-[15px] leading-none">calendar_month</span>
+                        <Calendar className="w-3.75 h-3.75" />
                     </button>
                 </div>
             </div>

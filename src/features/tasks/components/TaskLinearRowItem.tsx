@@ -2,6 +2,18 @@
 
 import React from 'react';
 import type { Task } from '@/types';
+import {
+    CheckCircle2,
+    Clock,
+    Eye,
+    Circle,
+    ChevronsUp,
+    Equal,
+    ChevronDown,
+    Check,
+    Flag,
+    MoreHorizontal
+} from 'lucide-react';
 
 interface TaskLinearRowItemProps {
     task: Task;
@@ -17,15 +29,15 @@ export function TaskLinearRowItem({ task, onClick }: TaskLinearRowItemProps) {
         switch (status) {
             case 'done':
             case 'DONE':
-                return <span className="material-symbols-outlined text-[16px] text-[#006c49]">check_circle</span>;
+                return <CheckCircle2 className="w-4 h-4 text-[#006c49]" />;
             case 'inprogress':
             case 'IN_PROGRESS':
-                return <span className="material-symbols-outlined text-[16px] text-[#4f46e5]">adjust</span>;
+                return <Clock className="w-4 h-4 text-[#4f46e5]" />;
             case 'review':
             case 'IN_REVIEW':
-                return <span className="material-symbols-outlined text-[16px] text-[#a44100]">visibility</span>;
+                return <Eye className="w-4 h-4 text-[#a44100]" />;
             default:
-                return <span className="material-symbols-outlined text-[16px] text-[#777587]">radio_button_unchecked</span>;
+                return <Circle className="w-4 h-4 text-[#777587]" />;
         }
     };
 
@@ -37,21 +49,21 @@ export function TaskLinearRowItem({ task, onClick }: TaskLinearRowItemProps) {
             case 'highest':
                 return (
                     <span className="flex items-center gap-1 text-[11px] font-medium text-[#ba1a1a] bg-[#ffdad6]/40 px-1.5 py-0.5 rounded">
-                        <span className="material-symbols-outlined text-[12px]">keyboard_double_arrow_up</span>
+                        <ChevronsUp className="w-3 h-3" />
                         High
                     </span>
                 );
             case 'medium':
                 return (
                     <span className="flex items-center gap-1 text-[11px] font-medium text-[#a44100] bg-[#ffd2be]/40 px-1.5 py-0.5 rounded">
-                        <span className="material-symbols-outlined text-[12px]">drag_handle</span>
+                        <Equal className="w-3 h-3" />
                         Med
                     </span>
                 );
             default:
                 return (
                     <span className="flex items-center gap-1 text-[11px] font-medium text-[#777587] bg-[#eae6f4] px-1.5 py-0.5 rounded">
-                        <span className="material-symbols-outlined text-[12px]">keyboard_arrow_down</span>
+                        <ChevronDown className="w-3 h-3" />
                         Low
                     </span>
                 );
@@ -73,7 +85,7 @@ export function TaskLinearRowItem({ task, onClick }: TaskLinearRowItemProps) {
                 <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                     isCompleted ? 'bg-[#006c49] border-[#006c49]' : 'border-[#c7c4d8] group-hover:border-[#4f46e5]'
                 }`}>
-                    {isCompleted && <span className="material-symbols-outlined text-white text-[12px]">check</span>}
+                    {isCompleted && <Check className="text-white w-3 h-3" />}
                 </div>
             </div>
 
@@ -137,20 +149,20 @@ export function TaskLinearRowItem({ task, onClick }: TaskLinearRowItemProps) {
                     className="p-1.5 text-[#464555] hover:text-[#4f46e5] hover:bg-[#eae6f4] rounded transition-colors cursor-pointer"
                     title="Change Status"
                 >
-                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                    <CheckCircle2 className="w-4.5 h-4.5" />
                 </button>
                 <button
                     className="p-1.5 text-[#464555] hover:text-[#4f46e5] hover:bg-[#eae6f4] rounded transition-colors cursor-pointer"
                     title="Set Priority"
                 >
-                    <span className="material-symbols-outlined text-[18px]">flag</span>
+                    <Flag className="w-4.5 h-4.5" />
                 </button>
                 <div className="w-px h-4 bg-[#c7c4d8] mx-0.5"></div>
                 <button
                     className="p-1.5 text-[#464555] hover:text-[#1b1b24] hover:bg-[#eae6f4] rounded transition-colors cursor-pointer"
                     title="More"
                 >
-                    <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+                    <MoreHorizontal className="w-4.5 h-4.5" />
                 </button>
             </div>
         </div>

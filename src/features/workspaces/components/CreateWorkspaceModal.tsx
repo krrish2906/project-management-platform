@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { toast } from 'react-hot-toast';
+import { Building2, X, Info } from 'lucide-react';
 
 interface CreateWorkspaceModalProps {
     isOpen: boolean;
@@ -48,11 +49,11 @@ export function CreateWorkspaceModal({ isOpen, onClose, onCreated }: CreateWorks
             <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-[#E2E8F0] animate-in fade-in zoom-in duration-150 relative z-100000">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#4F46E5]">add_business</span>
+                        <Building2 className="w-5 h-5 text-[#4F46E5]" />
                         <h3 className="text-[20px] font-bold text-[#1b1b24]">Create New Workspace</h3>
                     </div>
                     <button onClick={onClose} className="text-[#777587] hover:text-[#1b1b24] cursor-pointer">
-                        <span className="material-symbols-outlined">close</span>
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -76,7 +77,7 @@ export function CreateWorkspaceModal({ isOpen, onClose, onCreated }: CreateWorks
 
                     {/* Business SaaS Plan Notice */}
                     <div className="p-3 bg-[#f5f2ff] border border-[#4F46E5]/20 rounded-2xl flex items-start gap-2.5 text-xs text-[#464555]">
-                        <span className="material-symbols-outlined text-[#4F46E5] text-[18px] shrink-0 mt-0.5">info</span>
+                        <Info className="w-4.5 h-4.5 text-[#4F46E5] shrink-0 mt-0.5" />
                         <div>
                             <p className="font-bold text-[#1b1b24] mb-0.5">Default Plan: Free Tier</p>
                             <p className="text-[11px] leading-relaxed">

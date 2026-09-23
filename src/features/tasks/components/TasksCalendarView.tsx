@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import type { Task } from '@/types';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface TasksCalendarViewProps {
     tasks: Task[];
@@ -76,13 +77,13 @@ export function TasksCalendarView({ tasks, onTaskClick }: TasksCalendarViewProps
                         onClick={prevMonth}
                         className="w-8 h-8 flex items-center justify-center bg-white border border-[#E2E8F0] rounded-lg text-[#64748b] hover:text-[#0f172a] hover:bg-[#F8FAFC] transition-colors shadow-2xs cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                        <ChevronLeft className="w-4.5 h-4.5" />
                     </button>
                     <button
                         onClick={nextMonth}
                         className="w-8 h-8 flex items-center justify-center bg-white border border-[#E2E8F0] rounded-lg text-[#64748b] hover:text-[#0f172a] hover:bg-[#F8FAFC] transition-colors shadow-2xs cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                        <ChevronRight className="w-4.5 h-4.5" />
                     </button>
                 </div>
             </div>

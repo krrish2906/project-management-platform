@@ -2,29 +2,43 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useWorkspaceStore } from "@/features/workspaces/store/useWorkspaceStore";
 import { useProjectStore } from "@/features/projects/store/useProjectStore";
 import { CreateWorkspaceModal } from "@/features/workspaces/components/CreateWorkspaceModal";
+import { 
+    LayoutDashboard, 
+    FolderOpen, 
+    CheckSquare, 
+    Users, 
+    CreditCard, 
+    Settings, 
+    User, 
+    HelpCircle, 
+    ChevronsUpDown, 
+    Check, 
+    Plus 
+} from "lucide-react";
 
 const navSections = [
     {
         title: "Workspace",
         items: [
-            { name: "Dashboard", icon: "dashboard", href: "/dashboard" },
-            { name: "Projects", icon: "folder_open", href: "/projects" },
-            { name: "My Tasks", icon: "assignment", href: "/tasks" },
-            { name: "Workspace Team", icon: "group", href: "/teams" },
+            { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+            { name: "Projects", icon: FolderOpen, href: "/projects" },
+            { name: "My Tasks", icon: CheckSquare, href: "/tasks" },
+            { name: "Workspace Team", icon: Users, href: "/teams" },
         ],
     },
     {
         title: "Account",
         items: [
-            { name: "Billing", icon: "payments", href: "/billing" },
-            { name: "Settings", icon: "settings", href: "/settings" },
-            { name: "My Profile", icon: "account_circle", href: "/profile" },
-            { name: "Help", icon: "help", href: "/help" },
+            { name: "Billing", icon: CreditCard, href: "/billing" },
+            { name: "Settings", icon: Settings, href: "/settings" },
+            { name: "My Profile", icon: User, href: "/profile" },
+            { name: "Help", icon: HelpCircle, href: "/help" },
         ],
     },
 ];
@@ -71,12 +85,19 @@ export default function Sidebar() {
         <aside className="bg-white text-[#1b1b24] w-64 border-r border-[#E2E8F0] hidden md:flex flex-col h-full py-5 px-3.5 z-20 shrink-0 select-none">
             {/* Header / Brand */}
             <div className="mb-6 flex items-center gap-3 px-2">
-                <div className="w-8 h-8 rounded-xl bg-linear-to-br from-[#4F46E5] to-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                    P
+                <div className="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                    <Image
+                        src="/favicon.png"
+                        alt="OmniSync Logo"
+                        width={36}
+                        height={36}
+                        className="w-full h-full object-contain"
+                        priority
+                    />
                 </div>
                 <div>
                     <h1 className="text-base font-bold text-[#0f172a] tracking-tight leading-none">
-                        ProjectHub
+                        OmniSync
                     </h1>
                     <p className="text-[11px] text-[#64748b] mt-1 font-medium">Workspace Hub</p>
                 </div>
@@ -91,6 +112,7 @@ export default function Sidebar() {
                         </div>
                         {section.items.map((item) => {
                             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href));
+                            const Icon = item.icon;
                             return (
                                 <Link
                                     key={item.name}
@@ -101,14 +123,11 @@ export default function Sidebar() {
                                             : "text-[#475569] hover:text-[#0f172a] hover:bg-[#F8FAFC]"
                                     }`}
                                 >
-                                    <span
-                                        className={`material-symbols-outlined text-[19px] ${
+                                    <Icon
+                                        className={`w-4.75 h-4.75 shrink-0 transition-colors ${
                                             isActive ? "text-[#4F46E5]" : "text-[#64748b]"
                                         }`}
-                                        style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
-                                    >
-                                        {item.icon}
-                                    </span>
+                                    />
                                     <span>{item.name}</span>
                                 </Link>
                             );
@@ -139,9 +158,7 @@ export default function Sidebar() {
                             <span className="text-[9px] font-bold px-1.5 py-0.2 bg-[#4F46E5]/10 text-[#4F46E5] rounded-md border border-[#4F46E5]/20 uppercase">
                                 {activeWs.plan}
                             </span>
-                            <span className="material-symbols-outlined text-[#64748b] text-[15px] group-hover:text-[#4F46E5] transition-transform">
-                                {isSwitcherOpen ? 'expand_more' : 'unfold_more'}
-                            </span>
+                            <ChevronsUpDown className="w-3.75 h-3.75 text-[#64748b] group-hover:text-[#4F46E5] transition-colors" />
                         </div>
                     </div>
 
@@ -187,7 +204,7 @@ export default function Sidebar() {
                                             <span className="text-[10px] text-[#64748b] font-normal">{ws.role} • {ws.plan} Plan</span>
                                         </div>
                                         {isSelected && (
-                                            <span className="material-symbols-outlined text-[16px] text-[#4F46E5] shrink-0">check</span>
+                                            <Check className="w-4 h-4 text-[#4F46E5] shrink-0" />
                                         )}
                                     </button>
                                 );
@@ -201,7 +218,7 @@ export default function Sidebar() {
                     onClick={() => setIsCreateModalOpen(true)}
                     className="w-full py-2 px-3 bg-[#EEF2FF]/60 hover:bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE] hover:border-[#818CF8] rounded-xl text-xs font-semibold transition-all shadow-2xs hover:shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                    <span className="material-symbols-outlined text-[16px] text-[#4F46E5]">add</span>
+                    <Plus className="w-4 h-4 text-[#4F46E5]" />
                     <span>New Workspace</span>
                 </button>
             </div>

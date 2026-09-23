@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
+import { Loader2, History } from 'lucide-react';
 
 interface ActivityItem {
     id: string;
@@ -49,14 +50,12 @@ export function RecentActivityTimeline() {
 
             {isLoading ? (
                 <div className="py-6 flex items-center justify-center">
-                    <span className="material-symbols-outlined animate-spin text-[#4F46E5] text-xl">
-                        progress_activity
-                    </span>
+                    <Loader2 className="w-5 h-5 animate-spin text-[#4F46E5]" />
                 </div>
             ) : activities.length === 0 ? (
                 <div className="py-7 px-4 text-center border border-dashed border-[#E2E8F0] rounded-xl bg-[#F8FAFC]">
                     <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mx-auto mb-1.5">
-                        <span className="material-symbols-outlined text-[18px]">history</span>
+                        <History className="w-4.5 h-4.5" />
                     </div>
                     <p className="text-xs font-semibold text-[#1e293b]">No activity yet</p>
                     <p className="text-[11px] text-[#64748b] mt-0.5">Team events and task updates will appear here.</p>

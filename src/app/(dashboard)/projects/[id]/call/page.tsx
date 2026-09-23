@@ -9,6 +9,7 @@ import '@livekit/components-styles';
 import Header from '@/components/layout/Header';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
+import { Check, Copy, ArrowLeft, Video, Mic, Loader2, DoorOpen } from 'lucide-react';
 
 export default function ProjectCallPage() {
     const router = useRouter();
@@ -136,16 +137,14 @@ export default function ProjectCallPage() {
                         onClick={handleCopy}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f2ff] hover:bg-[#eae6f4] border border-[#e4e1ee] text-[#4f46e5] rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[16px]">
-                            {copied ? 'check' : 'content_copy'}
-                        </span>
+                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         {copied ? 'Copied' : 'Share Link'}
                     </button>
                     <button
                         onClick={() => router.push(`/projects/${projectId}/chatroom`)}
                         className="flex items-center gap-1 px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs font-semibold hover:bg-rose-100 transition-colors cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                        <ArrowLeft className="w-4 h-4" />
                         Back to Chat
                     </button>
                 </div>
@@ -157,9 +156,7 @@ export default function ProjectCallPage() {
                     /* Pre-Join Card */
                     <div className="max-w-md w-full bg-white rounded-3xl border border-[#E2E8F0] p-8 shadow-level-1 text-center space-y-6 animate-in fade-in zoom-in duration-200">
                         <div className="w-20 h-20 rounded-full bg-[#4f46e5]/10 border border-[#4f46e5]/20 text-[#4f46e5] flex items-center justify-center mx-auto">
-                            <span className="material-symbols-outlined text-4xl">
-                                {callType === 'video' ? 'videocam' : 'mic'}
-                            </span>
+                            {callType === 'video' ? <Video className="w-9 h-9" /> : <Mic className="w-9 h-9" />}
                         </div>
 
                         <div>
@@ -185,16 +182,12 @@ export default function ProjectCallPage() {
                             >
                                 {isJoining ? (
                                     <>
-                                        <span className="material-symbols-outlined text-base animate-spin">
-                                            progress_activity
-                                        </span>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
                                         Connecting to LiveKit...
                                     </>
                                 ) : (
                                     <>
-                                        <span className="material-symbols-outlined text-base">
-                                            meeting_room
-                                        </span>
+                                        <DoorOpen className="w-4 h-4" />
                                         Enter Meeting Room
                                     </>
                                 )}

@@ -6,7 +6,7 @@ const baseStyles = `
         margin: 0;
         padding: 0;
         background-color: #f8fafc;
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         color: #1e293b;
         line-height: 1.6;
     }
@@ -145,8 +145,8 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                 <div className="container">
                     <div className="email-card">
                         <div className="email-header">
-                            <div className="brand-logo">P</div>
-                            <h1>{title || 'ProjectHub Workspace'}</h1>
+                            <div className="brand-logo">O</div>
+                            <h1>{title || 'OmniSync Workspace'}</h1>
                             <p className="subtitle">
                                 {template === 'welcome' ? 'Welcome to your engineering platform' :
                                  template === 'reset-password' ? 'Account Security Verification' :
@@ -177,13 +177,13 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                             
                             <p style={{ marginTop: '32px', color: '#64748b', fontSize: '14px' }}>
                                 Best regards,<br />
-                                <strong>The ProjectHub Team</strong>
+                                <strong>The OmniSync Team</strong>
                             </p>
                         </div>
                         
                         <div className="email-footer">
                             <p className="footer-text">
-                                © {new Date().getFullYear()} ProjectHub Platform Inc. All rights reserved.<br />
+                                © {new Date().getFullYear()} OmniSync Platform Inc. All rights reserved.<br />
                                 This is an automated transactional message.
                             </p>
                         </div>

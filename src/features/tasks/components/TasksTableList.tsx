@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { Task } from '@/types';
+import { CheckSquare } from 'lucide-react';
 
 interface TasksTableListProps {
     tasks: Task[];
@@ -52,7 +53,7 @@ export function TasksTableList({ tasks, onTaskClick }: TasksTableListProps) {
     if (tasks.length === 0) {
         return (
             <div className="bg-white rounded-2xl p-12 text-center border border-[#E2E8F0] shadow-2xs">
-                <span className="material-symbols-outlined text-[#94a3b8] text-[48px] mb-2">task_alt</span>
+                <CheckSquare className="w-12 h-12 text-[#94a3b8] mb-2 mx-auto" />
                 <h3 className="text-base font-bold text-[#0f172a] mb-1">No Tasks Found</h3>
                 <p className="text-xs text-[#64748b]">Try adjusting your search query or filters.</p>
             </div>

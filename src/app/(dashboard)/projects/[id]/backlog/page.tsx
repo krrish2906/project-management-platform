@@ -1,426 +1,497 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { 
-    ArrowLeft, Search, Plus, Calendar, Settings, ChevronDown, ChevronRight, 
-    MoreHorizontal, Loader2, Bug, BookOpen, Zap, Layers, ListChecks, Play, CheckCircle, AlertCircle
-} from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { useParams, useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import Header from '@/components/layout/Header';
+import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useTaskStore } from '@/features/tasks/store/useTaskStore';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
 import { useSprintStore } from '@/features/sprints/store/useSprintStore';
-import type { Task, Sprint } from '@/types';
+import TaskDetailSlideout from '@/features/tasks/components/TaskDetailSlideout';
+import { CreateTaskModal } from '@/features/tasks/components/CreateTaskModal';
+
+// Modular Sprints & Backlog Components
+import { SprintCard } from '@/features/sprints/components/SprintCard';
+import { BacklogToolbar } from '@/features/sprints/components/BacklogToolbar';
+import { SprintModal } from '@/features/sprints/components/SprintModal';
+import { CompleteSprintModal } from '@/features/sprints/components/CompleteSprintModal';
+
+import type { Task, Sprint, TaskPriority, TaskType } from '@/types';
 
 export default function BacklogPage() {
     const router = useRouter();
-    const { user } = useAuth(false);
+    const { user, isLoading: authLoading } = useAuth(false);
     const { id } = useParams();
     const projectId = id as string;
 
-    const { tasks, isLoading: tasksLoading, fetchTasks, moveTask, updateTask } = useTaskStore();
+    const { tasks, isLoading: tasksLoading, fetchTasks, createTask, updateTask } = useTaskStore();
     const { projects, fetchProjects } = useProjectStore();
-    const { sprints, isLoading: sprintsLoading, fetchSprints, createSprint, startSprint, completeSprint } = useSprintStore();
+    const { 
+        sprints, 
+        isLoading: sprintsLoading, 
+        fetchSprints, 
+        createSprint, 
+        updateSprint, 
+        deleteSprint, 
+        startSprint, 
+        completeSprint 
+    } = useSprintStore();
 
-    const [expandedSprints, setExpandedSprints] = useState<Record<string, boolean>>({ backlog: true });
-    const [showCreateSprintModal, setShowCreateSprintModal] = useState(false);
-    const [newSprintName, setNewSprintName] = useState('');
+    // UI state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [priorityFilter, setPriorityFilter] = useState('ALL');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+    const [assigneeFilter, setAssigneeFilter] = useState('ALL');
+
+    const [expandedSprints, setExpandedSprints] = useState<Record<string, boolean>>({
+        active: true,
+        backlog: true,
+        completed: false,
+    });
+
+    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
     
-    const [showCompleteModal, setShowCompleteModal] = useState(false);
-    const [completingSprintId, setCompletingSprintId] = useState<string | null>(null);
+    // Sprint Modals
+    const [sprintModalOpen, setSprintModalOpen] = useState(false);
+    const [editingSprint, setEditingSprint] = useState<Sprint | null>(null);
+    const [completingSprint, setCompletingSprint] = useState<Sprint | null>(null);
 
     useEffect(() => {
-        fetchTasks({ project: projectId });
-        fetchProjects();
-        fetchSprints(projectId);
+        if (projectId) {
+            fetchTasks({ project: projectId });
+            fetchProjects();
+            fetchSprints(projectId);
+        }
     }, [fetchTasks, fetchProjects, fetchSprints, projectId]);
 
-    const project = projects.find(p => p.id === projectId);
+    const project = projects.find((p) => p.id === projectId);
     const canEdit = user?.role !== 'viewer';
+    const projectKey = project?.key || (project?.name ? project.name.slice(0, 3).toUpperCase() : 'PRJ');
 
-    const projectTasks = tasks.filter(t => (t.projectId || (t as any).project) === projectId);
+    // Filter project tasks
+    const projectTasks = useMemo(() => {
+        return tasks.filter((t) => (t.projectId || (t as any).project) === projectId);
+    }, [tasks, projectId]);
 
-    const activeSprints = sprints.filter(s => s.status === 'ACTIVE');
-    const planningSprints = sprints.filter(s => s.status === 'PLANNING');
-    
-    const getTasksForSprint = (sprintId: string | null) => {
-        return projectTasks.filter(t => {
-            if (sprintId === null) return !t.sprintId;
-            return t.sprintId === sprintId;
-        }).sort((a, b) => a.order - b.order);
-    };
+    // Apply search and filter criteria
+    const filteredTasks = useMemo(() => {
+        return projectTasks.filter((task) => {
+            // Search query filter
+            if (searchQuery.trim()) {
+                const query = searchQuery.toLowerCase().trim();
+                const titleMatch = task.title.toLowerCase().includes(query);
+                const numberMatch = task.number ? `#${task.number}`.includes(query) || `${task.number}`.includes(query) : false;
+                const keyMatch = task.key ? task.key.toLowerCase().includes(query) : false;
+                if (!titleMatch && !numberMatch && !keyMatch) return false;
+            }
 
-    const backlogTasks = getTasksForSprint(null);
+            // Priority filter
+            if (priorityFilter !== 'ALL') {
+                if (task.priority?.toUpperCase() !== priorityFilter) return false;
+            }
 
+            // Status filter
+            if (statusFilter !== 'ALL') {
+                if (statusFilter === 'OPEN') {
+                    if (task.status?.toUpperCase() === 'DONE' || task.status?.toUpperCase() === 'CANCELLED') return false;
+                } else if (task.status?.toUpperCase() !== statusFilter) {
+                    return false;
+                }
+            }
+
+            // Assignee filter
+            if (assigneeFilter !== 'ALL') {
+                if (assigneeFilter === 'UNASSIGNED') {
+                    if (task.assignee) return false;
+                } else if (task.assignee?.id !== assigneeFilter) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }, [projectTasks, searchQuery, priorityFilter, statusFilter, assigneeFilter]);
+
+    // Sprints categorization
+    const activeSprint = useMemo(() => sprints.find((s) => s.status === 'ACTIVE') || null, [sprints]);
+    const planningSprints = useMemo(() => sprints.filter((s) => s.status === 'PLANNING'), [sprints]);
+    const completedSprints = useMemo(() => sprints.filter((s) => s.status === 'COMPLETED'), [sprints]);
+
+    // Task grouping by sprint
+    const getTasksForSprint = useCallback((sprintId: string | null) => {
+        return filteredTasks
+            .filter((t) => {
+                if (sprintId === null) return !t.sprintId;
+                return t.sprintId === sprintId;
+            })
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+    }, [filteredTasks]);
+
+    const activeSprintTasks = useMemo(() => activeSprint ? getTasksForSprint(activeSprint.id) : [], [activeSprint, getTasksForSprint]);
+    const backlogTasks = useMemo(() => getTasksForSprint(null), [getTasksForSprint]);
+
+    // Drag and Drop
     const onDragEnd = async (result: DropResult) => {
         const { source, destination, draggableId } = result;
         if (!destination) return;
         if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
         if (source.droppableId !== destination.droppableId) {
-            const newSprintId = destination.droppableId === 'backlog' ? null : destination.droppableId;
-            await updateTask(draggableId, { sprintId: newSprintId });
+            const targetSprintId = destination.droppableId === 'backlog' ? null : destination.droppableId;
+            try {
+                await updateTask(draggableId, { sprintId: targetSprintId });
+                toast.success(targetSprintId ? 'Moved to sprint' : 'Moved to backlog');
+            } catch {
+                toast.error('Failed to move task');
+            }
         }
     };
 
-    const handleCreateSprint = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newSprintName.trim()) return;
-        
-        await createSprint({
-            name: newSprintName,
-            project: projectId,
-        });
-        
-        setNewSprintName('');
-        setShowCreateSprintModal(false);
-    };
-
+    // Sprint Management Handlers
     const handleStartSprint = async (sprintId: string) => {
-        if (activeSprints.length > 0) {
-            alert('You already have an active sprint. Complete it before starting a new one.');
+        if (activeSprint) {
+            toast.error('You already have an active sprint. Complete it before starting a new one.');
             return;
         }
-        await startSprint(sprintId);
-    };
-
-    const handleCompleteSprintClick = (sprintId: string) => {
-        setCompletingSprintId(sprintId);
-        setShowCompleteModal(true);
-    };
-
-    const handleConfirmCompleteSprint = async () => {
-        if (!completingSprintId) return;
-        
-        await completeSprint(completingSprintId);
-        
-        const sprintTasks = getTasksForSprint(completingSprintId);
-        const unfinishedTasks = sprintTasks.filter(t => t.status !== 'DONE');
-        
-        for (const task of unfinishedTasks) {
-            await updateTask(task.id, { sprintId: null });
-        }
-        
-        setShowCompleteModal(false);
-        setCompletingSprintId(null);
-    };
-
-    const toggleSprint = (id: string) => {
-        setExpandedSprints(prev => ({ ...prev, [id]: !prev[id] }));
-    };
-
-    const getTypeIcon = (type: string) => {
-        switch (type?.toUpperCase()) {
-            case 'BUG': return <Bug className="w-4 h-4 text-red-500" />;
-            case 'STORY': return <BookOpen className="w-4 h-4 text-green-500" />;
-            case 'EPIC': return <Zap className="w-4 h-4 text-purple-500" />;
-            case 'FEATURE': return <Layers className="w-4 h-4 text-blue-500" />;
-            default: return <ListChecks className="w-4 h-4 text-blue-400" />;
+        try {
+            await startSprint(sprintId);
+            toast.success('Sprint started!');
+        } catch {
+            toast.error('Failed to start sprint');
         }
     };
 
-    if (tasksLoading || sprintsLoading) {
+    const handleConfirmCompleteSprint = async (destinationSprintId: string | null) => {
+        if (!completingSprint) return;
+        try {
+            await completeSprint(completingSprint.id);
+
+            // Reassign any incomplete tasks
+            const sTasks = projectTasks.filter((t) => t.sprintId === completingSprint.id);
+            const incompleteTasks = sTasks.filter((t) => t.status?.toUpperCase() !== 'DONE');
+
+            for (const t of incompleteTasks) {
+                await updateTask(t.id, { sprintId: destinationSprintId });
+            }
+
+            toast.success(`${completingSprint.name} completed!`);
+            setCompletingSprint(null);
+            fetchTasks({ project: projectId });
+        } catch {
+            toast.error('Failed to complete sprint');
+        }
+    };
+
+    const handleDeleteSprint = async (sprintId: string) => {
+        const target = sprints.find((s) => s.id === sprintId);
+        if (!target) return;
+        if (target.status === 'ACTIVE') {
+            toast.error('Cannot delete an active sprint. Complete it first.');
+            return;
+        }
+
+        if (window.confirm(`Delete ${target.name}? Any assigned tasks will be returned to the Backlog.`)) {
+            try {
+                // Return assigned tasks to backlog
+                const sTasks = projectTasks.filter((t) => t.sprintId === sprintId);
+                for (const t of sTasks) {
+                    await updateTask(t.id, { sprintId: null });
+                }
+
+                await deleteSprint(sprintId);
+                toast.success('Sprint deleted');
+            } catch {
+                toast.error('Failed to delete sprint');
+            }
+        }
+    };
+
+    const handleSaveSprintModal = async (data: { name: string; goal?: string; startDate?: string; endDate?: string }) => {
+        if (editingSprint) {
+            const updated = await updateSprint(editingSprint.id, data);
+            if (updated) {
+                toast.success('Sprint updated');
+            } else {
+                toast.error(useSprintStore.getState().error || 'Failed to update sprint');
+            }
+        } else {
+            const created = await createSprint({
+                ...data,
+                project: projectId,
+            });
+            if (created) {
+                toast.success('Sprint created');
+            } else {
+                toast.error(useSprintStore.getState().error || 'Failed to create sprint');
+            }
+        }
+    };
+
+    // Inline Task Creation Handler
+    const handleInlineCreateTask = async (data: { title: string; type: TaskType; priority: TaskPriority; sprintId: string | null }) => {
+        const created = await createTask({
+            title: data.title,
+            type: data.type,
+            priority: data.priority,
+            status: 'TODO',
+            sprint: data.sprintId || undefined,
+            project: projectId,
+        });
+        if (created) {
+            fetchTasks({ project: projectId });
+        }
+    };
+
+    // Full modal task creation
+    const handleFullCreateTask = async (taskData: {
+        title: string;
+        project: string;
+        description?: string;
+        priority?: string;
+        status?: string;
+        dueDate?: string;
+    }) => {
+        try {
+            await createTask({
+                title: taskData.title,
+                description: taskData.description,
+                priority: (taskData.priority?.toUpperCase() as TaskPriority) || 'MEDIUM',
+                status: (taskData.status?.toUpperCase() as any) || 'TODO',
+                dueDate: taskData.dueDate,
+                project: projectId,
+            });
+            toast.success('Issue created');
+            setIsCreateTaskModalOpen(false);
+            fetchTasks({ project: projectId });
+        } catch {
+            toast.error('Failed to create issue');
+        }
+    };
+
+    // Toggle expand state
+    const toggleSprintExpand = (key: string) => {
+        setExpandedSprints((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const isAllExpanded = useMemo(() => {
+        return Object.values(expandedSprints).every(Boolean);
+    }, [expandedSprints]);
+
+    const handleToggleExpandAll = () => {
+        const nextState = !isAllExpanded;
+        const updated: Record<string, boolean> = {
+            active: nextState,
+            backlog: nextState,
+            completed: nextState,
+        };
+        planningSprints.forEach((s) => {
+            updated[s.id] = nextState;
+        });
+        setExpandedSprints(updated);
+    };
+
+    const handleUpdateStoryPoints = async (tId: string, pts: number | null) => {
+        await updateTask(tId, { storyPoints: pts });
+    };
+
+    if (authLoading || (tasksLoading && tasks.length === 0)) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+            <div className="flex h-screen bg-[#F8FAFC] items-center justify-center">
+                <Spinner />
             </div>
         );
     }
 
-    const renderTaskItem = (task: Task, index: number) => (
-        <Draggable draggableId={task.id} index={index} key={task.id} isDragDisabled={!canEdit}>
-            {(provided, snapshot) => (
-                <div
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    ref={provided.innerRef}
-                    className={`flex items-center justify-between p-3 border-b border-gray-100 bg-white hover:bg-gray-50 transition-colors group ${
-                        snapshot.isDragging ? 'shadow-lg border-2 border-blue-400 z-50 rounded-lg' : ''
-                    }`}
-                >
-                    <div className="flex items-center gap-4 flex-1">
-                        {getTypeIcon(task.type)}
-                        <span className="text-xs font-mono font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            #{task.number || 'TASK'}
-                        </span>
-                        <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate max-w-md">
-                            {task.title}
-                        </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-6">
-                        <div className="w-24">
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                                {task.status.replace('_', ' ')}
-                            </span>
-                        </div>
-                        
-                        <div className="w-16">
-                            <input 
-                                type="number"
-                                className="w-full text-center text-xs font-bold bg-gray-100 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded px-1 py-1 outline-none focus:bg-white focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-500"
-                                defaultValue={task.storyPoints || ''}
-                                placeholder="-"
-                                onBlur={(e) => {
-                                    const val = parseInt(e.target.value);
-                                    if (!isNaN(val) && val !== task.storyPoints) {
-                                        updateTask(task.id, { storyPoints: val });
-                                    }
-                                }}
-                            />
-                        </div>
-                        
-                        <div className="w-8 flex justify-end">
-                            {task.assignee ? (
-                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-[10px] font-bold">
-                                    {typeof task.assignee === 'object' ? task.assignee.name.charAt(0).toUpperCase() : '?'}
-                                </div>
-                            ) : (
-                                <div className="w-6 h-6 rounded-full border border-dashed border-gray-300 flex items-center justify-center text-gray-500">
-                                    <UserIcon />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </Draggable>
-    );
-
-    const renderSprintList = (sprint: Sprint, isActive: boolean) => {
-        const sprintTasks = getTasksForSprint(sprint.id);
-        const isExpanded = expandedSprints[sprint.id] !== false;
-        const totalPoints = sprintTasks.reduce((acc, t) => acc + 1, 0);
-
-        return (
-            <div key={sprint.id} className="mb-8 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs">
-                <div className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${isActive ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`} onClick={() => toggleSprint(sprint.id)}>
-                    <div className="flex items-center gap-3">
-                        <button className="text-gray-500">
-                            {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                        </button>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-base font-bold text-gray-900">{sprint.name}</h3>
-                                {isActive && (
-                                    <span className="text-[10px] uppercase tracking-wider font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                        <Play className="w-3 h-3 fill-current" /> Active Sprint
-                                    </span>
-                                )}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1 flex items-center gap-4">
-                                <span>{sprintTasks.length} issues</span>
-                                {sprint.startDate && sprint.endDate && (
-                                    <span className="flex items-center gap-1">
-                                        <Calendar className="w-3 h-3" />
-                                        {new Date(sprint.startDate).toLocaleDateString()} - {new Date(sprint.endDate).toLocaleDateString()}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                        {isActive ? (
-                            <button 
-                                onClick={() => handleCompleteSprintClick(sprint.id)}
-                                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
-                            >
-                                <CheckCircle className="w-4 h-4" />
-                                Complete Sprint
-                            </button>
-                        ) : (
-                            <button 
-                                onClick={() => handleStartSprint(sprint.id)}
-                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-medium rounded-lg transition-colors cursor-pointer"
-                            >
-                                Start Sprint
-                            </button>
-                        )}
-                        <button className="p-2 text-gray-500 hover:text-gray-600 rounded-lg hover:bg-gray-100">
-                            <MoreHorizontal className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-
-                {isExpanded && (
-                    <Droppable droppableId={sprint.id}>
-                        {(provided, snapshot) => (
-                            <div
-                                {...provided.droppableProps}
-                                ref={provided.innerRef}
-                                className={`min-h-2.5 ${snapshot.isDraggingOver ? 'bg-blue-50/30' : ''}`}
-                            >
-                                {sprintTasks.length > 0 ? (
-                                    sprintTasks.map((t, i) => renderTaskItem(t, i))
-                                ) : (
-                                    <div className="p-8 text-center text-sm text-gray-500 border-t border-dashed border-gray-200 bg-gray-50/50">
-                                        Plan a sprint by dragging issues here
-                                    </div>
-                                )}
-                                {provided.placeholder}
-                            </div>
-                        )}
-                    </Droppable>
-                )}
-            </div>
-        );
-    };
+    const projectMembersList = project?.members
+        ? project.members
+              .map((m: any) => ({
+                  id: m.user?.id || m.userId,
+                  name: m.user?.name || m.user?.email || 'Member',
+              }))
+              .filter((m: any) => m.id)
+        : [];
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="bg-white border-b border-gray-200 px-8 py-6 sticky top-0 z-40">
-                <div className="flex items-center gap-4 mb-4">
-                    <div onClick={() => router.push(`/projects/${projectId}`)} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center cursor-pointer transition-colors">
-                        <ArrowLeft className="w-4 h-4 text-gray-600" />
-                    </div>
-                    <span className="text-sm text-gray-500 font-medium">{project?.name || 'Project'} / Backlog</span>
-                </div>
-                
-                <div className="flex justify-between items-end">
-                    <h1 className="text-3xl font-bold text-gray-900">Backlog</h1>
-                    
-                    <div className="flex gap-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                            <input 
-                                type="text"
-                                placeholder="Search backlog..."
-                                className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 text-gray-900 placeholder:text-gray-500"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div className="min-h-screen bg-[#F8FAFC] text-[#0f172a] flex flex-col font-sans relative">
+            {/* Standard Global Header */}
+            <Header user={user} />
 
-            <div className="max-w-5xl mx-auto px-8 py-8">
+            {/* Main Content Area */}
+            <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 md:px-8 py-6 flex flex-col gap-6">
+                {/* Backlog Toolbar (Breadcrumb, Search, Filters, Create Sprint) */}
+                <BacklogToolbar
+                    projectName={project?.name}
+                    projectId={projectId}
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    priorityFilter={priorityFilter}
+                    onPriorityChange={setPriorityFilter}
+                    statusFilter={statusFilter}
+                    onStatusChange={setStatusFilter}
+                    assigneeFilter={assigneeFilter}
+                    onAssigneeChange={setAssigneeFilter}
+                    members={projectMembersList}
+                    currentUserId={user?.id}
+                    isAllExpanded={isAllExpanded}
+                    onToggleExpandAll={handleToggleExpandAll}
+                    onCreateSprint={() => {
+                        setEditingSprint(null);
+                        setSprintModalOpen(true);
+                    }}
+                    onCreateIssue={() => setIsCreateTaskModalOpen(true)}
+                    canEdit={canEdit}
+                />
+
+                {/* Drag and Drop Container */}
                 <DragDropContext onDragEnd={onDragEnd}>
-                    {activeSprints.map(s => renderSprintList(s, true))}
+                    <div className="space-y-6">
+                        {/* 1. ACTIVE SPRINT CARD (If active) */}
+                        {activeSprint && (
+                            <SprintCard
+                                sprint={activeSprint}
+                                tasks={activeSprintTasks}
+                                projectKey={projectKey}
+                                isExpanded={expandedSprints['active'] !== false}
+                                canEdit={canEdit}
+                                onToggleExpand={() => toggleSprintExpand('active')}
+                                onSelectTask={(tId) => setSelectedTaskId(tId)}
+                                onUpdateStoryPoints={handleUpdateStoryPoints}
+                                onInlineCreateTask={handleInlineCreateTask}
+                                onCompleteSprint={(s) => setCompletingSprint(s)}
+                                onEditSprint={(s) => {
+                                    setEditingSprint(s);
+                                    setSprintModalOpen(true);
+                                }}
+                                onDeleteSprint={handleDeleteSprint}
+                            />
+                        )}
 
-                    {planningSprints.map(s => renderSprintList(s, false))}
+                        {/* 2. PLANNING SPRINTS (Accordion cards) */}
+                        {planningSprints.map((sprint) => {
+                            const sTasks = getTasksForSprint(sprint.id);
+                            const isExp = expandedSprints[sprint.id] !== false;
+                            return (
+                                <SprintCard
+                                    key={sprint.id}
+                                    sprint={sprint}
+                                    tasks={sTasks}
+                                    projectKey={projectKey}
+                                    isExpanded={isExp}
+                                    canEdit={canEdit}
+                                    onToggleExpand={() => toggleSprintExpand(sprint.id)}
+                                    onSelectTask={(tId) => setSelectedTaskId(tId)}
+                                    onUpdateStoryPoints={handleUpdateStoryPoints}
+                                    onInlineCreateTask={handleInlineCreateTask}
+                                    onStartSprint={handleStartSprint}
+                                    onEditSprint={(s) => {
+                                        setEditingSprint(s);
+                                        setSprintModalOpen(true);
+                                    }}
+                                    onDeleteSprint={handleDeleteSprint}
+                                />
+                            );
+                        })}
 
-                    <div className="mt-12 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                        <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => toggleSprint('backlog')}>
-                            <div className="flex items-center gap-3">
-                                <button className="text-gray-500">
-                                    {expandedSprints['backlog'] ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                                </button>
-                                <div>
-                                    <h3 className="text-base font-bold text-gray-900">Backlog</h3>
-                                    <div className="text-xs text-gray-500 mt-1">
-                                        {backlogTasks.length} issues
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                                <button 
-                                    onClick={() => setShowCreateSprintModal(true)}
-                                    className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                        {/* 3. PRODUCT BACKLOG CARD */}
+                        <SprintCard
+                            sprint={null}
+                            tasks={backlogTasks}
+                            projectKey={projectKey}
+                            isExpanded={expandedSprints['backlog'] !== false}
+                            canEdit={canEdit}
+                            onToggleExpand={() => toggleSprintExpand('backlog')}
+                            onSelectTask={(tId) => setSelectedTaskId(tId)}
+                            onUpdateStoryPoints={handleUpdateStoryPoints}
+                            onInlineCreateTask={handleInlineCreateTask}
+                            onCreateSprintFromBacklog={() => {
+                                setEditingSprint(null);
+                                setSprintModalOpen(true);
+                            }}
+                        />
+
+                        {/* 4. COMPLETED SPRINTS ARCHIVE (Collapsible) */}
+                        {completedSprints.length > 0 && (
+                            <div className="pt-4 border-t border-slate-200/80">
+                                <div
+                                    onClick={() => toggleSprintExpand('completed')}
+                                    className="flex items-center justify-between p-3 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl cursor-pointer select-none transition-colors"
                                 >
-                                    <Plus className="w-4 h-4" />
-                                    Create Sprint
-                                </button>
-                            </div>
-                        </div>
+                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                        Completed Sprints ({completedSprints.length})
+                                    </span>
+                                    <span className="text-xs text-slate-400 font-semibold">
+                                        {expandedSprints['completed'] ? 'Hide Archive' : 'Show Archive'}
+                                    </span>
+                                </div>
 
-                        {expandedSprints['backlog'] && (
-                            <Droppable droppableId="backlog">
-                                {(provided, snapshot) => (
-                                    <div
-                                        {...provided.droppableProps}
-                                        ref={provided.innerRef}
-                                        className={`min-h-25 border-t border-gray-100 ${snapshot.isDraggingOver ? 'bg-blue-50/30' : ''}`}
-                                    >
-                                        {backlogTasks.length > 0 ? (
-                                            backlogTasks.map((t, i) => renderTaskItem(t, i))
-                                        ) : (
-                                            <div className="p-8 text-center text-sm text-gray-500 bg-gray-50/50">
-                                                Your backlog is empty. Add issues via the Kanban board.
-                                            </div>
-                                        )}
-                                        {provided.placeholder}
+                                {expandedSprints['completed'] && (
+                                    <div className="mt-3 space-y-4">
+                                        {completedSprints.map((cs) => {
+                                            const csTasks = getTasksForSprint(cs.id);
+                                            return (
+                                                <SprintCard
+                                                    key={cs.id}
+                                                    sprint={cs}
+                                                    tasks={csTasks}
+                                                    projectKey={projectKey}
+                                                    isExpanded={true}
+                                                    canEdit={false}
+                                                    onToggleExpand={() => {}}
+                                                    onSelectTask={(tId) => setSelectedTaskId(tId)}
+                                                    onInlineCreateTask={async () => {}}
+                                                />
+                                            );
+                                        })}
                                     </div>
                                 )}
-                            </Droppable>
+                            </div>
                         )}
                     </div>
                 </DragDropContext>
-            </div>
+            </main>
 
-            {showCreateSprintModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-6">
-                            <h3 className="text-lg font-bold text-gray-900 mb-4">Create Sprint</h3>
-                            <form onSubmit={handleCreateSprint}>
-                                <div className="mb-6">
-                                    <label className="block text-sm font-bold text-gray-900 mb-2">Sprint Name</label>
-                                    <input 
-                                        autoFocus
-                                        required
-                                        type="text"
-                                        value={newSprintName}
-                                        onChange={e => setNewSprintName(e.target.value)}
-                                        placeholder={`e.g. ${project?.key || 'PROJ'} Sprint ${sprints.length + 1}`}
-                                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-3">
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setShowCreateSprintModal(false)}
-                                        className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button 
-                                        type="submit"
-                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
-                                    >
-                                        Create
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+            {/* Task Detail Slideout Drawer */}
+            {selectedTaskId && (
+                <TaskDetailSlideout
+                    taskId={selectedTaskId}
+                    onClose={() => setSelectedTaskId(null)}
+                />
             )}
 
-            {showCompleteModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-center gap-3 text-yellow-600">
-                            <AlertCircle className="w-6 h-6" />
-                            <h3 className="text-lg font-bold text-gray-900">Complete Sprint</h3>
-                        </div>
-                        <div className="p-6">
-                            <p className="text-sm text-gray-600 mb-6">
-                                This sprint contains unfinished issues. They will be automatically moved to the <strong>Backlog</strong>.
-                            </p>
-                            <div className="flex justify-end gap-3">
-                                <button 
-                                    onClick={() => { setShowCompleteModal(false); setCompletingSprintId(null); }}
-                                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    onClick={handleConfirmCompleteSprint}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-black rounded-lg shadow-sm transition-colors"
-                                >
-                                    Confirm Complete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Sprint Modal (Create & Edit) */}
+            <SprintModal
+                isOpen={sprintModalOpen}
+                onClose={() => {
+                    setSprintModalOpen(false);
+                    setEditingSprint(null);
+                }}
+                onSubmit={handleSaveSprintModal}
+                initialData={editingSprint}
+                projectKey={projectKey}
+                existingSprintsCount={sprints.length}
+            />
+
+            {/* Complete Sprint Modal */}
+            <CompleteSprintModal
+                isOpen={Boolean(completingSprint)}
+                sprint={completingSprint}
+                sprintTasks={completingSprint ? projectTasks.filter((t) => t.sprintId === completingSprint.id) : []}
+                availableSprints={sprints}
+                onClose={() => setCompletingSprint(null)}
+                onConfirm={handleConfirmCompleteSprint}
+            />
+
+            {/* Create Task Full Modal */}
+            <CreateTaskModal
+                isOpen={isCreateTaskModalOpen}
+                onClose={() => setIsCreateTaskModalOpen(false)}
+                projects={projects.map((p) => ({ id: p.id, name: p.name }))}
+                onCreate={handleFullCreateTask}
+            />
         </div>
     );
 }
-
-const UserIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-);

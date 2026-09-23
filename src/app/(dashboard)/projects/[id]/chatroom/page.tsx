@@ -9,7 +9,10 @@ import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
 import { useSocket } from '@/features/chat/hooks/useSocket';
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 import AISummaryModal from '@/features/chat/components/AISummaryModal';
+import { ChatSummaryData } from '@/types/aiSummary';
+import { MessageSquare, SearchX } from 'lucide-react';
 
 // Modular Chat Components
 import { ChatSidebarLeft, MemberItem } from '@/features/chat/components/ChatSidebarLeft';
@@ -122,11 +125,16 @@ export default function ProjectChatRoomPage() {
     const [replyingTo, setReplyingTo] = useState<{ id: string; senderName: string; content: string } | null>(null);
     const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
 
+    // In-Chat Search State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+
     // AI Summary Modal States
     const [isAISummaryOpen, setIsAISummaryOpen] = useState(false);
     const [isAISummaryLoading, setIsAISummaryLoading] = useState(false);
-    const [aiSummaryText, setAiSummaryText] = useState<string | null>(null);
+    const [aiSummaryData, setAiSummaryData] = useState<ChatSummaryData | null>(null);
     const [aiSummaryError, setAiSummaryError] = useState<string | null>(null);
+    const [aiSummaryMeta, setAiSummaryMeta] = useState<{ messageCount?: number; participantCount?: number } | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -224,26 +232,64 @@ export default function ProjectChatRoomPage() {
         setIsAISummaryOpen(true);
         setIsAISummaryLoading(true);
         setAiSummaryError(null);
-        setAiSummaryText(null);
+        setAiSummaryData(null);
+        setAiSummaryMeta(null);
 
         try {
-            const chatText = messages.map((m) => `${m.senderName}: ${m.content}`).join('\n');
-            const res = await axios.post('/api/ai/summarize', { text: chatText, context: 'Project Chat Summary' });
-            if (res.data?.success && res.data.data?.summary) {
-                setAiSummaryText(res.data.data.summary);
+            const res = await axios.post(`/api/projects/${projectId}/ai/summarize-chat`);
+            if (res.data?.success && res.data?.summary) {
+                setAiSummaryData(res.data.summary);
+                setAiSummaryMeta({
+                    messageCount: res.data.messageCount,
+                    participantCount: res.data.participantCount,
+                });
+                if (res.data.workspaceId && typeof res.data.usedAiPrompts === 'number') {
+                    useWorkspaceStore.getState().updateWorkspaceAiUsage(res.data.workspaceId, res.data.usedAiPrompts);
+                }
             } else {
-                setAiSummaryText(generateFallbackSummary());
+                setAiSummaryData(generateFallbackSummary());
             }
-        } catch {
-            setAiSummaryText(generateFallbackSummary());
+        } catch (err: any) {
+            console.error('AI chat summary request failed:', err);
+            const backendError = err.response?.data?.error;
+            if (backendError && (backendError.includes('quota') || backendError.includes('Quota') || backendError.includes('upgrade'))) {
+                setAiSummaryError(backendError);
+            } else {
+                setAiSummaryData(generateFallbackSummary());
+            }
         } finally {
             setIsAISummaryLoading(false);
         }
     };
 
-    const generateFallbackSummary = () => {
-        if (messages.length === 0) return "No messages available to summarize.";
-        return `### 📌 Executive Chat Summary\n- **Total Messages Analyzed**: ${messages.length}\n- **Key Decisions**: Team collaborated on project infrastructure, component structure, and deployment pipelines.\n- **Action Items**: Finalize code reviews, conduct QA testing, and prepare release notes.`;
+    const generateFallbackSummary = (): ChatSummaryData => {
+        const uniqueSenders = Array.from(new Set(messages.map((m) => m.senderName).filter(Boolean)));
+        return {
+            overview:
+                messages.length > 0
+                    ? `The team exchanged ${messages.length} messages across recent project discussions. Key interactions centered around project setup, technical planning, and team workflows.`
+                    : 'No messages are available to summarize in this conversation yet.',
+            currentState: 'Progressing — active project coordination',
+            decisions: [
+                {
+                    text: 'Active discussion in project chat channel',
+                    evidence: `${messages.length} messages logged`,
+                },
+            ],
+            actionItems: uniqueSenders.slice(0, 3).map((sender) => ({
+                task: 'Review recent project discussions and updates',
+                owner: sender,
+                deadline: null,
+                evidence: 'Chat activity',
+            })),
+            blockers: [],
+            updates: [
+                {
+                    text: `${messages.length} messages recorded across ${uniqueSenders.length} active participants`,
+                },
+            ],
+            openQuestions: [],
+        };
     };
 
     const handleExportTranscript = () => {
@@ -282,9 +328,20 @@ export default function ProjectChatRoomPage() {
         })
         .filter(Boolean);
 
+    const filteredMessages = useMemo(() => {
+        if (!searchQuery.trim()) return messages;
+        const q = searchQuery.toLowerCase().trim();
+        return messages.filter(
+            (m) =>
+                m.content?.toLowerCase().includes(q) ||
+                m.senderName?.toLowerCase().includes(q) ||
+                (m.attachments && m.attachments.some((att: any) => att.filename?.toLowerCase().includes(q)))
+        );
+    }, [messages, searchQuery]);
+
     const groupedMessages = useMemo(() => {
         const groups: { dateLabel: string; msgs: ChatMessageItem[] }[] = [];
-        messages.forEach((msg) => {
+        filteredMessages.forEach((msg) => {
             const label = getMessageDateLabel(msg.rawCreatedAt);
             const lastGroup = groups[groups.length - 1];
             if (lastGroup && lastGroup.dateLabel === label) {
@@ -294,7 +351,7 @@ export default function ProjectChatRoomPage() {
             }
         });
         return groups;
-    }, [messages]);
+    }, [filteredMessages]);
 
     const sharedFilesList: SharedFileItem[] = messages
         .filter((m) => m.attachments && m.attachments.length > 0)
@@ -335,23 +392,29 @@ export default function ProjectChatRoomPage() {
 
             {/* Chat Room Workspace Body */}
             <div className="flex-1 flex overflow-hidden w-full max-w-full relative">
-                {/* Left Sidebar (Compact Size w-56/w-64 with Non-Changeable Project Initials PFP) */}
+                {/* Left Sidebar */}
                 <ChatSidebarLeft
                     projectId={projectId}
-                    projectName={project?.name || 'Authentication Service'}
-                    projectDescription={project?.description || 'Core infrastructure and auth services'}
+                    projectName={project?.name || 'Project Chat'}
+                    projectDescription={project?.description || undefined}
                     members={projectMembers}
                 />
 
                 {/* Main Chat Canvas */}
                 <main className="flex-1 flex flex-col min-w-0 max-w-full bg-linear-to-b from-[#f8fafc] via-[#f1f5f9]/60 to-[#f8fafc] relative z-0 overflow-x-hidden">
-                    {/* Channel Header with Dropdown Options & Group Call Button */}
+                    {/* Channel Header with Dropdown Options, Search Bar & Group Call Button */}
                     <ChatAreaHeader
-                        projectName={project?.name || 'Authentication Service'}
+                        projectName={project?.name || 'Project Chat'}
                         projectId={projectId}
                         onlineCount={projectMembers.filter((m) => m.isOnline).length || 1}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        isSearchOpen={isSearchOpen}
+                        onToggleSearch={() => {
+                            setIsSearchOpen((prev) => !prev);
+                            if (isSearchOpen) setSearchQuery('');
+                        }}
                         onExportTranscript={handleExportTranscript}
-                        onMuteNotifications={handleMuteNotifications}
                         onSummarizeAI={handleSummarizeAI}
                         onViewSharedFiles={() => setIsRightSidebarOpen(true)}
                         onViewPinnedMessages={() => setIsRightSidebarOpen(true)}
@@ -366,12 +429,29 @@ export default function ProjectChatRoomPage() {
                         ) : messages.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center max-w-sm mx-auto text-center">
                                 <div className="w-16 h-16 rounded-full bg-[#4F46E5]/10 flex items-center justify-center mb-4 text-[#4F46E5]">
-                                    <span className="material-symbols-outlined text-4xl">chat</span>
+                                    <MessageSquare className="w-9 h-9" />
                                 </div>
                                 <h3 className="text-lg font-bold text-[#1b1b24] mb-2">No messages yet</h3>
                                 <p className="text-xs text-[#777587] leading-relaxed">
                                     Start the conversation! Drop a message or share a file to get things going with the team.
                                 </p>
+                            </div>
+                        ) : filteredMessages.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center max-w-sm mx-auto text-center py-12">
+                                <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center mb-3 border border-[#C7D2FE]/60">
+                                    <SearchX className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-sm font-bold text-[#0f172a] mb-1">No messages found</h3>
+                                <p className="text-xs text-[#64748b]">
+                                    No messages found matching &ldquo;{searchQuery}&rdquo;.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchQuery('')}
+                                    className="mt-3 px-3 py-1.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-xs font-semibold text-[#4F46E5] rounded-xl shadow-2xs transition-colors cursor-pointer"
+                                >
+                                    Clear search
+                                </button>
                             </div>
                         ) : (
                             <div className="w-full space-y-4 px-2 sm:px-4">
@@ -444,12 +524,13 @@ export default function ProjectChatRoomPage() {
             <AISummaryModal
                 isOpen={isAISummaryOpen}
                 onClose={() => setIsAISummaryOpen(false)}
-                title={`AI Summary: ${project?.name || 'Project Chat'}`}
-                subtitle="Powered by Gemini AI"
-                summary={aiSummaryText}
+                title="✦ AI Conversation Summary"
+                subtitle={`Project: ${project?.name || 'Chatroom'}`}
+                structuredSummary={aiSummaryData}
                 isLoading={isAISummaryLoading}
                 error={aiSummaryError}
-                messageCount={messages.length}
+                messageCount={aiSummaryMeta?.messageCount ?? messages.length}
+                participantCount={aiSummaryMeta?.participantCount}
             />
         </div>
     );

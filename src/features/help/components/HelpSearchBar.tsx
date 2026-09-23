@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Search, X } from 'lucide-react';
 
 interface HelpSearchBarProps {
     searchQuery: string;
@@ -10,9 +11,7 @@ interface HelpSearchBarProps {
 export function HelpSearchBar({ searchQuery, onSearchChange }: HelpSearchBarProps) {
     return (
         <div className="max-w-2xl mx-auto mb-10 relative">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#4F46E5] text-[22px]">
-                search
-            </span>
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4F46E5] w-5.5 h-5.5" />
             <input
                 type="text"
                 value={searchQuery}
@@ -25,7 +24,7 @@ export function HelpSearchBar({ searchQuery, onSearchChange }: HelpSearchBarProp
                     onClick={() => onSearchChange('')}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#0f172a] p-1 cursor-pointer"
                 >
-                    <span className="material-symbols-outlined text-[18px]">close</span>
+                    <X className="w-4.5 h-4.5" />
                 </button>
             )}
         </div>

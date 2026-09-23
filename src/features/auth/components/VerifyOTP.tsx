@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { Check, Mail, Info, Timer, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export function VerifyOTP() {
     const router = useRouter();
@@ -135,8 +137,15 @@ export function VerifyOTP() {
         <div className="w-full max-w-120 mx-auto py-4">
             {/* Header & Branding */}
             <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#f5f2ff] border border-[#e4e1ee] text-[#4f46e5] mb-3 shadow-xs">
-                    <span className="material-symbols-outlined text-[24px]">lock_person</span>
+                <div className="flex justify-center mb-4">
+                    <Image
+                        src="/logo.png"
+                        alt="OmniSync"
+                        width={200}
+                        height={68}
+                        className="w-36 sm:w-40 h-auto object-contain"
+                        priority
+                    />
                 </div>
                 <h1 className="text-[24px] leading-8 font-bold text-[#1b1b24] mb-1">
                     Verify your identity
@@ -156,7 +165,7 @@ export function VerifyOTP() {
                     {/* Step 1: Email (Completed) */}
                     <div className="flex flex-col items-center gap-1 relative z-10">
                         <div className="w-6 h-6 rounded-full bg-[#10b981] text-white flex items-center justify-center text-[12px] font-bold shadow-xs ring-4 ring-white">
-                            <span className="material-symbols-outlined text-[14px]">check</span>
+                            <Check className="w-3.5 h-3.5" />
                         </div>
                         <span className="text-[12px] leading-4 font-semibold text-[#047857]">Email</span>
                     </div>
@@ -182,7 +191,7 @@ export function VerifyOTP() {
                 <div className="bg-[#f8fafc] rounded-lg p-3.5 border border-[#e2e8f0] flex flex-col gap-2 mb-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[#777587] text-[18px]">mail</span>
+                            <Mail className="text-[#777587] w-4.5 h-4.5" />
                             <span className="text-[14px] leading-5 font-medium text-[#1b1b24]">{email}</span>
                         </div>
                         <Link
@@ -193,7 +202,7 @@ export function VerifyOTP() {
                         </Link>
                     </div>
                     <div className="flex items-center gap-1.5 text-[12px] text-[#64748b]">
-                        <span className="material-symbols-outlined text-[16px] text-[#ef4444]">info</span>
+                        <Info className="w-4 h-4 text-[#ef4444]" />
                         <span>Verification code expires in 15 minutes.</span>
                     </div>
                 </div>
@@ -221,7 +230,7 @@ export function VerifyOTP() {
                     {/* Countdown & Resend Code */}
                     <div className="flex items-center justify-between text-[13px]">
                         <span className="text-[#64748b] flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[16px]">timer</span>
+                            <Timer className="w-4 h-4" />
                             <span>{formatTimer(timer)}</span>
                         </span>
                         <button
@@ -251,7 +260,7 @@ export function VerifyOTP() {
                         {loading ? 'Verifying...' : (
                             <>
                                 Verify Code
-                                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                                <ArrowRight className="w-4.5 h-4.5" />
                             </>
                         )}
                     </button>
@@ -264,7 +273,7 @@ export function VerifyOTP() {
                     href="/login"
                     className="text-[14px] leading-5 font-medium text-[#777587] hover:text-[#1b1b24] transition-colors inline-flex items-center gap-1"
                 >
-                    <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                    <ArrowLeft className="w-4.5 h-4.5" />
                     Return to Login
                 </Link>
             </div>

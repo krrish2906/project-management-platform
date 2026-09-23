@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { CheckCircle2, MessageSquare, Paperclip } from 'lucide-react';
 
 export interface KanbanTaskData {
     id: string;
@@ -53,9 +54,7 @@ export function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
                     {task.keyNumber || `#${task.id.slice(-3)}`}
                 </span>
                 {isCompleted && (
-                    <span className="material-symbols-outlined text-emerald-600 text-[16px]">
-                        check_circle
-                    </span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 )}
             </div>
 
@@ -110,13 +109,13 @@ export function KanbanTaskCard({ task, onClick }: KanbanTaskCardProps) {
                 <div className="flex items-center gap-2 text-[#94a3b8] text-[11px] font-medium">
                     {(task.commentsCount ?? 0) > 0 && (
                         <div className="flex items-center gap-0.5 text-[#64748b]">
-                            <span className="material-symbols-outlined text-[13px]">chat_bubble_outline</span>
+                            <MessageSquare className="w-3.5 h-3.5" />
                             <span>{task.commentsCount}</span>
                         </div>
                     )}
                     {(task.attachmentsCount ?? 0) > 0 && (
                         <div className="flex items-center gap-0.5 text-[#64748b]">
-                            <span className="material-symbols-outlined text-[13px]">attach_file</span>
+                            <Paperclip className="w-3.5 h-3.5" />
                             <span>{task.attachmentsCount}</span>
                         </div>
                     )}

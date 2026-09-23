@@ -5,6 +5,7 @@ import axios from 'axios';
 import type { User } from '@/types';
 import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 import toast from 'react-hot-toast';
+import { UserPlus, Search, UserMinus } from 'lucide-react';
 
 interface MemberItem {
     id: string;
@@ -128,7 +129,7 @@ export function MembersRolesTab({ currentUser, onInviteMember, onMemberCountChan
                     onClick={onInviteMember}
                     className="px-4 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                    <span className="material-symbols-outlined text-[16px]">person_add</span>
+                    <UserPlus className="w-4 h-4" />
                     <span>Invite Member</span>
                 </button>
             </div>
@@ -136,9 +137,7 @@ export function MembersRolesTab({ currentUser, onInviteMember, onMemberCountChan
             {/* Filter Toolbar */}
             <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-2xl border border-[#E2E8F0] shadow-2xs">
                 <div className="relative flex-1">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[17px]">
-                        search
-                    </span>
+                    <Search className="w-4.25 h-4.25 absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
                     <input
                         type="text"
                         value={searchQuery}
@@ -227,7 +226,7 @@ export function MembersRolesTab({ currentUser, onInviteMember, onMemberCountChan
                                                     className="text-[#94a3b8] hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
                                                     title="Remove member from workspace"
                                                 >
-                                                    <span className="material-symbols-outlined text-[18px]">person_remove</span>
+                                                    <UserMinus className="w-4.5 h-4.5" />
                                                 </button>
                                             )}
                                         </td>

@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Project } from '@/types';
+import { getProjectIcon } from '../utils/projectIconUtils';
+import { Star, MoreHorizontal, Trash2, CheckSquare, Calendar } from 'lucide-react';
 
 interface ProjectGridCardProps {
     project: Project;
@@ -50,6 +52,8 @@ export function ProjectGridCard({
             ? 'bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]/60'
             : 'bg-emerald-50 text-emerald-700 border border-emerald-200';
 
+    const ProjectIcon = getProjectIcon(project.icon);
+
     return (
         <div
             onClick={() => router.push(`/projects/${project.id}`)}
@@ -63,9 +67,7 @@ export function ProjectGridCard({
                             className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 font-bold text-sm shadow-2xs"
                             style={{ backgroundColor: project.color || '#4F46E5' }}
                         >
-                            <span className="material-symbols-outlined text-[20px]">
-                                {project.icon || 'folder'}
-                            </span>
+                            <ProjectIcon className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
                             <div className="flex items-center gap-1.5 mb-0.5">
@@ -88,12 +90,9 @@ export function ProjectGridCard({
                             onClick={(e) => onToggleStar(project.id, e)}
                             className="p-1 text-gray-300 hover:text-amber-400 transition-colors cursor-pointer"
                         >
-                            <span
-                                className="material-symbols-outlined text-[20px]"
-                                style={project.isStarred ? { fontVariationSettings: "'FILL' 1", color: '#F59E0B' } : {}}
-                            >
-                                star
-                            </span>
+                            <Star
+                                className={`w-5 h-5 ${project.isStarred ? 'fill-amber-400 text-amber-400' : ''}`}
+                            />
                         </button>
 
                         <div className="relative" ref={menuRef}>
@@ -101,19 +100,19 @@ export function ProjectGridCard({
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                                 className="text-[#94a3b8] hover:text-[#0f172a] p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer"
                             >
-                                <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+                                <MoreHorizontal className="w-4.5 h-4.5" />
                             </button>
 
                             {isMenuOpen && (
                                 <div className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-xl border border-[#E2E8F0] py-1 z-20 animate-in fade-in zoom-in-95 duration-150">
                                     <button
                                         onClick={() => {
-                                            setIsMenuOpen(false);
-                                            onDeleteProject(project.id);
+                                             setIsMenuOpen(false);
+                                             onDeleteProject(project.id);
                                         }}
                                         className="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
                                     >
-                                        <span className="material-symbols-outlined text-[15px]">delete</span>
+                                        <Trash2 className="w-3.75 h-3.75" />
                                         Delete Project
                                     </button>
                                 </div>
@@ -175,11 +174,11 @@ export function ProjectGridCard({
                 {/* Metadata */}
                 <div className="flex items-center gap-3 text-xs font-medium text-[#64748b]">
                     <div className="flex items-center gap-1" title="Tasks">
-                        <span className="material-symbols-outlined text-[15px]">check_box</span>
+                        <CheckSquare className="w-3.75 h-3.75" />
                         <span>{totalTasks}</span>
                     </div>
                     <div className="flex items-center gap-1 text-[#475569]" title="Date">
-                        <span className="material-symbols-outlined text-[15px]">event</span>
+                        <Calendar className="w-3.75 h-3.75" />
                         <span className="text-[11px]">{formattedDate}</span>
                     </div>
                 </div>

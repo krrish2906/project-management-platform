@@ -16,6 +16,7 @@ interface DocumentFormattingToolbarProps {
     onSaveSnapshot: () => void;
     onToggleHistory: () => void;
     onSummarize: () => void;
+    onOpenAIWriting?: () => void;
     onShare: () => void;
 }
 
@@ -26,6 +27,7 @@ export function DocumentFormattingToolbar({
     onSaveSnapshot,
     onToggleHistory,
     onSummarize,
+    onOpenAIWriting,
     onShare,
 }: DocumentFormattingToolbarProps) {
     if (!editor) return null;
@@ -180,14 +182,27 @@ export function DocumentFormattingToolbar({
                     <span className="hidden md:inline">History</span>
                 </button>
 
-                {/* AI Summarize */}
+                {/* AI Summary */}
                 <button
                     onClick={onSummarize}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-[#e4e1ee] text-[#1b1b24] text-xs font-semibold hover:border-[#4f46e5]/40 hover:text-[#4f46e5] transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 text-xs font-medium transition-colors cursor-pointer"
+                    title="Generate AI Summary"
                 >
                     <Sparkles className="w-3.5 h-3.5 text-[#4f46e5]" />
-                    <span className="hidden sm:inline">AI Summarize</span>
+                    <span className="hidden sm:inline">AI Summary</span>
                 </button>
+
+                {/* AI Assistant Trigger */}
+                {onOpenAIWriting && (
+                    <button
+                        onClick={onOpenAIWriting}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
+                        title="Ask AI"
+                    >
+                        <Sparkles className="w-3.5 h-3.5 text-[#4f46e5]" />
+                        <span className="hidden sm:inline">Ask AI</span>
+                    </button>
+                )}
 
                 {/* Share */}
                 <button

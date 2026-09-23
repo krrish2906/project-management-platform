@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@/types';
 import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
+import { Building2, BadgeCheck, Plus, CheckSquare, UserPlus } from 'lucide-react';
 
 interface DashboardHeroProps {
     user: User | null;
@@ -34,11 +35,11 @@ export function DashboardHero({ user, onOpenCreateProject }: DashboardHeroProps)
                 {/* 3rd Line: Standalone Rounded Purple Compact Tiles */}
                 <div className="flex flex-wrap items-center gap-2 pt-0.5">
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#EEF2FF] text-[#4F46E5] text-[11px] font-semibold rounded-full border border-[#818CF8]">
-                        <span className="material-symbols-outlined text-[11px] leading-none shrink-0 text-[#4F46E5]">domain</span>
+                        <Building2 className="w-3 h-3 shrink-0 text-[#4F46E5]" />
                         <span>{workspaceName}</span>
                     </span>
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#EEF2FF] text-[#4F46E5] text-[11px] font-bold rounded-full border border-[#818CF8] uppercase tracking-wider">
-                        <span className="material-symbols-outlined text-[11px] leading-none shrink-0 text-[#4F46E5]">verified</span>
+                        <BadgeCheck className="w-3 h-3 shrink-0 text-[#4F46E5]" />
                         <span>{planName} Plan</span>
                     </span>
                 </div>
@@ -50,21 +51,21 @@ export function DashboardHero({ user, onOpenCreateProject }: DashboardHeroProps)
                     onClick={onOpenCreateProject}
                     className="h-9 px-3.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-semibold transition-all shadow-2xs hover:shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <Plus className="w-4 h-4" />
                     <span>New Project</span>
                 </button>
                 <button
                     onClick={() => router.push('/tasks')}
                     className="h-9 px-3.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#334155] hover:text-[#4F46E5] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 >
-                    <span className="material-symbols-outlined text-[16px] text-[#64748b]">add_task</span>
+                    <CheckSquare className="w-4 h-4 text-[#64748b]" />
                     <span>Create Task</span>
                 </button>
                 <button
                     onClick={() => router.push('/teams')}
                     className="h-9 px-3.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#334155] hover:text-[#4F46E5] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 >
-                    <span className="material-symbols-outlined text-[16px] text-[#64748b]">person_add</span>
+                    <UserPlus className="w-4 h-4 text-[#64748b]" />
                     <span>Invite Member</span>
                 </button>
             </div>

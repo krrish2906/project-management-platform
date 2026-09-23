@@ -50,7 +50,7 @@ export async function POST(request: Request) {
         try {
             await sendEmail({
                 to: cleanEmail,
-                subject: 'Verify Your Email - ProjectHub OTP',
+                subject: 'Verify Your Email - OmniSync OTP',
                 template: 'otp',
                 data: {
                     name: 'New User',

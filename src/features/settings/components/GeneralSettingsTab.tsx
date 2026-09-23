@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { User } from '@/types';
 import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 import { toast } from 'react-hot-toast';
+import { Crown, ArrowRight, Save } from 'lucide-react';
 
 interface GeneralSettingsTabProps {
     user: User | null;
@@ -94,7 +95,7 @@ export function GeneralSettingsTab({ user, onSave }: GeneralSettingsTabProps) {
                     </label>
                     <div className="flex rounded-xl shadow-2xs border border-[#E2E8F0] overflow-hidden bg-[#F8FAFC]">
                         <span className="inline-flex items-center px-3.5 bg-[#F1F5F9] text-[#64748b] text-xs font-mono border-r border-[#E2E8F0] select-none">
-                            projecthub.com/w/
+                            omnisync.com/w/
                         </span>
                         <input
                             type="text"
@@ -114,7 +115,7 @@ export function GeneralSettingsTab({ user, onSave }: GeneralSettingsTabProps) {
                     <div className="flex flex-wrap items-center justify-between gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3.5">
                         <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] border border-[#C7D2FE]/60 flex items-center justify-center text-[#4F46E5]">
-                                <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
+                                <Crown className="w-4.5 h-4.5" />
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-[#0f172a]">
@@ -131,9 +132,7 @@ export function GeneralSettingsTab({ user, onSave }: GeneralSettingsTabProps) {
                             className="text-xs font-semibold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1 group transition-colors"
                         >
                             <span className="group-hover:underline">Manage Plan & Quotas</span>
-                            <span className="material-symbols-outlined text-[14px] no-underline group-hover:translate-x-0.5 transition-transform">
-                                arrow_forward
-                            </span>
+                            <ArrowRight className="w-3.5 h-3.5 no-underline group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                     </div>
                 </div>
@@ -156,7 +155,7 @@ export function GeneralSettingsTab({ user, onSave }: GeneralSettingsTabProps) {
                             </>
                         ) : (
                             <>
-                                <span className="material-symbols-outlined text-[16px]">save</span>
+                                <Save className="w-4 h-4" />
                                 <span>Save Changes</span>
                             </>
                         )}

@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Search, Folder, ChevronDown, List, Kanban, Calendar } from 'lucide-react';
 
 interface TasksStickyToolbarProps {
     searchQuery: string;
@@ -25,9 +26,7 @@ export function TasksStickyToolbar({
             <div className="flex items-center gap-2 flex-wrap">
                 {/* Search */}
                 <div className="relative flex items-center group w-52">
-                    <span className="material-symbols-outlined absolute left-2.5 text-[#777587] text-[18px] group-focus-within:text-[#4f46e5]">
-                        search
-                    </span>
+                    <Search className="absolute left-2.5 text-[#777587] w-4.5 h-4.5 group-focus-within:text-[#4f46e5]" />
                     <input
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
@@ -50,9 +49,9 @@ export function TasksStickyToolbar({
                 </select>
 
                 <button className="h-8 px-3 flex items-center gap-1 rounded-md text-[#464555] hover:bg-white text-xs font-semibold border border-transparent hover:border-[#e4e1ee] transition-colors cursor-pointer">
-                    <span className="material-symbols-outlined text-[16px]">folder</span>
+                    <Folder className="w-4 h-4" />
                     Project
-                    <span className="material-symbols-outlined text-[16px] text-[#777587]">expand_more</span>
+                    <ChevronDown className="w-4 h-4 text-[#777587]" />
                 </button>
             </div>
 
@@ -69,7 +68,7 @@ export function TasksStickyToolbar({
                         }`}
                         title="List View"
                     >
-                        <span className="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+                        <List className="w-4.5 h-4.5" />
                     </button>
                     <button
                         onClick={() => onViewModeChange('kanban')}
@@ -80,7 +79,7 @@ export function TasksStickyToolbar({
                         }`}
                         title="Kanban Board View"
                     >
-                        <span className="material-symbols-outlined text-[18px]">view_kanban</span>
+                        <Kanban className="w-4.5 h-4.5" />
                     </button>
                     <button
                         onClick={() => onViewModeChange('calendar')}
@@ -91,7 +90,7 @@ export function TasksStickyToolbar({
                         }`}
                         title="Calendar View"
                     >
-                        <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+                        <Calendar className="w-4.5 h-4.5" />
                     </button>
                 </div>
             </div>

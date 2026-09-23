@@ -6,18 +6,26 @@ import axios from 'axios';
 import Header from '@/components/layout/Header';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProjectStore } from '@/features/projects/store/useProjectStore';
+import { useWorkspaceStore } from '@/features/workspaces/store/useWorkspaceStore';
 import { useCollaboration } from '@/features/documents/hooks/useCollaboration';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, Extension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import AISummaryModal from '@/features/chat/components/AISummaryModal';
+import { TableKit } from '@tiptap/extension-table';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { toast } from 'react-hot-toast';
+import { Loader2 } from 'lucide-react';
 
 // Modular Document Components
 import { DocumentTabBar, DocumentPageItem } from '@/features/documents/components/DocumentTabBar';
 import { DocumentOutlineSidebar } from '@/features/documents/components/DocumentOutlineSidebar';
 import { DocumentFormattingToolbar } from '@/features/documents/components/DocumentFormattingToolbar';
 import { DocumentVersionHistoryDrawer } from '@/features/documents/components/DocumentVersionHistoryDrawer';
-import { DocumentAIFabWidget } from '@/features/documents/components/DocumentAIFabWidget';
+import { DocumentInlineAIWidget } from '@/features/documents/components/DocumentInlineAIWidget';
+import { AISelectionToolbar } from '@/features/documents/components/AISelectionToolbar';
+import { DocumentExecutiveBriefModal } from '@/features/documents/components/DocumentExecutiveBriefModal';
+import { DocumentSummaryData } from '@/types/aiSummary';
+import { DOMSerializer } from '@tiptap/pm/model';
 
 export default function DocumentEditorPage() {
     const { id } = useParams();
@@ -76,15 +84,50 @@ export default function DocumentEditorPage() {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [viewingVersionId, setViewingVersionId] = useState<string | null>(null);
 
-    // AI State
+    // AI Executive Brief State
     const [aiSummaryOpen, setAiSummaryOpen] = useState(false);
     const [aiSummary, setAiSummary] = useState<string | null>(null);
+    const [aiExecutiveBrief, setAiExecutiveBrief] = useState<DocumentSummaryData | null>(null);
     const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
     const [aiSummaryError, setAiSummaryError] = useState<string | null>(null);
 
-    const [aiFabOpen, setAiFabOpen] = useState(false);
+    // AI Writing Assistant State
+    const [aiWidgetOpen, setAiWidgetOpen] = useState(false);
     const [aiWritingLoading, setAiWritingLoading] = useState(false);
-    const [aiCustomPrompt, setAiCustomPrompt] = useState('');
+    const [capturedOriginalHtml, setCapturedOriginalHtml] = useState('');
+    const [aiSuggestedHtml, setAiSuggestedHtml] = useState<string | null>(null);
+    const [activeSelectionRange, setActiveSelectionRange] = useState<{ from: number; to: number; empty: boolean } | null>(null);
+    const [floatingPillCoords, setFloatingPillCoords] = useState<{ top: number; left: number } | null>(null);
+    const aiHighlightRangeRef = React.useRef<{ from: number; to: number } | null>(null);
+
+    // Persistent Selection Highlight Plugin for TipTap
+    const aiHighlightExtension = useMemo(() => {
+        return Extension.create({
+            name: 'aiSelectionHighlight',
+            addProseMirrorPlugins() {
+                return [
+                    new Plugin({
+                        key: new PluginKey('aiSelectionHighlightPlugin'),
+                        props: {
+                            decorations(state) {
+                                const range = aiHighlightRangeRef.current;
+                                if (!range || range.from >= range.to) return DecorationSet.empty;
+                                const maxPos = state.doc.content.size;
+                                const from = Math.max(0, Math.min(range.from, maxPos));
+                                const to = Math.max(0, Math.min(range.to, maxPos));
+                                if (from >= to) return DecorationSet.empty;
+                                return DecorationSet.create(state.doc, [
+                                    Decoration.inline(from, to, {
+                                        class: 'ai-selected-highlight',
+                                    }),
+                                ]);
+                            },
+                        },
+                    }),
+                ];
+            },
+        });
+    }, []);
 
     // Real-Time Broadcast & Version Collaboration connected to DB active page
     const activeDocContent = docContentMap[activePageId] || '';
@@ -95,7 +138,11 @@ export default function DocumentEditorPage() {
     } = useCollaboration(projectId, activePageId, activeDocContent);
 
     const editor = useEditor({
-        extensions: [StarterKit],
+        extensions: [
+            StarterKit,
+            TableKit,
+            aiHighlightExtension,
+        ],
         content: activeDocContent,
         editable: canEdit && !viewingVersionId,
         immediatelyRender: false,
@@ -107,8 +154,24 @@ export default function DocumentEditorPage() {
             }
         },
         onSelectionUpdate: ({ editor }) => {
-            const { from, to } = editor.state.selection;
+            const { from, to, empty } = editor.state.selection;
             updateCursor({ from, to });
+
+            if (!empty && typeof window !== 'undefined') {
+                const sel = window.getSelection();
+                if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+                    const range = sel.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        setFloatingPillCoords({
+                            top: rect.top - 8,
+                            left: rect.left + rect.width / 2,
+                        });
+                        return;
+                    }
+                }
+            }
+            setFloatingPillCoords(null);
         },
     });
 
@@ -189,6 +252,7 @@ export default function DocumentEditorPage() {
         if (!editor) return;
         setAiSummaryOpen(true);
         setAiSummary(null);
+        setAiExecutiveBrief(null);
         setAiSummaryError(null);
         setAiSummaryLoading(true);
         try {
@@ -197,6 +261,12 @@ export default function DocumentEditorPage() {
                 title: pages.find(p => p.id === activePageId)?.name || 'Document',
             });
             setAiSummary(res.data.summary);
+            if (res.data.structuredBrief) {
+                setAiExecutiveBrief(res.data.structuredBrief);
+            }
+            if (res.data?.workspaceId && typeof res.data?.usedAiPrompts === 'number') {
+                useWorkspaceStore.getState().updateWorkspaceAiUsage(res.data.workspaceId, res.data.usedAiPrompts);
+            }
         } catch (err: any) {
             setAiSummaryError(err.response?.data?.error || 'Failed to generate document summary');
         } finally {
@@ -204,35 +274,167 @@ export default function DocumentEditorPage() {
         }
     };
 
-    const handleRunAIWriting = async (promptType: string, customText?: string) => {
+    // Insert Editorial Executive Summary at the top of document
+    const handleInsertExecutiveSummary = (tldrText: string, takeaways: string[]) => {
+        if (!editor) return;
+        const calloutHtml = `
+<div style="background-color: #faf8ff; border-left: 3px solid #6366f1; border-radius: 8px; padding: 14px 18px; margin: 16px 0 24px 0; font-family: inherit;">
+    <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #4f46e5; margin-bottom: 8px;">
+        <span>✦</span>
+        <span>Executive Summary</span>
+    </div>
+    <p style="font-size: 13.5px; line-height: 1.6; color: #1e293b; margin: 0 0 10px 0; font-weight: 500;">
+        ${tldrText}
+    </p>
+    ${takeaways && takeaways.length > 0 ? `
+    <ul style="margin: 0; padding-left: 18px; font-size: 12.5px; color: #475569; line-height: 1.55;">
+        ${takeaways.map(t => `<li style="margin-bottom: 4px;">${t}</li>`).join('')}
+    </ul>` : ''}
+</div>
+`;
+        editor.chain().focus().insertContentAt(0, calloutHtml).run();
+        toast.success('Inserted Executive Summary at top of document');
+        setAiSummaryOpen(false);
+    };
+
+    // Open AI Assistant Widget at active selection
+    const handleOpenAIWidget = () => {
         if (!editor) return;
         const { from, to, empty } = editor.state.selection;
-        const targetText = !empty
-            ? editor.state.doc.textBetween(from, to, ' ')
-            : editor.state.doc.textBetween(Math.max(0, from - 500), from, ' ');
+        setActiveSelectionRange({ from, to, empty });
 
+        if (!empty) {
+            aiHighlightRangeRef.current = { from, to };
+        } else {
+            aiHighlightRangeRef.current = null;
+        }
+
+        let originalHtml = '';
+        if (!empty) {
+            const slice = editor.state.doc.slice(from, to);
+            const fragment = DOMSerializer.fromSchema(editor.schema).serializeFragment(slice.content);
+            const div = document.createElement('div');
+            div.appendChild(fragment);
+            originalHtml = div.innerHTML;
+        } else {
+            originalHtml = '';
+        }
+
+        setCapturedOriginalHtml(originalHtml);
+        setAiSuggestedHtml(null);
+        setAiWidgetOpen(true);
+        setFloatingPillCoords(null);
+        editor.view.dispatch(editor.state.tr);
+    };
+
+    // Keyboard Shortcut listener: Ctrl+J / Cmd+J
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
+                e.preventDefault();
+                handleOpenAIWidget();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [editor]);
+
+    // Context Extraction: Grab surrounding text before and after selection
+    const getSurroundingContext = (from: number, to: number): string => {
+        if (!editor) return '';
+        const doc = editor.state.doc;
+        const docSize = doc.content.size;
+        const beforeStart = Math.max(0, from - 400);
+        const afterEnd = Math.min(docSize, to + 400);
+        const before = doc.textBetween(beforeStart, from, ' ');
+        const after = doc.textBetween(to, afterEnd, ' ');
+        return `[PRECEDING TEXT]: ${before}\n[FOLLOWING TEXT]: ${after}`;
+    };
+
+    // Execute AI Writing Task (Context-aware & Rich Text HTML preserved)
+    const handleRunAIWriting = async (promptType: string, customPromptText?: string) => {
+        if (!editor) return;
         setAiWritingLoading(true);
+
+        const range = activeSelectionRange || editor.state.selection;
+        const { from, to, empty } = range;
+
+        let textToImprove = capturedOriginalHtml;
+        if (!textToImprove || empty) {
+            const fallbackStart = Math.max(0, from - 300);
+            textToImprove = editor.state.doc.textBetween(fallbackStart, to, ' ');
+        }
+
+        const surroundingContext = getSurroundingContext(from, to);
+        const activeDoc = pages.find((p) => p.id === activePageId);
+
         try {
             const res = await axios.post(`/api/projects/${projectId}/ai/improve-writing`, {
-                text: targetText,
-                promptType: customText ? 'custom' : promptType,
-                customPrompt: customText,
+                text: textToImprove,
+                promptType,
+                customPrompt: customPromptText,
+                documentTitle: activeDoc?.name || 'Document',
+                surroundingContext,
             });
+
             if (res.data?.result) {
-                if (!empty) {
-                    editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, res.data.result).run();
-                } else {
-                    editor.chain().focus().insertContentAt(from, '\n' + res.data.result + '\n').run();
+                setAiSuggestedHtml(res.data.result);
+                if (res.data?.workspaceId && typeof res.data?.usedAiPrompts === 'number') {
+                    useWorkspaceStore.getState().updateWorkspaceAiUsage(res.data.workspaceId, res.data.usedAiPrompts);
                 }
-                toast.success('AI writing assistant updated text!');
             }
         } catch (err: any) {
             toast.error(err.response?.data?.error || 'AI assistance failed');
         } finally {
             setAiWritingLoading(false);
-            setAiFabOpen(false);
-            setAiCustomPrompt('');
         }
+    };
+
+    // Review Actions: Accept (Replace selection with AI output)
+    const handleAcceptReplace = (htmlToInsert: string) => {
+        if (!editor) return;
+        aiHighlightRangeRef.current = null;
+        const range = activeSelectionRange || editor.state.selection;
+        const { from, to, empty } = range;
+
+        if (!empty) {
+            editor.chain().focus().deleteRange({ from, to }).insertContent(htmlToInsert).run();
+        } else {
+            editor.chain().focus().insertContent(htmlToInsert).run();
+        }
+
+        toast.success('AI suggestion applied!');
+        setAiWidgetOpen(false);
+        setAiSuggestedHtml(null);
+        setActiveSelectionRange(null);
+        editor.view.dispatch(editor.state.tr);
+    };
+
+    // Review Actions: Insert Below (Preserves original, inserts AI suggestion underneath)
+    const handleInsertBelow = (htmlToInsert: string) => {
+        if (!editor) return;
+        aiHighlightRangeRef.current = null;
+        const range = activeSelectionRange || editor.state.selection;
+        const insertPos = range ? range.to : editor.state.selection.to;
+
+        editor.chain().focus().setTextSelection(insertPos).insertContent('<p>' + htmlToInsert + '</p>').run();
+
+        toast.success('AI suggestion inserted below!');
+        setAiWidgetOpen(false);
+        setAiSuggestedHtml(null);
+        setActiveSelectionRange(null);
+        editor.view.dispatch(editor.state.tr);
+    };
+
+    // Review Actions: Discard
+    const handleDiscardAI = () => {
+        aiHighlightRangeRef.current = null;
+        if (editor) {
+            editor.view.dispatch(editor.state.tr);
+        }
+        setAiWidgetOpen(false);
+        setAiSuggestedHtml(null);
+        setActiveSelectionRange(null);
     };
 
     // Outline Headings Extraction
@@ -261,7 +463,7 @@ export default function DocumentEditorPage() {
             {/* VS Code Rectangular Tab Bar */}
             {isLoadingDocs ? (
                 <div className="bg-[#1e1e2e] text-[#a6adc8] px-4 py-2 text-xs flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Loading project documents from database...
                 </div>
             ) : (
@@ -305,6 +507,7 @@ export default function DocumentEditorPage() {
                         }}
                         onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
                         onSummarize={handleSummarize}
+                        onOpenAIWriting={handleOpenAIWidget}
                         onShare={() => {
                             navigator.clipboard.writeText(window.location.href);
                             toast.success('Document link copied to clipboard!');
@@ -370,26 +573,39 @@ export default function DocumentEditorPage() {
                 />
             </div>
 
-            {/* AI Assistant Floating FAB */}
-            <DocumentAIFabWidget
-                isOpen={aiFabOpen}
+            {/* Floating Selection Pill: ✦ Ask AI & AI Summary */}
+            {floatingPillCoords && !aiWidgetOpen && (
+                <AISelectionToolbar
+                    position={floatingPillCoords}
+                    onAskAI={handleOpenAIWidget}
+                    onSummarize={handleSummarize}
+                />
+            )}
+
+            {/* Document Inline AI Assistant (Fixed in Bottom-Right) */}
+            <DocumentInlineAIWidget
+                isOpen={aiWidgetOpen}
                 isLoading={aiWritingLoading}
-                customPrompt={aiCustomPrompt}
-                isSelectionEmpty={Boolean(editor?.state.selection.empty)}
-                onToggleFab={() => setAiFabOpen(!aiFabOpen)}
-                onCustomPromptChange={setAiCustomPrompt}
-                onRunAIWriting={handleRunAIWriting}
+                isSelectionEmpty={Boolean(activeSelectionRange?.empty ?? editor?.state.selection.empty)}
+                originalHtml={capturedOriginalHtml}
+                suggestedHtml={aiSuggestedHtml}
+                onClose={handleDiscardAI}
+                onRunPrompt={handleRunAIWriting}
+                onAcceptReplace={handleAcceptReplace}
+                onInsertBelow={handleInsertBelow}
+                onDiscard={handleDiscardAI}
             />
 
-            {/* AI Summary Modal */}
-            <AISummaryModal
+            {/* Document AI Executive Brief Modal */}
+            <DocumentExecutiveBriefModal
                 isOpen={aiSummaryOpen}
                 onClose={() => setAiSummaryOpen(false)}
-                title="Document Summary"
-                subtitle={`AI summary of "${activePage?.name || 'Document'}"`}
-                summary={aiSummary}
+                title={pages.find(p => p.id === activePageId)?.name || 'Document'}
+                brief={aiExecutiveBrief}
+                rawSummary={aiSummary}
                 isLoading={aiSummaryLoading}
                 error={aiSummaryError}
+                onInsertSummary={handleInsertExecutiveSummary}
             />
         </div>
     );

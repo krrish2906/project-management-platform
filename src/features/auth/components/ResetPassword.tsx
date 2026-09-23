@@ -5,6 +5,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { KeyRound, Check, Lock, Eye, EyeOff, CheckCircle2, Circle, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export function ResetPassword() {
     const router = useRouter();
@@ -99,7 +100,7 @@ export function ResetPassword() {
             {/* Header & Branding */}
             <div className="text-center mb-6">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#4f46e5] text-white mb-3 shadow-sm">
-                    <span className="material-symbols-outlined text-[24px]">key</span>
+                    <KeyRound className="w-6 h-6" />
                 </div>
                 <h1 className="text-[24px] leading-8 font-bold text-[#1b1b24] mb-1">
                     Set new password
@@ -118,7 +119,7 @@ export function ResetPassword() {
                     {/* Step 1: Email (Completed) */}
                     <div className="flex flex-col items-center gap-1 relative z-10">
                         <div className="w-6 h-6 rounded-full bg-[#10b981] text-white flex items-center justify-center text-[12px] font-bold shadow-xs ring-4 ring-white">
-                            <span className="material-symbols-outlined text-[14px]">check</span>
+                            <Check className="w-3.5 h-3.5" />
                         </div>
                         <span className="text-[12px] leading-4 font-semibold text-[#047857]">Email</span>
                     </div>
@@ -126,7 +127,7 @@ export function ResetPassword() {
                     {/* Step 2: Verify (Completed) */}
                     <div className="flex flex-col items-center gap-1 relative z-10">
                         <div className="w-6 h-6 rounded-full bg-[#10b981] text-white flex items-center justify-center text-[12px] font-bold shadow-xs ring-4 ring-white">
-                            <span className="material-symbols-outlined text-[14px]">check</span>
+                            <Check className="w-3.5 h-3.5" />
                         </div>
                         <span className="text-[12px] leading-4 font-semibold text-[#047857]">Verify</span>
                     </div>
@@ -149,7 +150,7 @@ export function ResetPassword() {
                         </label>
                         <div className="relative input-ring rounded-lg border border-[#e4e1ee] bg-white transition-all duration-200">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#777587]">
-                                <span className="material-symbols-outlined text-[20px]">lock</span>
+                                <Lock className="w-5 h-5" />
                             </div>
                             <input
                                 id="newPassword"
@@ -167,9 +168,7 @@ export function ResetPassword() {
                                 onClick={() => setShowNewPassword(!showNewPassword)}
                                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#777587] hover:text-[#1b1b24] transition-colors cursor-pointer"
                             >
-                                <span className="material-symbols-outlined text-[20px]">
-                                    {showNewPassword ? 'visibility' : 'visibility_off'}
-                                </span>
+                                {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
                         </div>
                     </div>
@@ -184,16 +183,16 @@ export function ResetPassword() {
                         </div>
                         <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
                             <div className={`flex items-center gap-1.5 text-[11px] ${hasLength ? 'text-[#047857] font-semibold' : 'text-[#64748b]'}`}>
-                                <span className={`material-symbols-outlined text-[14px] ${hasLength ? 'text-[#10b981]' : 'text-[#94a3b8]'}`}>{hasLength ? 'check_circle' : 'circle'}</span> 8+ characters
+                                {hasLength ? <CheckCircle2 className="w-3.5 h-3.5 text-[#10b981]" /> : <Circle className="w-3.5 h-3.5 text-[#94a3b8]" />} 8+ characters
                             </div>
                             <div className={`flex items-center gap-1.5 text-[11px] ${hasUpper ? 'text-[#047857] font-semibold' : 'text-[#64748b]'}`}>
-                                <span className={`material-symbols-outlined text-[14px] ${hasUpper ? 'text-[#10b981]' : 'text-[#94a3b8]'}`}>{hasUpper ? 'check_circle' : 'circle'}</span> Uppercase letter
+                                {hasUpper ? <CheckCircle2 className="w-3.5 h-3.5 text-[#10b981]" /> : <Circle className="w-3.5 h-3.5 text-[#94a3b8]" />} Uppercase letter
                             </div>
                             <div className={`flex items-center gap-1.5 text-[11px] ${hasNumber ? 'text-[#047857] font-semibold' : 'text-[#64748b]'}`}>
-                                <span className={`material-symbols-outlined text-[14px] ${hasNumber ? 'text-[#10b981]' : 'text-[#94a3b8]'}`}>{hasNumber ? 'check_circle' : 'circle'}</span> Number
+                                {hasNumber ? <CheckCircle2 className="w-3.5 h-3.5 text-[#10b981]" /> : <Circle className="w-3.5 h-3.5 text-[#94a3b8]" />} Number
                             </div>
                             <div className={`flex items-center gap-1.5 text-[11px] ${hasSpecial ? 'text-[#047857] font-semibold' : 'text-[#64748b]'}`}>
-                                <span className={`material-symbols-outlined text-[14px] ${hasSpecial ? 'text-[#10b981]' : 'text-[#94a3b8]'}`}>{hasSpecial ? 'check_circle' : 'circle'}</span> Special character
+                                {hasSpecial ? <CheckCircle2 className="w-3.5 h-3.5 text-[#10b981]" /> : <Circle className="w-3.5 h-3.5 text-[#94a3b8]" />} Special character
                             </div>
                         </div>
                     </div>
@@ -205,7 +204,7 @@ export function ResetPassword() {
                         </label>
                         <div className="relative input-ring rounded-lg border border-[#e4e1ee] bg-white transition-all duration-200">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#777587]">
-                                <span className="material-symbols-outlined text-[20px]">lock</span>
+                                <Lock className="w-5 h-5" />
                             </div>
                             <input
                                 id="confirmPassword"
@@ -223,9 +222,7 @@ export function ResetPassword() {
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#777587] hover:text-[#1b1b24] transition-colors cursor-pointer"
                             >
-                                <span className="material-symbols-outlined text-[20px]">
-                                    {showConfirmPassword ? 'visibility' : 'visibility_off'}
-                                </span>
+                                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
                         </div>
                     </div>
@@ -245,7 +242,7 @@ export function ResetPassword() {
                         {loading ? 'Resetting Password...' : (
                             <>
                                 Reset Password
-                                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                                <ArrowRight className="w-4.5 h-4.5" />
                             </>
                         )}
                     </button>
@@ -258,7 +255,7 @@ export function ResetPassword() {
                     href="/login"
                     className="text-[14px] leading-5 font-medium text-[#777587] hover:text-[#1b1b24] transition-colors inline-flex items-center gap-1"
                 >
-                    <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                    <ArrowLeft className="w-4.5 h-4.5" />
                     Return to Login
                 </Link>
             </div>

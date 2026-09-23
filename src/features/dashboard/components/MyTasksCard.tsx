@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useTaskStore } from '@/features/tasks/store/useTaskStore';
+import { CheckCircle2 } from 'lucide-react';
 
 interface MyTasksCardProps {
     tasks?: any[];
@@ -60,7 +61,7 @@ export function MyTasksCard({ tasks: propTasks }: MyTasksCardProps) {
             {assignedTasks.length === 0 ? (
                 <div className="py-7 px-4 text-center border border-dashed border-[#E2E8F0] rounded-xl bg-[#F8FAFC] flex-1 flex flex-col items-center justify-center">
                     <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-1.5">
-                        <span className="material-symbols-outlined text-[18px]">task_alt</span>
+                        <CheckCircle2 className="w-4.5 h-4.5" />
                     </div>
                     <p className="text-xs font-semibold text-[#1e293b]">All caught up!</p>
                     <p className="text-[11px] text-[#64748b] mt-0.5">No open tasks assigned to you right now.</p>

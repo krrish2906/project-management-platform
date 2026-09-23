@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { MoreHorizontal, Calendar, CalendarX, Plus } from 'lucide-react';
 
 export interface HeaderMemberItem {
     id: string;
@@ -77,7 +78,7 @@ export function ProjectOverviewHeaderCard({
                         onClick={onMoreOptions}
                         className="p-2 border border-[#E2E8F0] rounded-xl text-[#64748b] hover:text-[#0f172a] hover:bg-[#F8FAFC] transition-all bg-white cursor-pointer shadow-2xs"
                     >
-                        <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+                        <MoreHorizontal className="w-4.5 h-4.5" />
                     </button>
                 )}
             </div>
@@ -87,14 +88,14 @@ export function ProjectOverviewHeaderCard({
                 <div className="flex flex-col gap-1">
                     <span className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Start Date</span>
                     <span className="text-xs sm:text-sm font-medium flex items-center gap-1.5 text-[#0f172a]">
-                        <span className="material-symbols-outlined text-[16px] text-[#64748b]">calendar_today</span>
+                        <Calendar className="w-4 h-4 text-[#64748b]" />
                         <span>{startDate}</span>
                     </span>
                 </div>
                 <div className="flex flex-col gap-1">
                     <span className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Due Date</span>
                     <span className="text-xs sm:text-sm font-medium flex items-center gap-1.5 text-[#D97706]">
-                        <span className="material-symbols-outlined text-[16px]">event_busy</span>
+                        <CalendarX className="w-4 h-4" />
                         <span>{dueDate}</span>
                     </span>
                 </div>
@@ -132,7 +133,7 @@ export function ProjectOverviewHeaderCard({
                                     title="Add Member"
                                     className="w-6 h-6 rounded-full border-2 border-dashed border-[#4F46E5] bg-[#EEF2FF] hover:bg-[#E0E7FF] text-[#4F46E5] flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
                                 >
-                                    <span className="material-symbols-outlined text-[13px] font-bold">add</span>
+                                    <Plus className="w-3.5 h-3.5 font-bold" />
                                 </button>
                             )}
                         </div>

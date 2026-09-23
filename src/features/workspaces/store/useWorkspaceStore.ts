@@ -9,6 +9,8 @@ export interface WorkspaceItem {
     plan: 'FREE' | 'PRO' | 'MAX';
     role: 'OWNER' | 'ADMIN' | 'MEMBER';
     storageUsed?: number;
+    aiPromptsUsed?: number;
+    aiPromptsResetAt?: string;
     _count?: {
         projects: number;
         members: number;
@@ -25,6 +27,7 @@ interface WorkspaceState {
     setCurrentWorkspace: (workspace: WorkspaceItem) => void;
     createWorkspace: (name: string, plan?: 'FREE' | 'PRO' | 'MAX') => Promise<WorkspaceItem | null>;
     updateWorkspace: (id: string, data: { name?: string; slug?: string; plan?: 'FREE' | 'PRO' | 'MAX' }) => Promise<WorkspaceItem | null>;
+    updateWorkspaceAiUsage: (workspaceId: string, used: number) => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
@@ -45,6 +48,8 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
                     plan: w.plan || 'FREE',
                     role: w.role || 'OWNER',
                     storageUsed: Number(w.storageUsed || 0),
+                    aiPromptsUsed: Number(w.aiPromptsUsed || 0),
+                    aiPromptsResetAt: w.aiPromptsResetAt ? String(w.aiPromptsResetAt) : undefined,
                     _count: w._count || { projects: w.projectsCount || 0, members: w.membersCount || 1 },
                 }));
 
@@ -89,6 +94,18 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
         }
     },
 
+    updateWorkspaceAiUsage: (workspaceId: string, used: number) => {
+        set((state) => ({
+            workspaces: state.workspaces.map((item) =>
+                item.id === workspaceId ? { ...item, aiPromptsUsed: used } : item
+            ),
+            currentWorkspace:
+                state.currentWorkspace?.id === workspaceId
+                    ? { ...state.currentWorkspace, aiPromptsUsed: used }
+                    : state.currentWorkspace,
+        }));
+    },
+
     createWorkspace: async (name: string, plan = 'FREE') => {
         try {
             const res = await axios.post('/api/workspaces', { name, plan });
@@ -101,6 +118,7 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
                     plan: w.plan || plan,
                     role: 'OWNER',
                     storageUsed: 0,
+                    aiPromptsUsed: 0,
                     _count: { projects: 0, members: 1 },
                 };
 
@@ -128,6 +146,7 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
 
     updateWorkspace: async (id: string, data) => {
         try {
+            const existing = get().workspaces.find((ws) => ws.id === id);
             const res = await axios.put(`/api/workspaces/${id}`, data);
             if (res.data?.success && res.data.data?.workspace) {
                 const w = res.data.data.workspace;
@@ -136,9 +155,11 @@ export const useWorkspaceStore = create<WorkspaceState>()((set, get) => ({
                     name: w.name,
                     slug: w.slug,
                     plan: w.plan || 'FREE',
-                    role: w.role || 'OWNER',
-                    storageUsed: Number(w.storageUsed || 0),
-                    _count: w._count || { projects: 0, members: 1 },
+                    role: w.role || existing?.role || 'OWNER',
+                    storageUsed: Number(w.storageUsed || existing?.storageUsed || 0),
+                    aiPromptsUsed: Number(w.aiPromptsUsed ?? existing?.aiPromptsUsed ?? 0),
+                    aiPromptsResetAt: w.aiPromptsResetAt || existing?.aiPromptsResetAt,
+                    _count: w._count || existing?._count || { projects: 0, members: 1 },
                 };
 
                 set((state) => ({

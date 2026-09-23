@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { UserPlus, X, Search, Check } from 'lucide-react';
 
 interface WorkspaceMemberItem {
     id: string;
@@ -132,7 +133,7 @@ export function AddProjectMemberModal({
                 <div className="flex justify-between items-start pb-4 border-b border-[#E2E8F0]">
                     <div>
                         <h2 className="text-base font-bold text-[#0f172a] flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[20px] text-[#4F46E5]">group_add</span>
+                            <UserPlus className="w-5 h-5 text-[#4F46E5]" />
                             <span>Add Workspace Members to Project</span>
                         </h2>
                         <p className="text-xs text-[#64748b] mt-0.5">
@@ -143,7 +144,7 @@ export function AddProjectMemberModal({
                         onClick={onClose}
                         className="text-[#94a3b8] hover:text-[#0f172a] p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[20px]">close</span>
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -172,9 +173,7 @@ export function AddProjectMemberModal({
                                 Search Workspace Members
                             </label>
                             <div className="relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[17px]">
-                                    search
-                                </span>
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] w-4 h-4" />
                                 <input
                                     type="text"
                                     value={searchQuery}
@@ -239,7 +238,7 @@ export function AddProjectMemberModal({
                                                 }`}
                                             >
                                                 {isSelected && (
-                                                    <span className="material-symbols-outlined text-[15px]">check</span>
+                                                    <Check className="w-3.5 h-3.5" />
                                                 )}
                                             </div>
                                         </div>
@@ -289,7 +288,7 @@ export function AddProjectMemberModal({
                                     </>
                                 ) : (
                                     <>
-                                        <span className="material-symbols-outlined text-[16px]">person_add</span>
+                                        <UserPlus className="w-4 h-4" />
                                         <span>Add to Project</span>
                                     </>
                                 )}

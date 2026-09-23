@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import getAIClient, { getAIModel } from '@/services/ai/ai';
-import { checkAndIncrementAIQuota } from '@/lib/aiQuota';
+import { checkAIQuota, incrementAIQuota } from '@/lib/aiQuota';
 
 // POST /api/projects/[id]/ai/summarize-document — Generate AI summary of document content
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const user = getAuthUser(request);
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // AI Quota & Business Plan Check
-        const quota = await checkAndIncrementAIQuota(user.userId);
-        if (!quota.allowed) {
-            return NextResponse.json({ error: quota.error }, { status: 403 });
+        const { id: projectId } = await params;
+
+        // AI Quota & Business Plan Check (verify before processing)
+        const quotaCheck = await checkAIQuota(user.userId, projectId);
+        if (!quotaCheck.allowed) {
+            return NextResponse.json({ error: quotaCheck.error }, { status: 403 });
         }
 
         const body = await request.json();
@@ -37,6 +39,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Document has too little text content to summarize' }, { status: 400 });
         }
 
+        const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+        const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 220));
+
         const ai = getAIClient();
         const model = getAIModel();
 
@@ -45,28 +50,84 @@ export async function POST(request: NextRequest) {
             messages: [
                 {
                     role: 'system',
-                    content: `You are a professional document analyst. Provide a clear, structured executive summary of the following document.
+                    content: `You are an executive document analyst for a high-performance productivity platform like Linear/Notion.
+Analyze the provided document and produce a structured, high-signal Executive Brief.
 
-Your summary should include:
-- **Overview**: A 1-2 sentence high-level summary
-- **Key Points**: The main topics or sections covered (as bullet points)
-- **Details**: Important specifics, data, or requirements mentioned
-- **Conclusions**: Any conclusions, next steps, or recommendations
+Respond with ONLY a valid JSON object matching this schema:
+{
+  "tldr": "1-3 sentences capturing the core essence, architecture/proposal, and immediate status.",
+  "takeaways": [
+    "High-impact key takeaway statement 1",
+    "High-impact key takeaway statement 2",
+    "High-impact key takeaway statement 3"
+  ],
+  "actionItems": [
+    { "task": "Specific action item", "owner": "Owner name if mentioned, otherwise Unassigned", "deadline": "Deadline if mentioned, otherwise null" }
+  ],
+  "decisions": [
+    "Confirmed decision 1",
+    "Confirmed decision 2"
+  ],
+  "keyFacts": [
+    { "label": "Technology / Key Domain", "value": "Relevant tech or entity" },
+    { "label": "Primary Stakeholder", "value": "Relevant team or person" }
+  ],
+  "documentType": "Technical | Proposal | Strategy | Specification | Operational | Notes"
+}
 
-Format as clean markdown. Use **bold** for emphasis. Be concise but don't miss critical information. Do NOT include any preamble — start directly with the summary.`
+Do NOT wrap in markdown fences (\`\`\`json). Output raw, parseable JSON only.`
                 },
                 {
                     role: 'user',
                     content: `${title ? `Document Title: "${title}"\n\n` : ''}Document Content:\n\n${plainText.substring(0, 8000)}`
                 }
             ],
-            temperature: 0.3,
-            max_tokens: 1200,
+            temperature: 0.2,
+            max_tokens: 1500,
         });
 
-        const summary = completion.choices[0]?.message?.content || 'Unable to generate summary.';
+        const rawContent = completion.choices[0]?.message?.content || '';
+        let structuredBrief: any = null;
 
-        return NextResponse.json({ summary, remainingQuota: quota.remaining });
+        try {
+            const cleanedJson = rawContent
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/\s*```$/i, '')
+                .trim();
+            structuredBrief = JSON.parse(cleanedJson);
+        } catch (parseErr) {
+            console.warn('Failed to parse structured JSON from AI, falling back to basic extraction:', parseErr);
+        }
+
+        if (!structuredBrief || typeof structuredBrief !== 'object') {
+            structuredBrief = {
+                tldr: rawContent || 'No summary available.',
+                takeaways: [],
+                actionItems: [],
+                decisions: [],
+                keyFacts: [],
+                documentType: 'General',
+            };
+        }
+
+        // Attach computed document metrics
+        structuredBrief.metrics = {
+            wordCount,
+            readingTimeMinutes,
+            documentType: structuredBrief.documentType || 'Technical',
+        };
+
+        // Deduct quota only on success
+        const quotaResult = await incrementAIQuota(user.userId, projectId);
+
+        return NextResponse.json({
+            summary: structuredBrief.tldr,
+            structuredBrief,
+            remainingQuota: quotaResult?.remaining ?? quotaCheck.remaining,
+            usedAiPrompts: quotaResult?.used ?? ((quotaCheck.used || 0) + 1),
+            workspaceId: quotaResult?.workspaceId ?? quotaCheck.workspaceId,
+        });
     } catch (error: any) {
         console.error('AI Document Summarize Error:', error);
         return NextResponse.json({

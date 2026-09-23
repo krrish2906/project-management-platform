@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Folder, Sparkles, Cloud } from 'lucide-react';
 
 interface CurrentPlanBannerProps {
     planName?: string;
@@ -27,7 +28,7 @@ export function formatStorageBytes(bytes: number): string {
 
 export function CurrentPlanBanner({
     planName = 'FREE Plan',
-    resetDate = 'end of the month',
+    resetDate = 'the 1st of next month',
     usedProjects = 0,
     maxProjects = 3,
     usedStorageBytes = 0,
@@ -59,7 +60,7 @@ export function CurrentPlanBanner({
                         </span>
                     </div>
                     <p className="text-xs text-[#64748b]">
-                        Your workspace feature quotas reset at the {resetDate}.
+                        Your workspace feature quotas reset on {resetDate}.
                     </p>
                 </div>
 
@@ -68,7 +69,7 @@ export function CurrentPlanBanner({
                     <div className="bg-[#F8FAFC] p-3.5 rounded-xl border border-[#E2E8F0] flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-2 text-xs font-bold">
                             <span className="text-[#0f172a] flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-[16px] text-[#4F46E5]">folder</span>
+                                <Folder className="w-4 h-4 text-[#4F46E5]" />
                                 Projects
                             </span>
                             <span className="text-[#64748b] font-semibold text-[11px] bg-white px-2 py-0.5 rounded-md border border-[#E2E8F0]">
@@ -90,7 +91,7 @@ export function CurrentPlanBanner({
                     <div className="bg-[#F8FAFC] p-3.5 rounded-xl border border-[#E2E8F0] flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-2 text-xs font-bold">
                             <span className="text-[#0f172a] flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-[16px] text-purple-600">auto_awesome</span>
+                                <Sparkles className="w-4 h-4 text-purple-600" />
                                 AI Prompts
                             </span>
                             <span className="text-[#64748b] font-semibold text-[11px] bg-white px-2 py-0.5 rounded-md border border-[#E2E8F0]">
@@ -112,7 +113,7 @@ export function CurrentPlanBanner({
                     <div className="bg-[#F8FAFC] p-3.5 rounded-xl border border-[#E2E8F0] flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-2 text-xs font-bold">
                             <span className="text-[#0f172a] flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-[16px] text-blue-600">cloud</span>
+                                <Cloud className="w-4 h-4 text-blue-600" />
                                 Storage
                             </span>
                             <span className="text-[#64748b] font-semibold text-[11px] bg-white px-2 py-0.5 rounded-md border border-[#E2E8F0]">

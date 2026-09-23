@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { toast } from 'react-hot-toast';
+import { Kanban, Eye, EyeOff } from 'lucide-react';
 
 export function SignupForm() {
     const router = useRouter();
@@ -100,11 +101,9 @@ export function SignupForm() {
     return (
         <div className="w-full lg:w-[55%] p-6 sm:p-8 md:p-12 flex flex-col justify-center bg-white">
             <div className="lg:hidden flex items-center gap-2 mb-6">
-                <span className="material-symbols-outlined text-[#4F46E5] text-[28px]">
-                    view_kanban
-                </span>
+                <Kanban className="text-[#4F46E5] w-7 h-7" />
                 <span className="text-[24px] tracking-[-0.01em] font-bold text-[#1b1b24]">
-                    ProjectHub
+                    OmniSync
                 </span>
             </div>
 
@@ -174,9 +173,11 @@ export function SignupForm() {
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b]"
                                 >
-                                    <span className="material-symbols-outlined text-[18px]">
-                                        {showPassword ? 'visibility' : 'visibility_off'}
-                                    </span>
+                                    {showPassword ? (
+                                        <Eye className="w-4.5 h-4.5" />
+                                    ) : (
+                                        <EyeOff className="w-4.5 h-4.5" />
+                                    )}
                                 </button>
                             </div>
                         </div>

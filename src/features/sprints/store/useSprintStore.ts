@@ -9,6 +9,7 @@ interface SprintState {
     fetchSprints: (projectId: string) => Promise<void>;
     createSprint: (data: { name: string; project: string; goal?: string; startDate?: string; endDate?: string }) => Promise<Sprint | null>;
     updateSprint: (id: string, updates: Record<string, any>) => Promise<Sprint | null>;
+    deleteSprint: (id: string) => Promise<boolean>;
     startSprint: (id: string) => Promise<void>;
     completeSprint: (id: string) => Promise<void>;
 }
@@ -64,6 +65,23 @@ export const useSprintStore = create<SprintState>()((set, get) => ({
         } catch (err: any) {
             set({ error: err.response?.data?.message || err.message });
             return null;
+        }
+    },
+
+    deleteSprint: async (id) => {
+        try {
+            const res = await axios.delete(`/api/sprints/${id}`);
+            const resData = res.data;
+            if (resData.success) {
+                set(state => ({
+                    sprints: state.sprints.filter(s => s.id !== id)
+                }));
+                return true;
+            }
+            return false;
+        } catch (err: any) {
+            set({ error: err.response?.data?.message || err.message });
+            return false;
         }
     },
 

@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Search, LayoutGrid, List } from 'lucide-react';
 
 interface ProjectsFilterBarProps {
     searchQuery: string;
@@ -30,9 +31,7 @@ export function ProjectsFilterBar({
         <div className="flex flex-col lg:flex-row gap-3.5 justify-between items-stretch lg:items-center">
             {/* 1. Search Input */}
             <div className="flex-1 w-full lg:max-w-md relative">
-                <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[18px]">
-                    search
-                </span>
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] w-4.5 h-4.5" />
                 <input
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
@@ -75,7 +74,7 @@ export function ProjectsFilterBar({
                         }`}
                         title="Grid View"
                     >
-                        <span className="material-symbols-outlined text-[15px] leading-none">grid_view</span>
+                        <LayoutGrid className="w-3.75 h-3.75" />
                     </button>
                     <button
                         onClick={() => onViewModeChange('list')}
@@ -86,7 +85,7 @@ export function ProjectsFilterBar({
                         }`}
                         title="List View"
                     >
-                        <span className="material-symbols-outlined text-[15px] leading-none">view_list</span>
+                        <List className="w-3.75 h-3.75" />
                     </button>
                 </div>
             </div>

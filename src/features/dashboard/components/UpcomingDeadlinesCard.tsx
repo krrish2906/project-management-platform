@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { useTaskStore } from '@/features/tasks/store/useTaskStore';
 import { formatDistanceToNow, format } from 'date-fns';
+import { CalendarCheck } from 'lucide-react';
 
 export function UpcomingDeadlinesCard() {
     const { tasks, fetchTasks } = useTaskStore();
@@ -30,7 +31,7 @@ export function UpcomingDeadlinesCard() {
             {tasksWithDeadlines.length === 0 ? (
                 <div className="py-7 px-4 text-center border border-dashed border-[#E2E8F0] rounded-xl bg-[#F8FAFC] flex-1 flex flex-col items-center justify-center">
                     <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-1.5">
-                        <span className="material-symbols-outlined text-[18px]">event_available</span>
+                        <CalendarCheck className="w-4.5 h-4.5" />
                     </div>
                     <p className="text-xs font-semibold text-[#1e293b]">No upcoming deadlines</p>
                     <p className="text-[11px] text-[#64748b] mt-0.5">You are all clear of urgent task deadlines.</p>

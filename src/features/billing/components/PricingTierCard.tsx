@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { CheckCircle2 } from 'lucide-react';
 
 export interface PricingPlan {
     id: 'free' | 'pro' | 'max';
@@ -51,9 +52,7 @@ export function PricingTierCard({ plan, onSelectPlan }: PricingTierCardProps) {
                 <ul className="space-y-2.5 mb-8">
                     {plan.features.map((feature, idx) => (
                         <li key={idx} className="flex items-center gap-2 text-xs text-[#334155]">
-                            <span className="material-symbols-outlined text-[#4F46E5] text-[17px] shrink-0">
-                                check_circle
-                            </span>
+                            <CheckCircle2 className="w-4.25 h-4.25 text-[#4F46E5] shrink-0" />
                             <span className={plan.isRecommended && idx === 0 ? 'font-semibold text-[#0f172a]' : ''}>
                                 {feature}
                             </span>

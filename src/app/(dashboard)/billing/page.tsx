@@ -34,7 +34,13 @@ export default function BillingPage() {
 
     const usedProjectsCount = projects.length;
     const usedStorageBytes = currentWorkspace?.storageUsed || 0;
-    const usedAiPrompts = (currentWorkspace as any)?.aiPromptsUsed || 0;
+    const usedAiPrompts = currentWorkspace?.aiPromptsUsed ?? 0;
+
+    // Reset date calculation (1st of next month)
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextMonthName = nextMonth.toLocaleString('en-US', { month: 'long' });
+    const resetDateStr = `1st of ${nextMonthName}`;
 
     const plans: PricingPlan[] = [
         {
@@ -122,6 +128,7 @@ export default function BillingPage() {
                         {/* Current Plan Usage Banner with Live Meters */}
                         <CurrentPlanBanner
                             planName={`${activePlan} Plan`}
+                            resetDate={resetDateStr}
                             usedProjects={usedProjectsCount}
                             maxProjects={activeLimits.maxProjects}
                             usedStorageBytes={usedStorageBytes}

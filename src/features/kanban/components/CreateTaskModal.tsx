@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { CheckSquare, X } from 'lucide-react';
 
 interface CreateTaskModalProps {
     isOpen: boolean;
@@ -60,7 +61,7 @@ export function CreateTaskModal({
                 <div className="flex justify-between items-start mb-5 border-b border-[#E2E8F0] pb-4">
                     <div>
                         <h3 className="text-base font-bold text-[#0f172a] flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[20px] text-[#4F46E5]">add_task</span>
+                            <CheckSquare className="w-5 h-5 text-[#4F46E5]" />
                             <span>Create New Task</span>
                         </h3>
                         <p className="text-xs text-[#64748b] mt-0.5">Add a new task to your project board</p>
@@ -69,7 +70,7 @@ export function CreateTaskModal({
                         onClick={onClose}
                         className="text-[#94a3b8] hover:text-[#0f172a] p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[20px]">close</span>
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 

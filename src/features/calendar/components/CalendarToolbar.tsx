@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ChevronRight, ChevronLeft, Plus } from 'lucide-react';
 
 interface CalendarToolbarProps {
     projectName?: string;
@@ -31,15 +32,15 @@ export function CalendarToolbar({
                     <Link href="/dashboard" className="hover:text-[#4F46E5] transition-colors">
                         Workspace
                     </Link>
-                    <span className="material-symbols-outlined text-[13px] text-[#94a3b8]">chevron_right</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                     <Link href="/projects" className="hover:text-[#4F46E5] transition-colors">
                         Projects
                     </Link>
-                    <span className="material-symbols-outlined text-[13px] text-[#94a3b8]">chevron_right</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                     <Link href={`/projects/${projectId}`} className="hover:text-[#4F46E5] transition-colors">
                         {projectName}
                     </Link>
-                    <span className="material-symbols-outlined text-[13px] text-[#94a3b8]">chevron_right</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#94a3b8]" />
                     <span className="font-semibold text-[#0f172a]">Calendar</span>
                 </nav>
             </div>
@@ -59,7 +60,7 @@ export function CalendarToolbar({
                         className="h-full px-2 hover:bg-[#F8FAFC] border-r border-[#CBD5E1]/80 text-[#64748b] hover:text-[#0f172a] transition-colors cursor-pointer flex items-center justify-center"
                         title="Previous Month"
                     >
-                        <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                        <ChevronLeft className="w-4 h-4" />
                     </button>
                     <span className="px-3 text-xs font-bold text-[#0f172a] whitespace-nowrap select-none">
                         {monthYearTitle}
@@ -69,7 +70,7 @@ export function CalendarToolbar({
                         className="h-full px-2 hover:bg-[#F8FAFC] border-l border-[#CBD5E1]/80 text-[#64748b] hover:text-[#0f172a] transition-colors cursor-pointer flex items-center justify-center"
                         title="Next Month"
                     >
-                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                        <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
 
@@ -78,7 +79,7 @@ export function CalendarToolbar({
                         onClick={onCreateEvent}
                         className="h-8.5 px-3.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-[15px]">add</span>
+                        <Plus className="w-3.75 h-3.75" />
                         <span>Create Event</span>
                     </button>
                 )}
